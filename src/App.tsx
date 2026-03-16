@@ -326,7 +326,7 @@ export default function App() {
                 <img 
                   src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" 
                   alt="CleanFry Logo" 
-                  className="h-12 w-auto object-contain brightness-0 invert"
+                  className="h-12 w-auto object-contain"
                   referrerPolicy="no-referrer"
                 />
               </div>
