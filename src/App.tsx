@@ -391,7 +391,10 @@ export default function App() {
           </div>
 
           <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-            <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות. מיוצר באהבה בישראל.</p>
+            <div className="mb-4">
+  <a href="#accessibility" className="hover:text-white underline transition-colors">הצהרת נגישות</a>
+</div>
+            <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות. מיוצר לישראל באהבה.</p>
           </div>
         </div>
       </footer>
