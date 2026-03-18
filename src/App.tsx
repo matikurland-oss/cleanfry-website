@@ -17,8 +17,9 @@ import {
   Instagram, 
   Facebook, 
   MessageCircle,
-  CheckCircle2
-} from 'lucide-react';
+  CheckCircle2,
+    Truck
+  } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const Navbar = () => {
@@ -146,6 +147,10 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
 };
 
 export default function App() {
+  const [quantity, setQuantity] = useState(1);
+  const UNIT_PRICE = 49;
+  const totalPrice = quantity * UNIT_PRICE;
+  const isFreeShipping = totalPrice >= 249;
   return (
     <div className="min-h-screen bg-white" dir="rtl">
       {/* 1. Top Announcement Bar */}
@@ -182,26 +187,7 @@ export default function App() {
                 <p className="text-xl text-slate-600 leading-relaxed mb-10 max-w-xl">
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="gradient-brand text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-lg shadow-brand-blue/20 hover:scale-105 transition-transform">
-                    לקנייה עכשיו
-                  </button>
-                  <button className="bg-slate-100 text-slate-700 px-10 py-5 rounded-2xl font-bold text-xl hover:bg-slate-200 transition-colors">
-                    איך זה עובד?
-                  </button>
-                </div>
                 
-                <div className="mt-12 flex items-center gap-6 text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                    <span className="text-sm font-medium">100% טבעי</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                    <span className="text-sm font-medium">ידידותי לסביבה</span>
-                  </div>
-                </div>
-              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -219,6 +205,68 @@ export default function App() {
               </motion.div>
             </div>
           </div>
+
+            {/* תיבת קנייה מרכזית חכמה - CleanFry */}
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="max-w-3xl mx-auto mt-12 mb-20 relative z-10 px-4"
+        >
+          <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
+            {/* עיטור רקע מעוצב */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+            
+            <div className="flex-1 w-full order-1 md:order-1">
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">בחר כמות מארזים:</h3>
+              
+              <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
+                >-</button>
+                
+                <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center">{quantity}</span>
+                
+                <button 
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
+                >+</button>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-6">
+                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                  <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                  <span>100% טבעי</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                  <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                  <span>ידידותי לסביבה</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2 md:order-2">
+              <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-6xl font-black text-brand-blue">₪{totalPrice}</span>
+              </div>
+
+              {isFreeShipping ? (
+                <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6 animate-pulse">
+                  <Truck className="w-5 h-5" />
+                  <span>משלוח חינם מופעל!</span>
+                </div>
+              ) : (
+                <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+              )}
+
+              <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all shadow-brand-blue/25">
+                הזמן {quantity} מארזים עכשיו
+              </button>
+            </div>
+          </div>
+        </motion.div>
         </section>
 
         {/* 4. How It Works Section */}
