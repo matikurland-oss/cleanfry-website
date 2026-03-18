@@ -38,7 +38,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const navLinks = [
     { name: 'ראשי', href: '#' },
     { name: 'איך זה עובד', href: '#how-it-works' },
-    { name: 'بلוג', href: '#' },
+    { name: 'בלוג', href: '#' },
     { name: 'צור קשר', href: '#contact' },
   ];
 
@@ -47,9 +47,8 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            {/* לוגו ה-NavBar - משתמש בכתובת תקינה ובטריק שקיפות */}
             <img 
-              src="https://cleanfry.co.il/logo.png" 
+              src="/logo.png" 
               alt="CleanFry Logo" 
               className="h-12 w-auto object-contain mix-blend-multiply"
               referrerPolicy="no-referrer"
@@ -133,7 +132,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      {/* Top Announcement Bar */}
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-right">
         <p className="text-sm font-bold text-slate-900">משלוח חינם בקנייה מעל 249 ש״ח!</p>
       </div>
@@ -141,22 +139,19 @@ export default function App() {
       <Navbar onPurchaseClick={scrollToPurchase} />
 
       <main>
-        {/* Hero Section */}
         <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  {/* לוגו ה-Hero - משתמש בכתובת תקינה ובטריק שקיפות */}
-                  <img src="https://cleanfry.co.il/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8 mix-blend-multiply" referrerPolicy="no-referrer" /> <br />
+                  <img src="/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8 mix-blend-multiply" /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
-                <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
+                <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8 font-medium">
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
                 
-                {/* הבולטים הועברו לכאן - שורה אופקית (מקבילים) עם טקסט מוגדל */}
                 <div className="flex flex-row flex-wrap gap-8 mt-10 w-full justify-start border-t border-slate-100 pt-8">
                     <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
                       <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
@@ -171,9 +166,8 @@ export default function App() {
                       <span>מגן על הניקוז</span>
                     </div>
                 </div>
-                </motion.div>
+              </motion.div>
 
-              {/* צד שמאל: תמונת המוצר - תיקון המבנה שגרם לה להיעלם */}
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }} 
                 animate={{ opacity: 1, scale: 1 }} 
@@ -182,7 +176,7 @@ export default function App() {
               >
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
                 <img 
-                  src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2aZdyf3vzxa2BRo2jq_Y" 
+                  src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2Azdyf3vzxa2BRo2jq_Y" 
                   alt="CleanFry Packaging" 
                   className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" 
                   referrerPolicy="no-referrer" 
@@ -190,7 +184,6 @@ export default function App() {
               </motion.div>
             </div>
 
-            {/* תיבת קנייה מרכזית חכמה */}
             <motion.div ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="max-w-3xl mx-auto relative z-10 px-4">
               <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
@@ -221,7 +214,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* 6. FAQ Section */}
         <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
@@ -232,17 +224,4 @@ export default function App() {
               <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי השמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
               <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
               <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
-              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
-        </div>
-      </footer>
-    </div>
-  );
-}
+              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט.
