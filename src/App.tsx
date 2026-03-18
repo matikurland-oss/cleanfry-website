@@ -25,13 +25,15 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
 useEffect(() => {
-    // בדיקה אם הסקריפט כבר קיים כדי לא לטעון אותו פעמיים
-    if (document.getElementById('accessibility-js')) return;
+    // בודק אם הסקריפט כבר קיים כדי לא לטעון אותו פעמיים
+    if (document.getElementById('userway-widget')) return;
 
     const script = document.createElement('script');
-    script.src = "https://accessibility.com.il/button/button.js";
+    // משתמש ב-account הגנרי של UserWay, כדי שיופיע סמל
+    script.setAttribute('data-account', 'XQfDpHYmO1'); 
+    script.src = 'https://cdn.userway.org/widget.js';
     script.async = true;
-    script.id = "accessibility-js";
+    script.id = 'userway-widget';
     document.body.appendChild(script);
   }, []);
 
