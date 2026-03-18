@@ -207,7 +207,7 @@ export default function App() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="mt-16 lg:mt-0 relative"
+                className="mt-16 lg:mt-24 relative"
               >
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
                 <img 
