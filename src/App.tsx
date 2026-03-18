@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShoppingCart, 
   Menu, 
@@ -23,6 +23,17 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+useEffect(() => {
+    // בדיקה אם הסקריפט כבר קיים כדי לא לטעון אותו פעמיים
+    if (document.getElementById('enable')) return;
+
+    const script = document.createElement('script');
+    script.src = "https://cdn.enable.co.il/releases/enable.min.js";
+    script.async = true;
+    script.id = "enable";
+    document.body.appendChild(script);
+  }, []);
 
   const navLinks = [
     { name: 'ראשי', href: '#' },
