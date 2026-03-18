@@ -18,19 +18,16 @@ import {
   Facebook, 
   MessageCircle,
   CheckCircle2,
-    Truck
-  } from 'lucide-react';
+  Truck
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-useEffect(() => {
-    // בודק אם הסקריפט כבר קיים כדי לא לטעון אותו פעמיים
+  useEffect(() => {
     if (document.getElementById('userway-widget')) return;
-
     const script = document.createElement('script');
-    // משתמש ב-account הגנרי של UserWay, כדי שיופיע סמל
     script.setAttribute('data-account', 'XQfDpHYmO1'); 
     script.src = 'https://cdn.userway.org/widget.js';
     script.async = true;
@@ -49,7 +46,6 @@ useEffect(() => {
     <nav className="bg-white border-b border-slate-100 sticky top-8 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
-          {/* Right: Logo */}
           <div className="flex-shrink-0 flex items-center">
             <img 
               src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" 
@@ -59,7 +55,6 @@ useEffect(() => {
             />
           </div>
 
-          {/* Center: Desktop Nav */}
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
               <a
@@ -72,7 +67,6 @@ useEffect(() => {
             ))}
           </div>
 
-          {/* Left: Cart & Mobile Menu */}
           <div className="flex items-center gap-4">
             <button className="p-2 text-slate-600 hover:text-brand-blue relative">
               <ShoppingCart className="w-6 h-6" />
@@ -88,7 +82,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -118,7 +111,6 @@ useEffect(() => {
 
 const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <div className="border-b border-slate-200">
       <button
@@ -151,6 +143,7 @@ export default function App() {
   const UNIT_PRICE = 49;
   const totalPrice = quantity * UNIT_PRICE;
   const isFreeShipping = totalPrice >= 249;
+
   return (
     <div className="min-h-screen bg-white" dir="rtl">
       {/* 1. Top Announcement Bar */}
@@ -167,7 +160,7 @@ export default function App() {
         {/* 3. Hero Section */}
         <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start">
+            <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-16">
               <motion.div 
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -184,10 +177,10 @@ export default function App() {
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
-                <p className="text-xl text-slate-600 leading-relaxed mb-10 max-w-xl">
+                <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
-                
+              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -204,69 +197,56 @@ export default function App() {
                 />
               </motion.div>
             </div>
-          </div>
 
-            {/* תיבת קנייה מרכזית חכמה - CleanFry */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="max-w-3xl mx-auto mt-12 mb-20 relative z-10 px-4"
-        >
-          <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
-            {/* עיטור רקע מעוצב */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-            
-            <div className="flex-1 w-full order-1 md:order-1">
-              <h3 className="text-2xl font-bold text-slate-800 mb-6">בחר כמות מארזים:</h3>
-              
-              <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
-                >-</button>
+            {/* תיבת קנייה מרכזית חכמה */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="max-w-3xl mx-auto relative z-10 px-4"
+            >
+              <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 
-                <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center">{quantity}</span>
-                
-                <button 
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
-                >+</button>
-              </div>
-
-              <div className="mt-8 flex justify-end gap-6">
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-                  <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                  <span>100% טבעי</span>
+                <div className="flex-1 w-full order-1">
+                  <h3 className="text-2xl font-bold text-slate-800 mb-6">בחר כמות מארזים:</h3>
+                  <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50">-</button>
+                    <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50">+</button>
+                  </div>
+                  <div className="mt-8 flex justify-end gap-6">
+                    <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                      <span>100% טבעי</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                      <span>ידידותי לסביבה</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-                  <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                  <span>ידידותי לסביבה</span>
+
+                <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2">
+                  <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-6xl font-black text-brand-blue">₪{totalPrice}</span>
+                  </div>
+                  {isFreeShipping ? (
+                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6">
+                      <Truck className="w-5 h-5" />
+                      <span>משלוח חינם מופעל!</span>
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+                  )}
+                  <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all">
+                    הזמן {quantity} מארזים עכשיו
+                  </button>
                 </div>
               </div>
-            </div>
-
-            <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2 md:order-2">
-              <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-6xl font-black text-brand-blue">₪{totalPrice}</span>
-              </div>
-
-              {isFreeShipping ? (
-                <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6 animate-pulse">
-                  <Truck className="w-5 h-5" />
-                  <span>משלוח חינם מופעל!</span>
-                </div>
-              ) : (
-                <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
-              )}
-
-              <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all shadow-brand-blue/25">
-                הזמן {quantity} מארזים עכשיו
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
         </section>
 
         {/* 4. How It Works Section */}
@@ -276,46 +256,21 @@ export default function App() {
               <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
               <p className="text-slate-600 text-lg">פשוט, מהיר ונקי - כך תהפכו את השמן המשומש לגוש מוצק</p>
             </div>
-
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
-                {
-                  icon: <Flame className="w-10 h-10 text-brand-blue" />,
-                  title: "כיבוי האש",
-                  desc: "כבו את מקור החום או הכיריים."
-                },
-                {
-                  icon: <Droplets className="w-10 h-10 text-brand-blue" />,
-                  title: "הוספה",
-                  desc: "הוסיפו את אבקת CleanFry כשהשמן עודו חם."
-                },
-                {
-                  icon: <Timer className="w-10 h-10 text-brand-blue" />,
-                  title: "קירור",
-                  desc: "המתינו עד להתמצקות מלאה של השמן (כ-20-25 דקות)."
-                },
-                {
-                  icon: <Trash2 className="w-10 h-10 text-brand-blue" />,
-                  title: "השלכה",
-                  desc: "השליכו את השמן המוצק לפח האשפה."
-                }
+                { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כבו את מקור החום או הכיריים." },
+                { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוסיפו את אבקת CleanFry כשהשמן עודו חם." },
+                { icon: <Timer className="w-10 h-10 text-brand-blue" />, title: "קירור", desc: "המתינו עד להתמצקות מלאה של השמן (כ-20-25 דקות)." },
+                { icon: <Trash2 className="w-10 h-10 text-brand-blue" />, title: "השלכה", desc: "השליכו את השמן המוצק לפח האשפה." }
               ].map((step, idx) => (
-                <motion.div 
-                  key={idx}
-                  whileHover={{ y: -10 }}
-                  className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center"
-                >
-                  <div className="w-20 h-20 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    {step.icon}
-                  </div>
+                <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                  <div className="w-20 h-20 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-6">{step.icon}</div>
                   <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
                   <p className="text-slate-600 leading-relaxed">{step.desc}</p>
                   <div className="mt-6 text-4xl font-black text-slate-100">{idx + 1}</div>
                 </motion.div>
               ))}
             </div>
-
-            {/* 5. Safety Warning Box */}
             <div className="mt-20 max-w-3xl mx-auto">
               <div className="bg-red-50 border-2 border-red-100 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6">
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -337,24 +292,11 @@ export default function App() {
               <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
               <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
             </div>
-
             <div className="space-y-2">
-              <FAQItem 
-                question="האם האבקה בטוחה לשימוש בכל סוגי השמנים?"
-                answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס."
-              />
-              <FAQItem 
-                question="כמה אבקה צריך להוסיף לכל ליטר שמן?"
-                answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם."
-              />
-              <FAQItem 
-                question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?"
-                answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר."
-              />
-              <FAQItem 
-                question="האם המוצר ידידותי לסביבה?"
-                answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה."
-              />
+              <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי השמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
+              <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
+              <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
+              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
             </div>
           </div>
         </section>
@@ -377,42 +319,22 @@ export default function App() {
         </section>
       </main>
 
-      {/* 7. Footer */}
       <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-            {/* Brand */}
             <div className="space-y-6">
               <div className="flex items-center">
-                <img 
-                  src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" 
-                  alt="CleanFry Logo" 
-                  className="h-12 w-auto object-contain"
-                  referrerPolicy="no-referrer"
-                />
+                <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
               </div>
               <p className="text-slate-400 leading-relaxed">
                 הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors">
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors">
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors">
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" />
-                  </svg>
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors">
-                  <MessageCircle className="w-5 h-5" />
-                </a>
+                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Instagram className="w-5 h-5" /></a>
+                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Facebook className="w-5 h-5" /></a>
+                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><MessageCircle className="w-5 h-5" /></a>
               </div>
             </div>
-
-            {/* Links */}
             <div>
               <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
               <ul className="space-y-4 text-slate-400">
@@ -422,8 +344,6 @@ export default function App() {
                 <li><a href="#" className="hover:text-white transition-colors">שאלות ותשובות</a></li>
               </ul>
             </div>
-
-            {/* Support */}
             <div>
               <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
               <ul className="space-y-4 text-slate-400">
@@ -433,28 +353,17 @@ export default function App() {
                 <li><a href="#" className="hover:text-white transition-colors">מדיניות פרטיות</a></li>
               </ul>
             </div>
-
-            {/* Newsletter */}
             <div>
               <h4 className="text-lg font-bold mb-6">הצטרפו לקהילה שלנו</h4>
               <p className="text-slate-400 mb-4 text-sm">הירשמו לקבלת טיפים למטבח ירוק ומבצעים בלעדיים.</p>
               <div className="flex gap-2">
-                <input 
-                  type="email" 
-                  placeholder="האימייל שלך" 
-                  className="bg-slate-800 border-none rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-brand-blue outline-none"
-                />
-                <button className="bg-brand-green px-4 py-2 rounded-lg font-bold hover:bg-brand-green/80 transition-colors">
-                  שלח
-                </button>
+                <input type="email" placeholder="האימייל שלך" className="bg-slate-800 border-none rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-brand-blue outline-none" />
+                <button className="bg-brand-green px-4 py-2 rounded-lg font-bold hover:bg-brand-green/80 transition-colors">שלח</button>
               </div>
             </div>
           </div>
-
           <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-            <div className="mb-4">
-  <a href="/accessibility-statement.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white underline transition-colors">הצהרת נגישות</a>
-</div>
+            <div className="mb-4"><a href="/accessibility-statement.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white underline transition-colors">הצהרת נגישות</a></div>
             <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות. מיוצר לישראל באהבה.</p>
           </div>
         </div>
