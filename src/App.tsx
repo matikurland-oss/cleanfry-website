@@ -160,9 +160,9 @@ export default function App() {
 
       <main>
         {/* 3. Hero Section */}
-        <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32 lg:pb-40">
+        <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+            <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start">
               <motion.div 
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -173,7 +173,7 @@ export default function App() {
                   <img 
                     src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" 
                     alt="CleanFry" 
-                    className="h-32 lg:h-48 w-auto inline-block mb-2"
+                    className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8"
                     referrerPolicy="no-referrer"
                   /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
