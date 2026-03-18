@@ -18,7 +18,8 @@ import {
   Facebook, 
   MessageCircle,
   CheckCircle2,
-  Truck
+  Truck,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -129,7 +130,6 @@ export default function App() {
     purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // לוגיקה לעברית תקנית בכפתור
   const getButtonText = () => {
     if (quantity === 1) return "הזמנת מארז אחד";
     return `הזמנת ${quantity} מארזים`;
@@ -137,16 +137,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      {/* 1. Top Announcement Bar */}
+      {/* Top Announcement Bar */}
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50">
         <p className="text-sm font-bold text-slate-900">משלוח חינם בקנייה מעל 249 ש״ח!</p>
       </div>
 
-      {/* 2. Header / Navigation */}
       <Navbar onPurchaseClick={scrollToPurchase} />
 
       <main>
-        {/* 3. Hero Section */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
@@ -156,9 +155,25 @@ export default function App() {
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
-                <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
+                <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
+                
+                {/* הבולטים הועברו לכאן - מתחת לטקסט ה-Hero */}
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-slate-700 font-bold">
+                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                      <span>100% טבעי</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-700 font-bold">
+                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                      <span>ידידותי לסביבה</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-700 font-bold">
+                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                      <span>מגן על הניקוז</span>
+                    </div>
+                </div>
               </motion.div>
 
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
@@ -179,10 +194,6 @@ export default function App() {
                     <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
                   </div>
-                  <div className="mt-8 flex justify-end gap-6 text-slate-500 text-sm">
-                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>100% טבעי</span></div>
-                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>ידידותי לסביבה</span></div>
-                  </div>
                 </div>
 
                 <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2">
@@ -202,14 +213,14 @@ export default function App() {
           </div>
         </section>
 
-        {/* 4. How It Works Section */}
+        {/* How It Works Section */}
         <section id="how-it-works" className="py-24 bg-slate-50 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-20">
               <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
               <p className="text-slate-600 text-lg">פשוט, מהיר ונקי - כך תהפכו את השמן המשומש לגוש מוצק</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-right">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
                 { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוספת אבקת CleanFry כשהשמן עודו חם." },
@@ -238,7 +249,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* 6. FAQ Section */}
+        {/* FAQ Section */}
         <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
@@ -277,7 +288,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div className="space-y-6">
               <div className="flex items-center">
-                <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+                <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
               </div>
               <p className="text-slate-400 leading-relaxed">
                 הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
