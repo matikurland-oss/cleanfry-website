@@ -30,18 +30,18 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
+            {/* לוגו מהתיקייה הציבורית */}
             <img 
-              src="https://cleanfry.co.il/logo.png" 
+              src="/logo.png" 
               alt="CleanFry Logo" 
               className="h-12 w-auto object-contain"
-              onError={(e) => { (e.target as HTMLImageElement).src = "https://lh3.googleusercontent.com/d/1vA5W3U6-0W2Y-XN-9X9X9X9X9X9X9X9X" }}
             />
           </div>
 
           <div className="hidden md:flex gap-8">
-            <a href="#" className="text-slate-600 hover:text-brand-blue font-medium">ראשי</a>
-            <a href="#how-it-works" className="text-slate-600 hover:text-brand-blue font-medium">איך זה עובד</a>
-            <a href="#contact" className="text-slate-600 hover:text-brand-blue font-medium">צור קשר</a>
+            <a href="#" className="text-slate-600 hover:text-brand-blue font-medium transition-colors">ראשי</a>
+            <a href="#how-it-works" className="text-slate-600 hover:text-brand-blue font-medium transition-colors">איך זה עובד</a>
+            <a href="#contact" className="text-slate-600 hover:text-brand-blue font-medium transition-colors">צור קשר</a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -91,7 +91,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      {/* Top Bar */}
+      {/* Top Announcement Bar */}
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold text-slate-900">
         משלוח חינם בקנייה מעל 249 ש״ח!
       </div>
@@ -105,6 +105,7 @@ export default function App() {
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }}>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
+                  <img src="/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
@@ -112,7 +113,7 @@ export default function App() {
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
                 
-                {/* בולטים אופקיים ירוקים */}
+                {/* בולטים אופקיים */}
                 <div className="flex flex-row flex-wrap gap-8 mt-10 justify-start border-t border-slate-100 pt-8">
                     <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
                       <CheckCircle2 className="w-7 h-7 text-brand-green" />
@@ -129,9 +130,9 @@ export default function App() {
                 </div>
               </motion.div>
 
-              {/* תמונת מוצר */}
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="mt-16 lg:mt-0 relative flex justify-center">
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
+                {/* תמונת מוצר מהתיקייה הציבורית או קישור חיצוני לגיבוי */}
                 <img 
                   src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2aZdyf3vzxa2BRo2jq_Y" 
                   alt="CleanFry Packaging" 
@@ -141,14 +142,14 @@ export default function App() {
             </div>
 
             {/* תיבת קנייה */}
-            <motion.div ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
+            <motion.div ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto px-4">
               <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 <div className="flex-1 w-full order-1 text-right">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
                   <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 bg-white rounded-xl shadow text-3xl font-bold text-brand-blue">-</button>
-                    <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center">{quantity}</span>
+                    <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 bg-white rounded-xl shadow text-3xl font-bold text-brand-blue">+</button>
                   </div>
                 </div>
@@ -156,11 +157,11 @@ export default function App() {
                   <p className="text-slate-500 text-lg">סה"כ לתשלום:</p>
                   <p className="text-6xl font-black text-brand-blue mb-4">₪{totalPrice}</p>
                   {isFreeShipping ? (
-                    <div className="text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6">משלוח חינם מופעל!</div>
+                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6 animate-pulse"><Truck className="w-5 h-5" /><span>משלוח חינם!</span></div>
                   ) : (
-                    <p className="text-slate-400 text-sm mb-6">משלוח חינם בקנייה מעל 249 ₪</p>
+                    <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם מעל 249 ₪</p>
                   )}
-                  <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl">
+                  <button className="w-full bg-brand-blue text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-105 transition-transform">
                     הזמנת {quantity === 1 ? 'מארז אחד' : `${quantity} מארזים`}
                   </button>
                 </div>
@@ -169,28 +170,28 @@ export default function App() {
           </div>
         </section>
 
-        {/* How It Works */}
+        {/* How It Works Section */}
         <section id="how-it-works" className="py-24 bg-slate-50 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-4xl font-black text-center mb-16 text-slate-900">שלבי השימוש</h2>
             <div className="grid md:grid-cols-4 gap-8">
               {[
-                { icon: <Flame />, title: "כיבוי אש", desc: "כבו את מקור החום." },
-                { icon: <Droplets />, title: "הוספה", desc: "הוסיפו אבקה לשמן חם." },
-                { icon: <Timer />, title: "קירור", desc: "המתינו כ-20 דקות." },
-                { icon: <Trash2 />, title: "השלכה", desc: "השליכו את הגוש לפח." }
+                { icon: <Flame />, title: "כיבוי אש", desc: "כבו את מקור החום או הכיריים." },
+                { icon: <Droplets />, title: "הוספה", desc: "הוסיפו אבקת CleanFry כשהשמן עודו חם." },
+                { icon: <Timer />, title: "קירור", desc: "המתינו כ-20 דקות להתמצקות מלאה." },
+                { icon: <Trash2 />, title: "השלכה", desc: "השליכו את השמן המוצק לפח האשפה." }
               ].map((step, idx) => (
-                <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm text-center">
+                <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm text-center border border-slate-100">
                   <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-blue">{step.icon}</div>
                   <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-slate-600">{step.desc}</p>
+                  <p className="text-slate-600 leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
+        {/* FAQ Section */}
         <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 text-right">
             <h2 className="text-4xl font-black text-center mb-16">שאלות ותשובות</h2>
