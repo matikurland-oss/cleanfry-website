@@ -157,21 +157,21 @@ export default function App() {
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
                 
-                {/* הבולטים הועברו לכאן - שורה אופקית (מקבילים) עם טקסט מוגדל */}
-                <div className="flex flex-row gap-6 mt-8 w-full justify-end border-t border-slate-100 pt-8">
-                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
-                      <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
-                      <span>100% טבעי</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
-                      <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
-                      <span>ידידותי לסביבה</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
-                      <ShieldCheck className="w-6 h-6 text-brand-blue flex-shrink-0" />
-                      <span>מגן על הניקוז</span>
-                    </div>
-                </div>
+               {/* הבולטים בשורה אופקית (מקבילים) - כולם בירוק אחיד */}
+<div className="flex flex-row flex-wrap gap-8 mt-10 w-full justify-end border-t border-slate-100 pt-8">
+    <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+      <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+      <span>100% טבעי</span>
+    </div>
+    <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+      <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+      <span>ידידותי לסביבה</span>
+    </div>
+    <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+      <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+      <span>מגן על הניקוז</span>
+    </div>
+</div>
               </motion.div>
 
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
