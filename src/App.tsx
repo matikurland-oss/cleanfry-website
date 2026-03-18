@@ -47,12 +47,11 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            {/* לוגו ה-NavBar - משתמש בכתובת תקינה */}
             <img 
-              src="https://cleanfry.co.il/logo.png" 
+              src="/logo.png" 
+              onError={(e) => { (e.target as HTMLImageElement).src = "https://cleanfry.co.il/logo.png" }}
               alt="CleanFry Logo" 
               className="h-12 w-auto object-contain"
-              referrerPolicy="no-referrer"
             />
           </div>
 
@@ -133,22 +132,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      {/* Top Announcement Bar */}
-      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50">
-        <p className="text-sm font-bold text-slate-900">משלוח חינם בקנייה מעל 249 ש״ח!</p>
+      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold text-slate-900">
+        משלוח חינם בקנייה מעל 249 ש״ח!
       </div>
 
       <Navbar onPurchaseClick={scrollToPurchase} />
 
       <main>
-        {/* Hero Section */}
         <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  {/* לוגו ה-Hero - משתמש בכתובת תקינה */}
-                  <img src="https://cleanfry.co.il/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" referrerPolicy="no-referrer" /> <br />
+                  <img 
+                    src="/logo.png" 
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://cleanfry.co.il/logo.png" }}
+                    alt="CleanFry" 
+                    className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" 
+                  /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
@@ -156,7 +157,6 @@ export default function App() {
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
                 
-                {/* הבולטים הועברו לכאן - שורה אופקית (מקבילים) עם טקסט מוגדל */}
                 <div className="flex flex-row flex-wrap gap-8 mt-10 w-full justify-start border-t border-slate-100 pt-8">
                     <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
                       <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
@@ -173,20 +173,23 @@ export default function App() {
                 </div>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative flex justify-center">
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
-                <img src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2aZdyf3vzxa2BRo2jq_Y" alt="CleanFry Packaging" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" referrerPolicy="no-referrer" />
+                <img 
+                  src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2Azdyf3vzxa2BRo2jq_Y" 
+                  alt="CleanFry Packaging" 
+                  className="relative rounded-3xl shadow-2xl w-full max-w-lg object-cover" 
+                />
               </motion.div>
             </div>
 
-            {/* תיבת קנייה מרכזית חכמה */}
             <motion.div ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="max-w-3xl mx-auto relative z-10 px-4">
               <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 
                 <div className="flex-1 w-full order-1">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
-                  <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
+                  <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">-</button>
                     <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
@@ -210,51 +213,22 @@ export default function App() {
           </div>
         </section>
 
-        {/* FAQ Section */}
         <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
-              <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
             </div>
             <div className="space-y-2">
-              <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי השמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
-              <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
-              <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
-              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
+              <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי השמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים." />
+              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי." />
             </div>
           </div>
         </section>
       </main>
 
-      <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-            <div className="space-y-6">
-              <div className="flex items-center">
-                <img src="https://cleanfry.co.il/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
-              </div>
-              <p className="text-slate-400 leading-relaxed">
-                הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
-              </p>
-              <div className="flex gap-4 justify-end">
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Instagram className="w-5 h-5" /></a>
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Facebook className="w-5 h-5" /></a>
-                <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><MessageCircle className="w-5 h-5" /></a>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
-              <ul className="space-y-4 text-slate-400">
-                <li><a href="#" className="hover:text-white transition-colors">ראשי</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">איך זה עובד</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">בלוג</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-            <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
-          </div>
+      <footer className="bg-slate-900 text-white pt-20 pb-10 text-right">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
         </div>
       </footer>
     </div>
