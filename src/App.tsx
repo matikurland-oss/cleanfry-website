@@ -171,7 +171,7 @@ export default function App() {
                       <span>מגן על הניקוז</span>
                     </div>
                 </div>
-              </motion.div>
+                </motion.div>
 
               {/* צד שמאל: תמונת המוצר - תיקון המבנה שגרם לה להיעלם */}
               <motion.div 
