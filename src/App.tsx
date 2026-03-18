@@ -65,7 +65,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
 
           <div className="flex items-center gap-4">
             <button onClick={onPurchaseClick} className="hidden sm:block bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-xl font-bold hover:bg-brand-blue hover:text-white transition-all">
-              הזמן עכשיו
+              הזמנה עכשיו
             </button>
             <button className="p-2 text-slate-600 hover:text-brand-blue relative">
               <ShoppingCart className="w-6 h-6" />
@@ -88,7 +88,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
                 </a>
               ))}
               <button onClick={() => { setIsOpen(false); onPurchaseClick(); }} className="w-full text-right px-3 py-3 text-base font-bold text-brand-blue bg-blue-50 rounded-lg mt-2">
-                הזמן עכשיו
+                הזמנה עכשיו
               </button>
             </div>
           </motion.div>
@@ -129,6 +129,12 @@ export default function App() {
     purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  // לוגיקה לעברית תקנית בכפתור
+  const getButtonText = () => {
+    if (quantity === 1) return "הזמנת מארז אחד";
+    return `הזמנת ${quantity} מארזים`;
+  };
+
   return (
     <div className="min-h-screen bg-white" dir="rtl">
       {/* 1. Top Announcement Bar */}
@@ -167,15 +173,15 @@ export default function App() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 
                 <div className="flex-1 w-full order-1">
-                  <h3 className="text-2xl font-bold text-slate-800 mb-6">בחר כמות מארזים:</h3>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
                   <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">-</button>
-                    <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center">{quantity}</span>
+                    <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
                   </div>
                   <div className="mt-8 flex justify-end gap-6 text-slate-500 text-sm">
-                    <div className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-brand-green" /><span>100% טבעי</span></div>
-                    <div className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-brand-green" /><span>ידידותי לסביבה</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>100% טבעי</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>ידידותי לסביבה</span></div>
                   </div>
                 </div>
 
@@ -187,7 +193,9 @@ export default function App() {
                   ) : (
                     <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
                   )}
-                  <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all">הזמן {quantity} מארזים עכשיו</button>
+                  <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all shadow-brand-blue/25">
+                    {getButtonText()}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -201,12 +209,12 @@ export default function App() {
               <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
               <p className="text-slate-600 text-lg">פשוט, מהיר ונקי - כך תהפכו את השמן המשומש לגוש מוצק</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-right">
               {[
-                { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כבו את מקור החום או הכיריים." },
-                { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוסיפו את אבקת CleanFry כשהשמן עודו חם." },
-                { icon: <Timer className="w-10 h-10 text-brand-blue" />, title: "קירור", desc: "המתינו עד להתמצקות מלאה של השמן (כ-20-25 דקות)." },
-                { icon: <Trash2 className="w-10 h-10 text-brand-blue" />, title: "השלכה", desc: "השליכו את השמן המוצק לפח האשפה." }
+                { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
+                { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוספת אבקת CleanFry כשהשמן עודו חם." },
+                { icon: <Timer className="w-10 h-10 text-brand-blue" />, title: "קירור", desc: "המתנה עד להתמצקות מלאה של השמן (כ-20-25 דקות)." },
+                { icon: <Trash2 className="w-10 h-10 text-brand-blue" />, title: "השלכה", desc: "השלכת השמן המוצק לפח האשפה." }
               ].map((step, idx) => (
                 <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
                   <div className="w-20 h-20 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-6">{step.icon}</div>
@@ -232,7 +240,7 @@ export default function App() {
 
         {/* 6. FAQ Section */}
         <section className="py-24">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
               <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
@@ -254,11 +262,11 @@ export default function App() {
           </div>
           <div className="max-w-4xl mx-auto px-4 relative z-10">
             <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח שלכם?</h2>
-            <p className="text-white/90 text-xl mb-12 leading-relaxed">
+            <p className="text-white/90 text-xl mb-12 leading-relaxed text-center">
               הצטרפו לאלפי משפחות בישראל שכבר נהנות ממטבח נקי יותר וסביבה ירוקה יותר.
             </p>
             <button onClick={scrollToPurchase} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
-              הזמינו עכשיו
+              הזמנה עכשיו
             </button>
           </div>
         </section>
@@ -266,7 +274,7 @@ export default function App() {
 
       <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-right">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div className="space-y-6">
               <div className="flex items-center">
                 <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
