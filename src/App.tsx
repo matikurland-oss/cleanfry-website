@@ -47,9 +47,10 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     <nav className="bg-white border-b border-slate-100 sticky top-8 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
+          {/* לוגו ה-NavBar - דורש כתובת URL אמיתית */}
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
             <img 
-              src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" 
+              src="https://cleanfry.co.il/logo.png" // החלף בכתובת הלוגו האמיתית שלך
               alt="CleanFry Logo" 
               className="h-12 w-auto object-contain"
               referrerPolicy="no-referrer"
@@ -67,10 +68,6 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
           <div className="flex items-center gap-4">
             <button onClick={onPurchaseClick} className="hidden sm:block bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-xl font-bold hover:bg-brand-blue hover:text-white transition-all">
               הזמנה עכשיו
-            </button>
-            <button className="p-2 text-slate-600 hover:text-brand-blue relative">
-              <ShoppingCart className="w-6 h-6" />
-              <span className="absolute top-0 right-0 bg-brand-green text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
             </button>
             <button className="md:hidden p-2 text-slate-600" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -150,8 +147,9 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+                {/* לוגו ה-Hero - דורש כתובת URL אמיתית */}
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" referrerPolicy="no-referrer" /> <br />
+                  <img src="https://cleanfry.co.il/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" referrerPolicy="no-referrer" /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
@@ -159,18 +157,18 @@ export default function App() {
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
                 
-                {/* הבולטים הועברו לכאן - מתחת לטקסט ה-Hero */}
-                <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-slate-700 font-bold">
-                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                {/* הבולטים הועברו לכאן - שורה אופקית (מקבילים) עם טקסט מוגדל */}
+                <div className="flex flex-row gap-6 mt-8 w-full justify-end border-t border-slate-100 pt-8">
+                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
+                      <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
                       <span>100% טבעי</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-700 font-bold">
-                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
+                      <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
                       <span>ידידותי לסביבה</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-700 font-bold">
-                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
+                    <div className="flex items-center gap-3 text-slate-700 text-lg font-bold">
+                      <ShieldCheck className="w-6 h-6 text-brand-blue flex-shrink-0" />
                       <span>מגן על הניקוז</span>
                     </div>
                 </div>
@@ -288,7 +286,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <div className="space-y-6">
               <div className="flex items-center">
-                <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+                <img src="https://cleanfry.co.il/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
               </div>
               <p className="text-slate-400 leading-relaxed">
                 הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
