@@ -26,12 +26,12 @@ const Navbar = () => {
 
 useEffect(() => {
     // בדיקה אם הסקריפט כבר קיים כדי לא לטעון אותו פעמיים
-    if (document.getElementById('enable')) return;
+    if (document.getElementById('accessibility-js')) return;
 
     const script = document.createElement('script');
-    script.src = "https://cdn.enable.co.il/releases/enable.min.js";
+    script.src = "https://accessibility.com.il/button/button.js";
     script.async = true;
-    script.id = "enable";
+    script.id = "accessibility-js";
     document.body.appendChild(script);
   }, []);
 
