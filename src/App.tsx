@@ -18,7 +18,8 @@ import {
   Facebook, 
   MessageCircle,
   CheckCircle2,
-  Truck
+  Truck,
+  ShieldCheck // הוסף את זה כאן אם הוא חסר
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -129,7 +130,6 @@ export default function App() {
     purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  // לוגיקה לעברית תקנית בכפתור
   const getButtonText = () => {
     if (quantity === 1) return "הזמנת מארז אחד";
     return `הזמנת ${quantity} מארזים`;
@@ -137,16 +137,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      {/* 1. Top Announcement Bar */}
+      {/* Top Announcement Bar */}
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50">
         <p className="text-sm font-bold text-slate-900">משלוח חינם בקנייה מעל 249 ש״ח!</p>
       </div>
 
-      {/* 2. Header / Navigation */}
       <Navbar onPurchaseClick={scrollToPurchase} />
 
       <main>
-        {/* 3. Hero Section */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
@@ -172,19 +171,34 @@ export default function App() {
               <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 
-                <div className="flex-1 w-full order-1">
+                {/* צד ימין: בחירת כמות והבולטים (Features) */}
+                <div className="flex-1 w-full order-1 text-right">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
                   <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">-</button>
                     <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
                   </div>
-                  <div className="mt-8 flex justify-end gap-6 text-slate-500 text-sm">
-                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>100% טבעי</span></div>
-                    <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-brand-green" /><span>ידידותי לסביבה</span></div>
+
+                  {/* הבולטים מתחת לבורר, מיושרים לימין כפי שביקשת */}
+                  <div className="mt-8 space-y-3 w-full text-right ml-auto md:ml-0 md:max-w-xs">
+                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
+                      <span>100% טבעי</span>
+                      <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                    </div>
+                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
+                      <span>ידידותי לסביבה</span>
+                      <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                    </div>
+                    {/* הבולט החדש: מגן על הניקוז */}
+                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
+                      <span>מגן על הניקוז</span>
+                      <ShieldCheck className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                    </div>
                   </div>
                 </div>
 
+                {/* צד שמאל: מחיר, משלוח וכפתור */}
                 <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2">
                   <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
                   <p className="text-6xl font-black text-brand-blue mb-4">₪{totalPrice}</p>
@@ -202,14 +216,14 @@ export default function App() {
           </div>
         </section>
 
-        {/* 4. How It Works Section */}
+        {/* How It Works Section */}
         <section id="how-it-works" className="py-24 bg-slate-50 text-right">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-20">
               <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
               <p className="text-slate-600 text-lg">פשוט, מהיר ונקי - כך תהפכו את השמן המשומש לגוש מוצק</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-right">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
                 { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוספת אבקת CleanFry כשהשמן עודו חם." },
@@ -238,7 +252,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* 6. FAQ Section */}
+        {/* FAQ Section */}
         <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
@@ -272,9 +286,10 @@ export default function App() {
         </section>
       </main>
 
+      {/* Footer */}
       <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-right">
             <div className="space-y-6">
               <div className="flex items-center">
                 <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
@@ -312,7 +327,7 @@ export default function App() {
             </div>
           </div>
           <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-            <div className="mb-4"><a href="/accessibility-statement.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white underline">הצהרת נגישות</a></div>
+            <div className="mb-4"><a href="/accessibility-statement.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white underline underline-offset-4">הצהרת נגישות</a></div>
             <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
           </div>
         </div>
