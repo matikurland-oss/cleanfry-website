@@ -167,15 +167,34 @@ export default function App() {
                       <span>ידידותי לסביבה</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700 font-bold">
-                      <CheckCircle2 className="w-5 h-5 text-brand-green" />
-                      <span>מגן על הניקוז</span>
-                    </div>
+                      <div className="flex flex-row flex-wrap gap-8 mt-10 w-full justify-end border-t border-slate-100 pt-8">
+                  <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+                    <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+                    <span>100% טבעי</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+                    <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+                    <span>ידידותי לסביבה</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-slate-800 text-xl font-bold">
+                    <CheckCircle2 className="w-7 h-7 text-brand-green flex-shrink-0" />
+                    <span>מגן על הניקוז</span>
+                  </div>
                 </div>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                transition={{ duration: 0.8, delay: 0.2 }} 
+                className="mt-16 lg:mt-24 relative"
+              >
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
-                <img src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2aZdyf3vzxa2BRo2jq_Y" alt="CleanFry Packaging" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" referrerPolicy="no-referrer" />
+                <img 
+                  src="https://lh3.googleusercontent.com/d/17qNHAp5sP3qq2AZdyf3vzxa2BRo2jq_Y" 
+                  alt="CleanFry Packaging" 
+                  className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover"
+                />
               </motion.div>
             </div>
 
