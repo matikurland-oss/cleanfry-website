@@ -1,3 +1,4 @@
+```tsx
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -19,7 +20,7 @@ import {
   MessageCircle,
   CheckCircle2,
   Truck,
-  ShieldCheck // הוסף את זה כאן אם הוא חסר
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -48,14 +49,8 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            <img 
-              src="/logo.png" 
-              alt="CleanFry Logo" 
-              className="h-12 w-auto object-contain"
-            
-            />
+            <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
           </div>
-
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
               <a key={link.name} href={link.href} className="text-slate-600 hover:text-brand-blue font-medium transition-colors">
@@ -63,7 +58,6 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
               </a>
             ))}
           </div>
-
           <div className="flex items-center gap-4">
             <button onClick={onPurchaseClick} className="hidden sm:block bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-xl font-bold hover:bg-brand-blue hover:text-white transition-all">
               הזמנה עכשיו
@@ -78,7 +72,6 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
           </div>
         </div>
       </div>
-
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="md:hidden bg-white border-t border-slate-100 overflow-hidden">
@@ -151,13 +144,29 @@ export default function App() {
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  <img src="/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" /> <br />
-                  <span className="text-brand-blue">טיגון מושלם.</span> <br />
+                  <img src="/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" /><br />
+                  <span className="text-brand-blue">טיגון מושלם.</span><br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
                 <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
                   אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
                 </p>
+
+                {/* בולטים ממורכזים מתחת לפסקה */}
+                <div className="flex flex-wrap justify-center gap-6 mt-6">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                    <span>100% טבעי</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                    <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
+                    <span>ידידותי לסביבה</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                    <ShieldCheck className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                    <span>מגן על הניקוז</span>
+                  </div>
+                </div>
               </motion.div>
 
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
@@ -171,30 +180,13 @@ export default function App() {
               <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 
-                {/* צד ימין: בחירת כמות והבולטים (Features) */}
+                {/* צד ימין: בחירת כמות בלבד */}
                 <div className="flex-1 w-full order-1 text-right">
                   <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
                   <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">-</button>
                     <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
                     <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
-                  </div>
-
-                  {/* הבולטים מתחת לבורר, מיושרים לימין כפי שביקשת */}
-                  <div className="mt-8 space-y-3 w-full text-right ml-auto md:ml-0 md:max-w-xs">
-                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
-                      <span>100% טבעי</span>
-                      <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
-                    </div>
-                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
-                      <span>ידידותי לסביבה</span>
-                      <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
-                    </div>
-                    {/* הבולט החדש: מגן על הניקוז */}
-                    <div className="flex items-center justify-end gap-2 text-slate-500 text-sm font-medium">
-                      <span>מגן על הניקוז</span>
-                      <ShieldCheck className="w-5 h-5 text-brand-blue flex-shrink-0" />
-                    </div>
                   </div>
                 </div>
 
@@ -292,7 +284,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-right">
             <div className="space-y-6">
               <div className="flex items-center">
-                <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain"  />
+                <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
               </div>
               <p className="text-slate-400 leading-relaxed">
                 הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
@@ -335,3 +327,4 @@ export default function App() {
     </div>
   );
 }
+```
