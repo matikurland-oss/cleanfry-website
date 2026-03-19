@@ -153,17 +153,17 @@ export default function App() {
 
                 {/* בולטים ממורכזים מתחת לפסקה */}
                 <div className="flex flex-wrap justify-center gap-4 mt-8">
-  <div className="flex items-center gap-3 bg-green-50 border border-green-200 px-5 py-3 rounded-2xl shadow-sm">
-    <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
-    <span className="text-slate-700 text-base font-bold">100% טבעי</span>
+  <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md">
+    <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+    <span className="text-green-800 text-base font-extrabold">100% טבעי</span>
   </div>
-  <div className="flex items-center gap-3 bg-green-50 border border-green-200 px-5 py-3 rounded-2xl shadow-sm">
-    <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
-    <span className="text-slate-700 text-base font-bold">ידידותי לסביבה</span>
+  <div className="flex items-center gap-3 bg-emerald-100 border-2 border-emerald-400 px-6 py-3 rounded-2xl shadow-md">
+    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+    <span className="text-emerald-800 text-base font-extrabold">ידידותי לסביבה</span>
   </div>
-  <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 px-5 py-3 rounded-2xl shadow-sm">
-    <ShieldCheck className="w-6 h-6 text-brand-blue flex-shrink-0" />
-    <span className="text-slate-700 text-base font-bold">מגן על הניקוז</span>
+  <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md">
+    <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
+    <span className="text-blue-800 text-base font-extrabold">מגן על הניקוז</span>
   </div>
 </div>
               </motion.div>
