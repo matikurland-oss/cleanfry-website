@@ -49,10 +49,10 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
             <img 
-              src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" 
+              src="/logo.png" 
               alt="CleanFry Logo" 
               className="h-12 w-auto object-contain"
-              referrerPolicy="no-referrer"
+            
             />
           </div>
 
@@ -151,7 +151,7 @@ export default function App() {
             <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
               <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qV08jgaHXh" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" referrerPolicy="no-referrer" /> <br />
+                  <img src="/logo.png" alt="CleanFry" className="h-32 lg:h-48 w-auto inline-block mb-2 mt-8" /> <br />
                   <span className="text-brand-blue">טיגון מושלם.</span> <br />
                   <span className="text-brand-green">ניקוי קל.</span>
                 </h1>
@@ -292,7 +292,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-right">
             <div className="space-y-6">
               <div className="flex items-center">
-                <img src="https://lh3.googleusercontent.com/d/1ll71-cdPvbF8SQ8Gc1coS5qVO8jgaHXh" alt="CleanFry Logo" className="h-12 w-auto object-contain" referrerPolicy="no-referrer" />
+                <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain"  />
               </div>
               <p className="text-slate-400 leading-relaxed">
                 הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
