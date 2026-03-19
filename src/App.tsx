@@ -153,15 +153,15 @@ export default function App() {
 
                 {/* בולטים ממורכזים מתחת לפסקה */}
                 <div className="flex flex-wrap justify-center gap-4 mt-8">
-  <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md">
+  <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
+    <CheckCircle2 className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+    <span className="text-yellow-800 text-base font-extrabold">100% טבעי</span>
+  </div>
+  <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
     <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-    <span className="text-green-800 text-base font-extrabold">100% טבעי</span>
+    <span className="text-green-800 text-base font-extrabold">ידידותי לסביבה</span>
   </div>
-  <div className="flex items-center gap-3 bg-emerald-100 border-2 border-emerald-400 px-6 py-3 rounded-2xl shadow-md">
-    <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-    <span className="text-emerald-800 text-base font-extrabold">ידידותי לסביבה</span>
-  </div>
-  <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md">
+  <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
     <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
     <span className="text-blue-800 text-base font-extrabold">מגן על הניקוז</span>
   </div>
