@@ -153,16 +153,16 @@ export default function App() {
 
                 {/* בולטים ממורכזים מתחת לפסקה */}
                 <div className="flex flex-wrap justify-center gap-6 mt-6">
-                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-large">
                     <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
                     <span>100% טבעי</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-large">
                     <CheckCircle2 className="w-5 h-5 text-brand-green flex-shrink-0" />
                     <span>ידידותי לסביבה</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-                    <ShieldCheck className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-slate-500 text-sm font-large">
+                    <ShieldCheck className="w-5 h-5 text-brand-green flex-shrink-0" />
                     <span>מגן על הניקוז</span>
                   </div>
                 </div>
