@@ -98,7 +98,7 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
     <div className="border-b border-slate-200">
       <button className="w-full py-6 flex justify-between items-center text-right focus:outline-none" onClick={() => setIsOpen(!isOpen)}>
         <span className="text-lg font-bold text-slate-800">{question}</span>
-        <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={isOpen ? "w-5 h-5 text-slate-400 transition-transform rotate-180" : "w-5 h-5 text-slate-400 transition-transform"} />
       </button>
       <AnimatePresence>
         {isOpen && (
