@@ -114,7 +114,7 @@ export default function App() {
   const [quantity, setQuantity] = useState(1);
   const purchaseBoxRef = useRef<HTMLDivElement>(null);
   
-  const UNIT_PRICE = 49;
+  const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;
   const isFreeShipping = totalPrice >= 249;
 
