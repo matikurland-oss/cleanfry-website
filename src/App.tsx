@@ -125,7 +125,7 @@ export default function App() {
 
   const getButtonText = () => {
     if (quantity === 1) return "הזמנת מארז אחד";
-    return `הזמנת ${quantity} מארזים`;
+    return "הזמנת " + quantity + " מארזים";
   };
 
   return (
