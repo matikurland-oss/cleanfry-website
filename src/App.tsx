@@ -152,7 +152,7 @@ export default function App() {
                 </p>
 
                 {/* בולטים ממורכזים מתחת לפסקה */}
-               <div className="flex flex-wrap justify-center gap-4 mt-8">
+                <div className="flex flex-wrap justify-center gap-4 mt-8">
   <div className="flex items-center gap-3 bg-green-50 border border-green-200 px-5 py-3 rounded-2xl shadow-sm">
     <CheckCircle2 className="w-6 h-6 text-brand-green flex-shrink-0" />
     <span className="text-slate-700 text-base font-bold">100% טבעי</span>
@@ -166,6 +166,7 @@ export default function App() {
     <span className="text-slate-700 text-base font-bold">מגן על הניקוז</span>
   </div>
 </div>
+              </motion.div>
 
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
                 <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
