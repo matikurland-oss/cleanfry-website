@@ -33,7 +33,7 @@ const AccessibilityPage = () => {
             <h2 className="text-2xl font-bold text-slate-900 mb-4">פניות בנושא נגישות</h2>
             <p>למרות מאמצינו להנגיש את כלל הדפים באתר, ייתכן ויתגלו חלקים שטרם הונגשו במלואם. אם נתקלתם בבעיה או שיש לכם הצעה לשיפור, נשמח לשמוע מכם:</p>
             <div className="mt-4 p-4 bg-slate-50 rounded-xl inline-block">
-              <p><strong>רכז נגישות:</strong> מתי קורלנד</p>
+              <p><strong>רכז נגישות:</strong> מ.ק יזמות</p>
               <p><strong>אימייל:</strong> info@cleanfry.co.il</p>
             </div>
           </section>
