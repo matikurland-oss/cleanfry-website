@@ -28,6 +28,7 @@ const ContactPage = () => {
           
           {/* טופס יצירת קשר - אל תשכח להחליף את ה-ID כשיגיע המייל מ-Zoho */}
           <form action="https://formspree.io/f/xvzwnrla" method="POST" className="space-y-5">
+            <input type="hidden" name="_next" value="https://cleanfry.co.il/thanks" />
             
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">שם מלא</label>
