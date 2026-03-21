@@ -3,27 +3,21 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.tsx';
 import ContactPage from './ContactPage.tsx';
-import SuccessPage from './SuccessPage.tsx';
-import BlogPage from './BlogPage.tsx'; // ייבוא חדש
-import BlogPostDetail from './BlogPostDetail.tsx'; // ייבוא חדש
+import BlogPage from './BlogPage.tsx';
+import BlogPostDetail from './BlogPostDetail.tsx';
+import SuccessPage from './SuccessPage.tsx'; // השורה שחסרה לך!
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        {/* דף הבית */}
         <Route path="/" element={<App />} />
-        
-        {/* דף צור קשר */}
         <Route path="/contact" element={<ContactPage />} />
-
-        {/* דפי הבלוג של CleanFry */}
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:id" element={<BlogPostDetail />} />
-        
         <Route path="/thanks" element={<SuccessPage />} />
       </Routes>
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 );
