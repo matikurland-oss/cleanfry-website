@@ -26,6 +26,7 @@ import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 
 // ייבוא הדפים הנוספים
 import ContactPage from './ContactPage';
+import LegalPage from './LegalPage';
 import BlogPage from './BlogPage';
 import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
@@ -153,6 +154,7 @@ const Footer = () => (
           <ul className="space-y-4 text-slate-400">
             <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
             <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
+            <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
           </ul>
         </div>
         <div>
