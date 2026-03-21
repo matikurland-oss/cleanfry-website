@@ -41,7 +41,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     { name: 'ראשי', href: '#' },
     { name: 'איך זה עובד', href: '#how-it-works' },
     { name: 'בלוג', href: '#' },
-    { name: 'צור קשר', href: '#contact' },
+    { name: 'צור קשר', href: '/contact' },
   ];
 
   return (
