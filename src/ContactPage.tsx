@@ -3,16 +3,16 @@ import { Link } from 'react-router-dom';
 
 const ContactPage = () => {
   return (
-    <div className="bg-slate-50 min-h-screen py-12 px-4" dir="rtl">
+    <div className="bg-white min-h-screen py-12 px-4" dir="rtl">
       <div className="max-w-xl mx-auto">
         
         {/* לוגו בראש העמוד */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-10">
           <Link to="/">
             <img 
               src="/logo.png" 
               alt="CleanFry Logo" 
-              className="h-16 w-auto object-contain cursor-pointer" 
+              className="h-24 w-auto object-contain cursor-pointer" 
             />
           </Link>
         </div>
