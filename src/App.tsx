@@ -167,7 +167,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-        <div className="mb-4"><a href="/accessibility-statement.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-white underline underline-offset-4">הצהרת נגישות</a></div>
+        <div className="mb-4"><Link to="/accessibility" className="hover:text-white underline underline-offset-4">הצהרת נגישות</Link></div>
         <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
       </div>
     </div>
@@ -331,6 +331,7 @@ export default function App() {
           <Route path="/blog/:id" element={<BlogPostDetail />} />
           <Route path="/thanks" element={<SuccessPage />} />
           <Route path="/legal" element={<LegalPage />} />
+          <Route path="/accessibility" element={<AccessibilityPage />} />
         </Routes>
       </main>
 
