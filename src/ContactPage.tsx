@@ -35,10 +35,13 @@ const ContactPage = () => {
   return (
     <div className="bg-slate-50 min-h-screen py-16 px-4 font-sans" dir="rtl">
       <div className="max-w-4xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100">
+        <div className="grid md:grid-cols-2 gap-12 bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative">
           
+          {/* רקע עיצובי קטן בפינה */}
+          <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full -ml-16 -mt-16 blur-3xl"></div>
+
           {/* צד שמאל - טופס */}
-          <div>
+          <div className="relative z-10">
             <h1 className="text-3xl font-extrabold text-slate-950 mb-2">דברו איתנו</h1>
             <p className="text-slate-600 mb-8 leading-relaxed">
               נשמח לשמוע מכם! מלאו את הפרטים ונחזור אליכם בהקדם.
@@ -124,8 +127,13 @@ const ContactPage = () => {
                 </div>
              </div>
 
-             <div className="mt-12">
-                <img src="/logo.png" alt="CleanFry" className="h-12 w-auto brightness-0 invert opacity-50" />
+             {/* הלוגו המעודכן - כאן קרה השינוי! */}
+             <div className="mt-12 text-center">
+                <img 
+                  src="/logo.png" 
+                  alt="CleanFry Logo" 
+                  className="h-16 w-auto mx-auto object-contain cursor-pointer transition-opacity hover:opacity-80" 
+                />
              </div>
           </div>
 
