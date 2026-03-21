@@ -40,7 +40,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const navLinks = [
     { name: 'ראשי', href: '#' },
     { name: 'איך זה עובד', href: '#how-it-works' },
-    { name: 'בלוג', href: '#' },
+    { name: 'בלוג', href: '/blog' }
     { name: 'צור קשר', href: '/contact' },
   ];
 
@@ -300,7 +300,7 @@ export default function App() {
               <ul className="space-y-4 text-slate-400">
                 <li><a href="#" className="hover:text-white transition-colors">ראשי</a></li>
                 <li><a href="#how-it-works" className="hover:text-white transition-colors">איך זה עובד</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">בלוג</a></li>
+                <li><Link to="/blog" className="hover:text-white transition-colors">בלוג</Link></li>
               </ul>
             </div>
             <div>
