@@ -21,6 +21,8 @@ createRoot(document.getElementById('root')!).render(
         {/* דפי הבלוג של CleanFry */}
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:id" element={<BlogPostDetail />} />
+        
+        <Route path="/thanks" element={<SuccessPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
