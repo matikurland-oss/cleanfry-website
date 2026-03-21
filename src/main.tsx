@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.tsx';
 import ContactPage from './ContactPage.tsx';
+import SuccessPage from './SuccessPage.tsx';
 import BlogPage from './BlogPage.tsx'; // ייבוא חדש
 import BlogPostDetail from './BlogPostDetail.tsx'; // ייבוא חדש
 import './index.css';
