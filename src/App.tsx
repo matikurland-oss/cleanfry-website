@@ -30,6 +30,7 @@ import LegalPage from './LegalPage';
 import BlogPage from './BlogPage';
 import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
+import AccessibilityPage from './AccessibilityPage';
 
 // --- קומפוננטת Navbar (הוצאה החוצה כדי שתהיה זמינה לכל הדפים) ---
 const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
