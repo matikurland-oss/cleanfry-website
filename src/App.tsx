@@ -22,6 +22,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 
 const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,10 +53,10 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
           </div>
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className="text-slate-600 hover:text-brand-blue font-medium transition-colors">
-                {link.name}
-              </a>
-            ))}
+  <Link key={link.name} to={link.href} className="...">
+    {link.name}
+  </Link>
+))}
           </div>
           <div className="flex items-center gap-4">
             <button onClick={onPurchaseClick} className="hidden sm:block bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-xl font-bold hover:bg-brand-blue hover:text-white transition-all">
