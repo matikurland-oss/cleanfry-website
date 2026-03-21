@@ -15,17 +15,14 @@ const BlogPostDetail = () => {
     );
   }
 
-  // פונקציה להפיכת הטקסט הגולמי לפסקאות HTML
+  // הפונקציה הקריטית שהופכת את הטקסט למעוצב באתר
   const renderContent = (content: string) => {
     return content.split('\n\n').map((paragraph, index) => (
-      <p key={index} className="mb-6 leading-loose">
-        {paragraph.split('\n').map((line, lineIndex) => (
-          <React.Fragment key={lineIndex}>
-            {line}
-            {lineIndex < paragraph.split('\n').length - 1 && <br />}
-          </React.Fragment>
-        ))}
-      </p>
+      <p 
+        key={index} 
+        className="mb-8 leading-loose text-lg text-slate-700"
+        dangerouslySetInnerHTML={{ __html: paragraph.replace(/\n/g, '<br />') }}
+      />
     ));
   };
 
@@ -33,12 +30,10 @@ const BlogPostDetail = () => {
     <div className="bg-white min-h-screen py-12 px-4 md:py-20" dir="rtl">
       <div className="max-w-3xl mx-auto">
         
-        {/* כפתור חזרה */}
         <Link to="/blog" className="text-blue-600 hover:text-blue-800 mb-12 inline-flex items-center gap-2 font-medium transition-colors">
           <span>←</span> חזרה לבלוג
         </Link>
         
-        {/* כותרת ותמונה */}
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-950 mb-4 leading-tight">
           {post.title}
         </h1>
@@ -48,23 +43,22 @@ const BlogPostDetail = () => {
           <img 
             src={post.image} 
             alt={post.title} 
-            className="w-full h-auto max-h-[400px] object-contain mb-16 rounded-2xl shadow-lg border border-slate-100" 
+            className="w-full h-auto max-h-[450px] object-contain mb-16 rounded-2xl shadow-lg border border-slate-100" 
           />
         )}
 
-        {/* תוכן המאמר המעוצב */}
-        <div className="prose prose-lg prose-slate max-w-none text-slate-800 text-right leading-relaxed font-sans">
+        {/* כאן קורה הקסם שמציג את ההדגשות והקו התחתי */}
+        <div className="prose prose-lg prose-slate max-w-none text-right font-sans">
           {renderContent(post.content)}
         </div>
 
-        {/* פוטר המאמר */}
         <div className="mt-20 pt-10 border-t border-slate-100 text-center">
           <p className="text-slate-600 mb-4">אהבתם את המאמר? שתפו אותו!</p>
           <a 
             href={`https://wa.me/?text=${encodeURIComponent(`תראו את המאמר הזה על CleanFry: ${window.location.href}`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600 transition"
+            className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600 transition shadow-md"
           >
             שתפו ב-WhatsApp
           </a>
