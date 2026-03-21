@@ -37,10 +37,10 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     document.body.appendChild(script);
   }, []);
 
-  const navLinks = [
-    { name: 'ראשי', href: '#' },
+const navLinks = [
+    { name: 'דף הבית', href: '/' },
     { name: 'איך זה עובד', href: '#how-it-works' },
-    { name: 'בלוג', href: '/blog' }
+    { name: 'בלוג', href: '/blog' },
     { name: 'צור קשר', href: '/contact' },
   ];
 
