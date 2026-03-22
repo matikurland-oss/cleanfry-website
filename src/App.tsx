@@ -32,10 +32,11 @@ import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
 import AccessibilityPage from './AccessibilityPage';
 
-// --- קומפוננטת Navbar (הוצאה החוצה כדי שתהיה זמינה לכל הדפים) ---
+// --- קומפוננטת Navbar ---
 const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (document.getElementById('userway-widget')) return;
@@ -54,18 +55,37 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     { name: 'צור קשר', href: '/contact' },
   ];
 
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    setIsOpen(false); // סגירת תפריט נייד
+    
+    if (href.includes('#')) {
+      const id = href.split('#')[1];
+      if (location.pathname === '/') {
+        // אם אנחנו בדף הבית, נמנע ניווט ונבצע גלילה
+        e.preventDefault();
+        const element = document.getElementById(id);
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <nav className="bg-white border-b border-slate-100 sticky top-8 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer">
-            <Link to="/">
+            <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
             </Link>
           </div>
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
-              <Link key={link.name} to={link.href} className="text-slate-600 hover:text-brand-blue font-medium transition-colors">
+              <Link 
+                key={link.name} 
+                to={link.href} 
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="text-slate-600 hover:text-brand-blue font-medium transition-colors"
+              >
                 {link.name}
               </Link>
             ))}
@@ -89,7 +109,12 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="md:hidden bg-white border-t border-slate-100 overflow-hidden">
             <div className="px-4 pt-2 pb-6 space-y-1 text-right">
               {navLinks.map((link) => (
-                <Link key={link.name} to={link.href} className="block px-3 py-3 text-base font-medium text-slate-600 hover:text-brand-blue rounded-lg" onClick={() => setIsOpen(false)}>
+                <Link 
+                  key={link.name} 
+                  to={link.href} 
+                  className="block px-3 py-3 text-base font-medium text-slate-600 hover:text-brand-blue rounded-lg" 
+                  onClick={(e) => handleNavClick(e, link.href)}
+                >
                   {link.name}
                 </Link>
               ))}
@@ -124,7 +149,7 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
   );
 };
 
-// --- קומפוננטת Footer (הוצאה החוצה) ---
+// --- קומפוננטת Footer ---
 const Footer = () => (
   <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -146,7 +171,7 @@ const Footer = () => (
           <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
           <ul className="space-y-4 text-slate-400">
             <li><Link to="/" className="hover:text-white transition-colors">ראשי</Link></li>
-            <li><a href="/#how-it-works" className="hover:text-white transition-colors">איך זה עובד</a></li>
+            <li><Link to="/#how-it-works" className="hover:text-white transition-colors">איך זה עובד</Link></li>
             <li><Link to="/blog" className="hover:text-white transition-colors">בלוג</Link></li>
           </ul>
         </div>
@@ -168,7 +193,7 @@ const Footer = () => (
       </div>
       <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
         <div className="mb-4"><Link to="/accessibility" className="hover:text-white underline underline-offset-4">הצהרת נגישות</Link></div>
-        <p>© {new Date().getFullYear()} CleanFry. כל הזכויות שמורות.</p>
+        <p>© {new Date().getFullYear()} CleanFry | מ.ק יזמות | כל הזכויות שמורות.</p>
       </div>
     </div>
   </footer>
@@ -177,6 +202,7 @@ const Footer = () => (
 export default function App() {
   const [quantity, setQuantity] = useState(1);
   const purchaseBoxRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   const navigate = useNavigate();
   
   const UNIT_PRICE = 59;
@@ -184,11 +210,10 @@ export default function App() {
   const isFreeShipping = totalPrice >= 249;
 
   const scrollToPurchase = () => {
-    // אם אנחנו בדף הבית, נגלול. אם לא, נעבור לדף הבית קודם.
-    if (window.location.pathname === '/') {
+    if (location.pathname === '/') {
       purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
-      window.location.href = '/#purchase';
+      navigate('/#purchase');
     }
   };
 
@@ -197,7 +222,6 @@ export default function App() {
     return `הזמנת ${quantity} מארזים`;
   };
 
-  // קומפוננטת דף הבית
   const HomePage = () => (
     <>
       {/* Hero Section */}
@@ -287,7 +311,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* FAQ & CTA Sections ... (השארתי את שאר תוכן דף הבית) */}
+      {/* FAQ & CTA Sections */}
       <section className="py-24">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
             <div className="text-center mb-16">
