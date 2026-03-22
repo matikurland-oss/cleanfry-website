@@ -286,13 +286,28 @@ export default function App() {
         </div>
       </section>
 
-      {/* How It Works Section */}
+{/* How It Works Section */}
       <section id="how-it-works" className="py-24 bg-slate-50 text-right">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
-            <p className="text-slate-600 text-lg">פשוט, מהיר ונקי - כך תהפכו את השמן המשומש לגוש מוצק</p>
+            <p className="text-slate-600 text-lg mb-10">פשוט, מהיר ונקי – כך תהפכו את השמן המשומש לגוש מוצק</p>
+            
+            {/* התמונה החדשה */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-4xl mx-auto mb-16"
+            >
+              <img 
+                src="/how-to-use.jpg" 
+                alt="CleanFry - שלבי שימוש בתמונות" 
+                className="rounded-3xl shadow-lg border-4 border-white w-full"
+              />
+            </motion.div>
           </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
