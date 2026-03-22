@@ -7,6 +7,9 @@
   --color-brand-green: #8cc63f;
   --color-brand-yellow: #fcee21;
 }
+html {
+  scroll-behavior: smooth;
+}
 
 @layer base {
   html {
