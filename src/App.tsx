@@ -56,12 +56,10 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   ];
 
   const handleNavClick = (e: React.MouseEvent, href: string) => {
-    setIsOpen(false); // סגירת תפריט נייד
-    
+    setIsOpen(false); 
     if (href.includes('#')) {
       const id = href.split('#')[1];
       if (location.pathname === '/') {
-        // אם אנחנו בדף הבית, נמנע ניווט ונבצע גלילה
         e.preventDefault();
         const element = document.getElementById(id);
         element?.scrollIntoView({ behavior: 'smooth' });
@@ -286,14 +284,13 @@ export default function App() {
         </div>
       </section>
 
-{/* How It Works Section */}
+      {/* How It Works Section */}
       <section id="how-it-works" className="py-24 bg-slate-50 text-right">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-slate-900 mb-4">שלבי השימוש</h2>
             <p className="text-slate-600 text-lg mb-10">פשוט, מהיר ונקי – כך תהפכו את השמן המשומש לגוש מוצק</p>
             
-            {/* התמונה החדשה */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -335,41 +332,45 @@ export default function App() {
                 desc: "השלכת השמן המוצק לפח האשפה." 
               }
             ].map((step, idx) => (
-  <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
-    <div className={`w-20 h-20 ${step.bg} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-      {step.icon}
-    </div>
-    <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
-    <p className="text-slate-600 leading-relaxed">{step.desc}</p>
-    <div className="mt-6 text-4xl font-black text-slate-100">{idx + 1}</div>
-  </motion.div>
-))}
+              <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                <div className={`w-20 h-20 ${step.bg} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                  {step.icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{step.desc}</p>
+                <div className={`mt-6 text-4xl font-black opacity-10 ${step.icon.props.className.split(' ').find((c: string) => c.startsWith('text-'))}`}>
+                  {idx + 1}
+                </div>
+              </motion.div>
+            ))}
           </div>
+        </div>
       </section>
 
-      {/* FAQ & CTA Sections */}
+      {/* FAQ Section */}
       <section className="py-24">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
-              <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
-            </div>
-            <div className="space-y-2">
-              <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי שמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
-              <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
-              <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
-              <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
-            </div>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
+            <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
           </div>
+          <div className="space-y-2">
+            <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי שמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
+            <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
+            <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
+            <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry עשויה מ-100% רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
+          </div>
+        </div>
       </section>
 
+      {/* CTA Section */}
       <section className="py-24 bg-brand-blue relative overflow-hidden text-center">
-          <div className="max-w-4xl mx-auto px-4 relative z-10">
-            <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח שלכם?</h2>
-            <button onClick={scrollToPurchase} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
-              הזמנה עכשיו
-            </button>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 relative z-10">
+          <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח שלכם?</h2>
+          <button onClick={scrollToPurchase} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
+            הזמנה עכשיו
+          </button>
+        </div>
       </section>
     </>
   );
