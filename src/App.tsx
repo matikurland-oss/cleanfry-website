@@ -310,20 +310,41 @@ export default function App() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: <Flame className="w-10 h-10 text-brand-blue" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
-              { icon: <Droplets className="w-10 h-10 text-brand-blue" />, title: "הוספה", desc: "הוספת אבקת CleanFry כשהשמן עודו חם." },
-              { icon: <Timer className="w-10 h-10 text-brand-blue" />, title: "קירור", desc: "המתנה עד להתמצקות מלאה של השמן (כ-20-25 דקות)." },
-              { icon: <Trash2 className="w-10 h-10 text-brand-blue" />, title: "השלכה", desc: "השלכת השמן המוצק לפח האשפה." }
+              { 
+                icon: <Flame className="w-10 h-10 text-red-500" />, 
+                bg: "bg-red-50",
+                title: "כיבוי האש", 
+                desc: "כיבוי מקור החום או הכיריים." 
+              },
+              { 
+                icon: <Droplets className="w-10 h-10 text-yellow-500" />, 
+                bg: "bg-yellow-50",
+                title: "הוספה", 
+                desc: "הוספת אבקת CleanFry כשהשמן עודו חם." 
+              },
+              { 
+                icon: <Timer className="w-10 h-10 text-blue-500" />, 
+                bg: "bg-blue-50",
+                title: "קירור", 
+                desc: "המתנה עד להתמצקות מלאה של השמן (כ-20-25 דקות)." 
+              },
+              { 
+                icon: <Trash2 className="w-10 h-10 text-green-500" />, 
+                bg: "bg-green-50",
+                title: "השלכה", 
+                desc: "השלכת השמן המוצק לפח האשפה." 
+              }
             ].map((step, idx) => (
-              <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
-                <div className="w-20 h-20 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-6">{step.icon}</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{step.desc}</p>
-                <div className="mt-6 text-4xl font-black text-slate-100">{idx + 1}</div>
-              </motion.div>
-            ))}
+  <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+    <div className={`w-20 h-20 ${step.bg} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+      {step.icon}
+    </div>
+    <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
+    <p className="text-slate-600 leading-relaxed">{step.desc}</p>
+    <div className="mt-6 text-4xl font-black text-slate-100">{idx + 1}</div>
+  </motion.div>
+))}
           </div>
-        </div>
       </section>
 
       {/* FAQ & CTA Sections */}
