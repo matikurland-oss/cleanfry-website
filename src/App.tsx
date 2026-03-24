@@ -317,7 +317,7 @@ export default function App() {
                 icon: <Droplets className="w-10 h-10 text-yellow-500" />, 
                 bg: "bg-yellow-50",
                 title: " הוספה וערבוב", 
-                desc: "הוספת אבקת CleanFry כשהשמן עודו חם, וערבבו עד שכל האבקה נטמעת בשמן הנוזלי." 
+                desc: "הוספת אבקת CleanFry כשהשמן חם, וערבוב עד שכל האבקה נטמעת בשמן הנוזלי." 
               },
               { 
                 icon: <Timer className="w-10 h-10 text-blue-500" />, 
