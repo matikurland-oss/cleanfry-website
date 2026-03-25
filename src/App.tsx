@@ -228,7 +228,20 @@ export default function App() {
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
               <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                <img src="/Cleanfry gif.gif" alt="CleanFry" className="h-40 lg:h-56 w-auto inline-block mb-2 mt-8" /><br />
+                <motion.img 
+  src="/logo.png" 
+  alt="CleanFry" 
+  className="h-48 lg:h-80 w-auto inline-block mb-2 mt-8"
+  animate={{ 
+    scale: [1, 1.03, 1],
+    filter: ["brightness(1)", "brightness(1.08)", "brightness(1)"]
+  }}
+  transition={{ 
+    duration: 4, 
+    repeat: Infinity, 
+    ease: "easeInOut" 
+  }}
+/>
                 <span className="text-brand-blue">טיגון מושלם.</span><br />
                 <span className="text-brand-green">ניקוי קל.</span>
               </h1>
