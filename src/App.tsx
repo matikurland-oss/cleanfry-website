@@ -73,7 +73,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer">
   <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-    <img src="/Cleanfry gif.gif" alt="CleanFry Logo" className="h-20 w-auto object-contain" />
+    <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
   </Link>
 </div>
           <div className="hidden md:flex gap-8">
