@@ -227,11 +227,12 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-              <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                <div className="relative inline-block mb-2 mt-8 w-full flex justify-center lg:justify-start">
+              <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+              <div className="flex flex-col items-start lg:items-start text-right">
+                <div className="relative inline-block mb-4 mt-4 overflow-hidden rounded-2xl">
                   <video
                     src="/logo-anim.mp4"
-                    className="h-64 lg:h-[450px] w-auto rounded-2xl object-contain"
+                    className="h-40 lg:h-64 w-auto object-contain"
                     autoPlay
                     loop
                     muted
@@ -239,14 +240,15 @@ export default function App() {
                     disablePictureInPicture
                   />
                 </div>
-                <br />
-                <span className="text-brand-blue">טיגון מושלם.</span><br />
-                <span className="text-brand-green">ניקוי קל.</span>
-              </h1>
-              <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
+                <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
+                  <span className="text-brand-blue">טיגון מושלם.</span><br />
+                  <span className="text-brand-green">ניקוי קל.</span>
+                </h1>
+              </div>
+              <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
                 אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
               </p>
-              <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <div className="flex flex-wrap justify-start gap-4 mt-8">
                 <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
                   <CheckCircle2 className="w-6 h-6 text-yellow-600 flex-shrink-0" />
                   <span className="text-yellow-800 text-base font-extrabold">מבוסס על רכיב ממקור צמחי</span>
@@ -261,6 +263,7 @@ export default function App() {
                 </div>
               </div>
             </motion.div>
+
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
               <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
               <img src="/product.png" alt="CleanFry Packaging" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" />
@@ -268,33 +271,6 @@ export default function App() {
           </div>
 
           <motion.div id="purchase" ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="max-w-3xl mx-auto relative z-10 px-4">
-            <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-              <div className="flex-1 w-full order-1 text-right">
-                <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
-                <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">-</button>
-                  <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center font-mono">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-md text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90">+</button>
-                </div>
-              </div>
-              <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2">
-                <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
-                <p className="text-6xl font-black text-brand-blue mb-4">₪{totalPrice}</p>
-                {isFreeShipping ? (
-                  <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-full mb-6 animate-pulse"><Truck className="w-5 h-5" /><span>משלוח חינם מופעל!</span></div>
-                ) : (
-                  <p className="text-slate-400 text-sm mb-6 font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
-                )}
-                <button className="w-full gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:scale-[1.03] transition-all shadow-brand-blue/25">
-                  {getButtonText()}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* How It Works Section */}
       <section id="how-it-works" className="py-24 bg-slate-50 text-right">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
