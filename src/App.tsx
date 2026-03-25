@@ -76,7 +76,6 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     <img src="/Cleanfry gif.gif" alt="CleanFry Logo" className="h-20 w-auto object-contain" />
   </Link>
 </div>
-          </div>
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
               <Link 
