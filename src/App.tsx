@@ -229,37 +229,18 @@ export default function App() {
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
               <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
                 <div className="relative inline-block mb-2 mt-8">
-            <motion.img 
-              src="/logo.png" 
-              alt="CleanFry" 
-              className="h-48 lg:h-80 w-auto inline-block"
-              animate={{ 
-                scale: [1, 1.03, 1],
-                filter: ["brightness(1)", "brightness(1.08)", "brightness(1)"]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
+            <video
+              src="/logo-anim.mp4"
+              className="h-48 lg:h-80 w-auto rounded-2xl"
+              autoPlay
+              loop
+              muted
+              playsInline
+              disablePictureInPicture
             />
           </div>
-          <br />
-                <span className="text-brand-blue">טיגון מושלם.</span><br />
-                <span className="text-brand-green">ניקוי קל.</span>
-              </h1>
-              <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
-                אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
-                  <CheckCircle2 className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-                  <span className="text-yellow-800 text-base font-extrabold">מבוסס על רכיב ממקור צמחי</span>
-                </div>
-                <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-                  <span className="text-green-800 text-base font-extrabold">ידידותי לסביבה</span>
-                </div>
+          <br />  
+              </div>
                 <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
                   <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
                   <span className="text-blue-800 text-base font-extrabold">מגן על הניקוז</span>
