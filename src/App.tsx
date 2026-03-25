@@ -229,36 +229,22 @@ export default function App() {
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
               <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
                 <div className="relative inline-block mb-2 mt-8">
-כדי להשיג את הלוגו הגדול והמרשים שביקשת מבלי להסתבך עם רקע של GIF, נשתמש בלוגו הקיים שלך וניתן לו "חיים" בעזרת אנימציית קוד חלקה.
-
-בצילום המסך של ה-**Hero Section** (קובץ `image_7ca25c.jpg`), עליך להחליף את **שורה 231**.
-
-### הקוד להחלפה:
-תחליף את השורה שמתחילה ב-`<img src="/Cleanfry gif.gif"...` (שורה 231) בבלוק הבא:
-
-```tsx
-<motion.img 
-  src="/logo.png" 
-  alt="CleanFry" 
-  className="h-48 lg:h-80 w-auto inline-block mb-2 mt-8"
-  animate={{ 
-    scale: [1, 1.03, 1],
-    filter: ["brightness(1)", "brightness(1.08)", "brightness(1)"]
-  }}
-  transition={{ 
-    duration: 4, 
-    repeat: Infinity, 
-    ease: "easeInOut" 
-  }}
-/>
-```
-
-### למה זה הפתרון הכי טוב עבורך?
-* **רקע לבן מושלם**: מכיוון שזה משתמש ב-`logo.png` המקורי שלך, הוא יושב בצורה נקייה לחלוטין על הרקע של האתר.
-* **גודל משמעותי**: הגדרתי גובה של `h-80` למחשבים (כ-**320 פיקסלים**), מה שנותן למוצר נוכחות חזקה ובולטת במרכז הדף.
-* **אנימציה יוקרתית**: במקום GIF שקופץ, הלוגו יבצע "פעימה" איטית ועדינה שמושכת את העין בצורה מקצועית.
-
-**האם תרצה שאוסיף מתחת ללוגו הגדול גם כפתור "צפו בסרטון הדגמה" שיפתח חלון קופץ עם הסבר על המוצר?**
+            <motion.img 
+              src="/logo.png" 
+              alt="CleanFry" 
+              className="h-48 lg:h-80 w-auto inline-block"
+              animate={{ 
+                scale: [1, 1.03, 1],
+                filter: ["brightness(1)", "brightness(1.08)", "brightness(1)"]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            />
+          </div>
+          <br />
                 <span className="text-brand-blue">טיגון מושלם.</span><br />
                 <span className="text-brand-green">ניקוי קל.</span>
               </h1>
