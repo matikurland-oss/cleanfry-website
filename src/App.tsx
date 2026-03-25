@@ -228,10 +228,10 @@ export default function App() {
           <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-start mb-20">
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
               <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                <div className="relative inline-block mb-2 mt-8">
+                <div className="relative inline-block mb-2 mt-8 w-full flex justify-center lg:justify-start">
                   <video
                     src="/logo-anim.mp4"
-                    className="h-48 lg:h-80 w-auto rounded-2xl"
+                    className="h-64 lg:h-[450px] w-auto rounded-2xl object-contain"
                     autoPlay
                     loop
                     muted
