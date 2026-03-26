@@ -246,17 +246,13 @@ export default function App() {
                 אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
               </p>
               <div className="flex flex-wrap justify-start gap-4 mt-8">
-                <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
+                <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
                   <CheckCircle2 className="w-6 h-6 text-yellow-600 flex-shrink-0" />
                   <span className="text-yellow-800 text-base font-extrabold">מבוסס על רכיב ממקור צמחי</span>
                 </div>
-                <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
+                <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
                   <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
                   <span className="text-green-800 text-base font-extrabold">ידידותי לסביבה</span>
-                </div>
-                <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md hover:scale-110 transition-transform duration-200 cursor-default">
-                  <ShieldCheck className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                  <span className="text-blue-800 text-base font-extrabold">מגן על הניקוז</span>
                 </div>
               </div>
             </motion.div>
@@ -266,7 +262,7 @@ export default function App() {
             </motion.div>
           </div>
 
-{/* שינוי: הורדת ה-motion מהעטיפה הראשית כדי למנוע רינדור מחדש של כל הבלוק */}
+          {/* Purchase Box */}
           <div id="purchase" ref={purchaseBoxRef} className="max-w-3xl mx-auto relative z-10 px-4 mt-12">
             <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
@@ -281,7 +277,6 @@ export default function App() {
                   >
                     -
                   </button>
-                  {/* tabular-nums מבטיח שהספרות לא יזיזו את האלמנטים מסביב */}
                   <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center tabular-nums">
                     {quantity}
                   </span>
@@ -299,10 +294,9 @@ export default function App() {
                 <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
                 <p className="text-6xl font-black text-brand-blue mb-4 tabular-nums">₪{totalPrice}</p>
                 
-                {/* h-10 קבוע מונע מהכפתור לקפוץ כשמופיע/נעלם הטקסט של המשלוח */}
                 <div className="h-10 flex items-center">
                   {isFreeShipping ? (
-                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full">
+                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full animate-pulse">
                       <Truck className="w-5 h-5" /><span>משלוח חינם!</span>
                     </div>
                   ) : (
@@ -316,12 +310,6 @@ export default function App() {
               </div>
             </div>
           </div>
-                <button className="w-full mt-6 gradient-brand text-white py-5 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all active:scale-[0.98] min-h-[80px]">
-                  {getButtonText()}
-                </button>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -340,7 +328,7 @@ export default function App() {
             >
               <img 
                 src="/how-to-use.jpg" 
-                alt="CleanFry - שלבי שימוש בתמונות" 
+                alt="CleanFry - שלבי שימוש" 
                 className="rounded-3xl shadow-lg border-4 border-white w-full"
               />
             </motion.div>
@@ -348,41 +336,18 @@ export default function App() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { 
-                icon: <Flame className="w-10 h-10 text-red-500" />, 
-                bg: "bg-red-50",
-                title: "כיבוי האש", 
-                desc: "כיבוי מקור החום או הכיריים." 
-              },
-              { 
-                icon: <Droplets className="w-10 h-10 text-yellow-500" />, 
-                bg: "bg-yellow-50",
-                title: " הוספה וערבוב", 
-                desc: "הוספת אבקת CleanFry כשהשמן חם, וערבוב עד שכל האבקה נטמעת בשמן הנוזלי." 
-              },
-              { 
-                icon: <Timer className="w-10 h-10 text-blue-500" />, 
-                bg: "bg-blue-50",
-                title: "קירור", 
-                desc: "המתנה עד להתמצקות מלאה של השמן (כ-20-25 דקות)." 
-              },
-              { 
-                icon: <Trash2 className="w-10 h-10 text-green-500" />, 
-                bg: "bg-green-50",
-                title: "השלכה", 
-                desc: "השלכת השמן המוצק לפח האשפה." 
-              }
+              { icon: <Flame className="w-10 h-10 text-red-500" />, title: "כיבוי האש", desc: "כיבוי מקור החום או הכיריים." },
+              { icon: <Droplets className="w-10 h-10 text-yellow-500" />, title: " הוספה וערבוב", desc: "הוספת אבקה כשהשמן חם וערבוב קל." },
+              { icon: <Timer className="w-10 h-10 text-blue-500" />, title: "קירור", desc: "המתנה להתמצקות (כ-20 דקות)." },
+              { icon: <Trash2 className="w-10 h-10 text-green-500" />, title: "השלכה", desc: "השלכת השמן המוצק לפח האשפה." }
             ].map((step, idx) => (
-              <motion.div key={idx} whileHover={{ y: -10 }} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
-                <div className={`w-20 h-20 ${step.bg} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+              <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center">
+                <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   {step.icon}
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
                 <p className="text-slate-600 leading-relaxed">{step.desc}</p>
-                <div className={`mt-6 text-4xl font-black opacity-10 ${step.icon.props.className.split(' ').find((c: string) => c.startsWith('text-'))}`}>
-                  {idx + 1}
-                </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -393,21 +358,19 @@ export default function App() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
-            <p className="text-slate-600">כל מה שרציתם לדעת על CleanFry</p>
           </div>
           <div className="space-y-2">
-            <FAQItem question="האם האבקה בטוחה לשימוש בכל סוגי שמנים?" answer="כן, CleanFry מתאימה לכל סוגי שמני הבישול הצמחיים הנפוצים במטבח הביתי, כולל שמן קנולה, סויה, חמניות ותירס." />
-            <FAQItem question="כמה אבקה צריך להוסיף לכל ליטר שמן?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן (כ-250 מ״ל). לתוצאות מיטביות, יש להוסיף את האבקה כשהשמן עדיין חם." />
-            <FAQItem question="האם ניתן להשתמש בשמן שוב אחרי שהתמצק?" answer="לא. CleanFry מיועדת לטיפול בשמן משומש המיועד להשלכה. ברגע שהשמן התמצק, הוא הופך לגוש מוצק שאינו ניתן לשימוש חוזר." />
-            <FAQItem question="האם המוצר ידידותי לסביבה?" answer="בהחלט. CleanFry מבוססת על רכיבים ממקור צמחי. היא מונעת שפיכת שמן לצנרת הניקוז, מה שמגן על מערכות הביוב ועל איכות הסביבה." />
+            <FAQItem question="האם האבקה בטוחה לשימוש?" answer="כן, CleanFry מבוססת על רכיבים ממקור צמחי ובטוחה לשימוש ביתי." />
+            <FAQItem question="כמה אבקה צריך לשים?" answer="המינון המומלץ הוא כף אחת של אבקה לכל כוס שמן." />
+            <FAQItem question="האם ניתן להשתמש בשמן שוב?" answer="לא. ברגע שהשמן התמצק, הוא מיועד להשלכה בלבד." />
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-brand-blue relative overflow-hidden text-center">
+      <section className="py-24 bg-brand-blue text-center">
         <div className="max-w-4xl mx-auto px-4 relative z-10">
-          <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח שלכם?</h2>
+          <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח?</h2>
           <button onClick={scrollToPurchase} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
             הזמנה עכשיו
           </button>
@@ -418,13 +381,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
-      {/* Top Announcement Bar */}
-      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50">
-        <p className="text-sm font-bold text-slate-900">משלוח חינם בקנייה מעל 249 ש״ח!</p>
-      </div>
-
+      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 249 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
-
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -436,7 +394,6 @@ export default function App() {
           <Route path="/accessibility" element={<AccessibilityPage />} />
         </Routes>
       </main>
-
       <Footer />
     </div>
   );
