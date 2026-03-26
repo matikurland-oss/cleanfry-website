@@ -266,31 +266,56 @@ export default function App() {
             </motion.div>
           </div>
 
-          <motion.div id="purchase" ref={purchaseBoxRef} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="max-w-3xl mx-auto relative z-10 px-4">
+{/* שינוי: הורדת ה-motion מהעטיפה הראשית כדי למנוע רינדור מחדש של כל הבלוק */}
+          <div id="purchase" ref={purchaseBoxRef} className="max-w-3xl mx-auto relative z-10 px-4 mt-12">
             <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-12 relative overflow-hidden text-right">
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+              
               <div className="flex-1 w-full order-1 text-right">
                 <h3 className="text-2xl font-bold text-slate-800 mb-6">בחירת כמות מארזים:</h3>
                 <div className="flex items-center gap-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-fit ml-auto md:ml-0 shadow-inner">
-                  <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-sm text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-95">-</button>
-                  <span className="text-4xl font-black text-slate-900 min-w-[50px] text-center tabular-nums">{quantity}</span>
-                  <button type="button" onClick={() => setQuantity(quantity + 1)} className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-sm text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-95">+</button>
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); setQuantity(Math.max(1, quantity - 1)); }} 
+                    className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-sm text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
+                  >
+                    -
+                  </button>
+                  {/* tabular-nums מבטיח שהספרות לא יזיזו את האלמנטים מסביב */}
+                  <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center tabular-nums">
+                    {quantity}
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); setQuantity(quantity + 1); }} 
+                    className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-sm text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
+
               <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-right border-t md:border-t-0 md:border-r border-slate-100 pt-8 md:pt-0 md:pr-12 order-2">
                 <p className="text-slate-500 text-lg mb-1">סה"כ לתשלום:</p>
                 <p className="text-6xl font-black text-brand-blue mb-4 tabular-nums">₪{totalPrice}</p>
                 
-                <div className="h-8 flex items-center">
+                {/* h-10 קבוע מונע מהכפתור לקפוץ כשמופיע/נעלם הטקסט של המשלוח */}
+                <div className="h-10 flex items-center">
                   {isFreeShipping ? (
-                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full animate-pulse">
-                      <Truck className="w-4 h-4" /><span>משלוח חינם!</span>
+                    <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full">
+                      <Truck className="w-5 h-5" /><span>משלוח חינם!</span>
                     </div>
                   ) : (
-                    <p className="text-slate-400 text-sm font-medium">משלוח חינם מעל 249 ₪</p>
+                    <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
                   )}
                 </div>
 
+                <button className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px]">
+                  {getButtonText()}
+                </button>
+              </div>
+            </div>
+          </div>
                 <button className="w-full mt-6 gradient-brand text-white py-5 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all active:scale-[0.98] min-h-[80px]">
                   {getButtonText()}
                 </button>
