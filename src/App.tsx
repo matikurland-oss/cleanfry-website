@@ -237,10 +237,13 @@ export default function App() {
                     disablePictureInPicture
                   />
                 </div>
-                <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-                  <span className="text-brand-blue">טיגון מושלם.</span><br />
-                  <span className="text-brand-green">ניקוי קל.</span>
-                </h1>
+                {/* כותרת נסתרת לגוגל לשיפור ה-SEO */}
+<h2 className="sr-only">CleanFry - אבקה למיצוק שמן בישול, הפתרון המושלם למיצוק שמן טיגון משומש</h2>
+
+<h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
+  <span className="text-brand-blue">טיגון מושלם.</span><br />
+  <span className="text-brand-green">ניקוי קל.</span>
+</h1>
               </div>
               <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
                 אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
