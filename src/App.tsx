@@ -245,20 +245,25 @@ export default function App() {
               <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
                 אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
               </p>
-              <div className="flex flex-wrap justify-start gap-4 mt-8">
-                <div className="flex items-center gap-3 bg-yellow-100 border-2 border-yellow-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
-                  <CheckCircle2 className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-                  <span className="text-yellow-800 text-base font-extrabold">מבוסס על רכיב ממקור צמחי</span>
-                </div>
-                <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
-                  <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-                  <span className="text-green-800 text-base font-extrabold">ידידותי לסביבה</span>
-                </div>
-                    <div className="flex items-center gap-3 bg-blue-100 border-2 border-blue-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
-                  <CheckCircle2 className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                  <span className="text-blue-800 text-base font-extrabold">אבקה למיצוק שמן</span>
-                </div>
-              </div>
+              <div className="flex flex-wrap justify-start items-center gap-2 sm:gap-4 mt-8">
+  {/* כפתור 1 - צהוב */}
+  <div className="flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0" />
+    <span className="text-yellow-800 text-sm sm:text-base font-extrabold">100% רכיבים צמחיים</span>
+  </div>
+
+  {/* כפתור 2 - ירוק */}
+  <div className="flex items-center gap-2 bg-green-100 border-2 border-green-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+    <span className="text-green-800 text-sm sm:text-base font-extrabold">ידידותי לסביבה</span>
+  </div>
+
+  {/* כפתור 3 - כחול - הבוסט לגוגל */}
+  <div className="flex items-center gap-2 bg-blue-100 border-2 border-blue-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+    <h2 className="text-blue-800 text-sm sm:text-base font-extrabold m-0">אבקה למיצוק שמן בישול</h2>
+  </div>
+</div>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
               <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
