@@ -270,7 +270,7 @@ export default function App() {
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
               <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
-              <img src="/product.png" alt="CleanFry Packaging" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" />
+              <img src="/product.png" alt="מארז CleanFry - אבקה למיצוק שמן בישול ביתי" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" />
             </motion.div>
           </div>
 
