@@ -254,6 +254,10 @@ export default function App() {
                   <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
                   <span className="text-green-800 text-base font-extrabold">ידידותי לסביבה</span>
                 </div>
+                    <div className="flex items-center gap-3 bg-green-100 border-2 border-green-400 px-6 py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform">
+                  <CheckCircle2 className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                  <span className="text-green-800 text-base font-extrabold">אבקה למיצוק שמן</span>
+                </div>
               </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
