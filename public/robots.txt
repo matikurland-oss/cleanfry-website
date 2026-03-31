@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# חסימת תיקיות מערכת וקבצים שלא צריכים להופיע בחיפוש
+Disallow: /node_modules/
+Disallow: /dist/
+Disallow: /build/
+Disallow: /src/
+
+# הפניה למפת האתר
+Sitemap: https://www.cleanfry.co.il/sitemap.xml
