@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import CheckoutPage from './CheckoutPage';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingCart, 
@@ -316,9 +317,13 @@ export default function App() {
                   )}
                 </div>
 
-                <button className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px]">
-                  {getButtonText()}
-                </button>
+                <button 
+  onClick={() => navigate(`/checkout?q=${quantity}`)}
+  className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px] flex items-center justify-center gap-3"
+>
+  <ShoppingCart className="w-8 h-8" />
+  {getButtonText()}
+</button>
               </div>
             </div>
           </div>
@@ -433,6 +438,7 @@ export default function App() {
           <Route path="/thanks" element={<SuccessPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/accessibility" element={<AccessibilityPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
       </main>
       <Footer />
