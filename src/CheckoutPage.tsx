@@ -44,7 +44,7 @@ const CheckoutPage = () => {
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     
-    // קביעת קוד קופון של 20% - שנה את 'SAVE20' לכל שם שתבחר
+    // קביעת קוד קופון של 20% - ניתן לשנות את השם כאן
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
@@ -84,7 +84,7 @@ const CheckoutPage = () => {
             {/* בחירת שיטת קבלה */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <Truck className="text-blue-500" /> איך תרצו לקבל את החבילה?
+                <Truck className="text-blue-500" size={28} /> איך תרצו לקבל את החבילה?
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,12 +121,14 @@ const CheckoutPage = () => {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800 flex gap-3 overflow-hidden"
+                    className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800 flex gap-3 overflow-hidden text-right"
                   >
                     <MapPin className="flex-shrink-0 mt-1" size={20} />
                     <div>
-                      <p className="font-bold">כתובת לאיסוף (בתיאום מראש):</p>
-                      <p>רחוב משה וילנסקי, תל אביב</p>
+                      <p className="font-bold mb-1 underline">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
+                      <p>• תל אביב: רח' משה וילנסקי</p>
+                      <p>• כפר סבא: רח' בן גוריון</p>
+                      <p className="mt-2 text-xs font-medium opacity-90 italic">* אנחנו נתקשר ונתאם את נקודת האיסוף הנוחה לכם לאחר ביצוע ההזמנה.</p>
                     </div>
                   </motion.div>
                 )}
@@ -134,29 +136,29 @@ const CheckoutPage = () => {
             </div>
 
             {/* פרטי משלוח/קשר */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder="שם מלא" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+                <input type="text" placeholder="שם מלא" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 <input 
-  type="tel" 
-  placeholder="טלפון" 
-  className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
-/>
+                  type="tel" 
+                  placeholder="טלפון" 
+                  className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                />
                 <input type="email" placeholder="אימייל לאישור הזמנה" className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 
                 {shippingMethod === 'delivery' && (
                   <>
-                    <input type="text" placeholder="עיר" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
-                    <input type="text" placeholder="כתובת ומספר בית" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+                    <input type="text" placeholder="עיר" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                    <input type="text" placeholder="כתובת ומספר בית" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                   </>
                 )}
               </div>
             </div>
 
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
               </h2>
@@ -165,13 +167,12 @@ const CheckoutPage = () => {
           </div>
 
           {/* עמודה שמאלית: סיכום הזמנה */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
               
-              {/* בורר כמות */}
               <div className="flex justify-between items-center mb-8 bg-slate-50 p-4 rounded-2xl">
-                <div>
+                <div className="text-right">
                   <p className="font-bold text-lg text-slate-800">מארז CleanFry</p>
                   <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
                 </div>
@@ -182,9 +183,8 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* מד התקדמות למשלוח חינם - מוצג רק אם נבחר משלוח */}
               {shippingMethod === 'delivery' && !isFreeShipping && (
-                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
+                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm text-right">
                   <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
                   <div className="w-full bg-orange-200 h-2 rounded-full mt-2 overflow-hidden">
                     <div className="bg-orange-500 h-full transition-all duration-500" style={{ width: `${(subtotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}></div>
@@ -192,7 +192,6 @@ const CheckoutPage = () => {
                 </div>
               )}
 
-              {/* קופון */}
               <div className="mb-8">
                 <div className="flex gap-2">
                   <input 
@@ -201,7 +200,7 @@ const CheckoutPage = () => {
                     value={coupon}
                     onChange={(e) => setCoupon(e.target.value)}
                     disabled={isCouponApplied}
-                    className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50"
+                    className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right"
                   />
                   {!isCouponApplied ? (
                     <button onClick={handleApplyCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition">החל</button>
@@ -212,18 +211,19 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {isCouponApplied && (
-                  <div className="flex items-center gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <CheckCircle2 size={16} />
-                    <span>קופון הופעל! חסכת ₪{discount.toFixed(0)}</span>
+                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} />
+                      <span>קופון הופעל! חסכת ₪{discount.toFixed(0)}</span>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* פירוט כספי */}
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between">
                   <span>סיכום ביניים ({quantity} יח'):</span>
-                  <span className="font-bold">₪{subtotal}</span>
+                  <span className="font-bold underline decoration-blue-200 underline-offset-4">₪{subtotal}</span>
                 </div>
                 
                 <div className="flex justify-between">
