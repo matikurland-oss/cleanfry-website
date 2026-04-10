@@ -44,7 +44,7 @@ const CheckoutPage = () => {
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     
-    // קביעת קוד קופון של 20% - ניתן לשנות את השם כאן
+    // קביעת קוד קופון של 20%
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
@@ -79,7 +79,7 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* עמודה ימנית: פרטים ושיטת קבלה */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-6 text-right">
             
             {/* בחירת שיטת קבלה */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -92,7 +92,7 @@ const CheckoutPage = () => {
                   onClick={() => setShippingMethod('delivery')}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'delivery' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
-                  <div>
+                  <div className="text-right">
                     <p className="font-bold text-slate-800">משלוח עד הבית</p>
                     <p className="text-xs text-slate-500">3-5 ימי עסקים</p>
                   </div>
@@ -105,9 +105,11 @@ const CheckoutPage = () => {
                   onClick={() => setShippingMethod('pickup')}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
-                  <div>
+                  <div className="text-right">
                     <p className="font-bold text-slate-800">איסוף עצמי</p>
                     <p className="text-xs text-green-600 font-bold underline">חינם</p>
+                    {/* המידע המקדים שהוספנו בתוך הכפתור */}
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">ת"א / כפר סבא בלבד</p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
                     {shippingMethod === 'pickup' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -118,16 +120,16 @@ const CheckoutPage = () => {
               <AnimatePresence>
                 {shippingMethod === 'pickup' && (
                   <motion.div 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    initial={{ height: 0, opacity: 0, scale: 0.95 }}
+                    animate={{ height: 'auto', opacity: 1, scale: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800 flex gap-3 overflow-hidden text-right"
+                    className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl text-blue-800 flex gap-3 overflow-hidden shadow-md"
                   >
-                    <MapPin className="flex-shrink-0 mt-1" size={20} />
-                    <div>
-                      <p className="font-bold mb-1 underline">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
-                      <p>• תל אביב: רח' משה וילנסקי</p>
-                      <p>• כפר סבא: רח' בן גוריון</p>
+                    <MapPin className="flex-shrink-0 mt-1 text-blue-600" size={20} />
+                    <div className="text-right">
+                      <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
+                      <p className="font-medium">• תל אביב: רח' משה וילנסקי</p>
+                      <p className="font-medium">• כפר סבא: רח' בן גוריון</p>
                       <p className="mt-2 text-xs font-medium opacity-90 italic">* אנחנו נתקשר ונתאם את נקודת האיסוף הנוחה לכם לאחר ביצוע ההזמנה.</p>
                     </div>
                   </motion.div>
@@ -184,7 +186,7 @@ const CheckoutPage = () => {
               </div>
 
               {shippingMethod === 'delivery' && !isFreeShipping && (
-                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm text-right">
+                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
                   <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
                   <div className="w-full bg-orange-200 h-2 rounded-full mt-2 overflow-hidden">
                     <div className="bg-orange-500 h-full transition-all duration-500" style={{ width: `${(subtotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}></div>
@@ -223,7 +225,7 @@ const CheckoutPage = () => {
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between">
                   <span>סיכום ביניים ({quantity} יח'):</span>
-                  <span className="font-bold underline decoration-blue-200 underline-offset-4">₪{subtotal}</span>
+                  <span className="font-bold">₪{subtotal}</span>
                 </div>
                 
                 <div className="flex justify-between">
