@@ -314,6 +314,7 @@ export default function App() {
                     </div>
                   ) : (
                     <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+                    <p className="text-sm text-gray-600 font-medium"> ישנה אפשרות לאיסוף עצמי ללא עלות</p>
                   )}
                 </div>
 
