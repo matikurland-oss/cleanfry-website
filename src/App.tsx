@@ -312,10 +312,12 @@ export default function App() {
                     <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full animate-pulse">
                       <Truck className="w-5 h-5" /><span>משלוח חינם!</span>
                     </div>
-                  ) : (
-                    <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
-                    <p className="text-sm text-gray-600 font-medium"> ישנה אפשרות לאיסוף עצמי ללא עלות</p>
-                  )}
+) : (
+            <>
+              <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+              <p className="text-sm text-gray-600 font-medium">אפשרות לאיסוף עצמי ללא עלות</p>
+            </>
+          )}
                 </div>
 
                 <button 
