@@ -32,6 +32,17 @@ import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
 import AccessibilityPage from './AccessibilityPage';
 
+// --- רכיב עזר לגלילה לראש הדף במעבר בין נתיבים ---
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
 // --- קומפוננטת Navbar ---
 const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -430,6 +441,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
+      <ScrollToTop />
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 249 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
