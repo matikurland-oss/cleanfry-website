@@ -192,7 +192,7 @@ const Footer = () => (
 
   {/* וואטסאפ - תחליף את המספר למטה למספר שלך */}
   <a 
-    href="https://wa.me/97255-955-0453" 
+    href="https://wa.me/972559550453" 
     target="_blank" 
     rel="noopener noreferrer" 
     className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
