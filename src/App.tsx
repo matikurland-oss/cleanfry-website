@@ -170,10 +170,36 @@ const Footer = () => (
             הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
           </p>
           <div className="flex gap-4 justify-end">
-            <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Instagram className="w-5 h-5" /></a>
-            <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><Facebook className="w-5 h-5" /></a>
-            <a href="#" className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"><MessageCircle className="w-5 h-5" /></a>
-          </div>
+  {/* אינסטגרם */}
+  <a 
+    href="https://www.instagram.com/cleanfry_official/" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+  >
+    <Instagram className="w-5 h-5" />
+  </a>
+
+  {/* פייסבוק */}
+  <a 
+    href="https://www.facebook.com/profile.php?id=61574285984183" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+  >
+    <Facebook className="w-5 h-5" />
+  </a>
+
+  {/* וואטסאפ - תחליף את המספר למטה למספר שלך */}
+  <a 
+    href="https://wa.me/97255-955-0453" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+  >
+    <MessageCircle className="w-5 h-5" />
+  </a>
+</div>
         </div>
         <div>
           <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
