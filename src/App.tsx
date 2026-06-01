@@ -481,6 +481,7 @@ export default function App() {
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/cancellation-policy" element={<LegalPage />} />
         </Routes>
       </main>
       <Footer />
