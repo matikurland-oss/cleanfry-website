@@ -210,13 +210,14 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
-          <ul className="space-y-4 text-slate-400">
-            <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
-            <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
-            <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
-          </ul>
-        </div>
+  <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
+  <ul className="space-y-4 text-slate-400">
+    <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
+    <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
+    <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
+    <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
+  </ul>
+</div>
         <div>
           <h4 className="text-lg font-bold mb-6">הצטרפו לקהילה</h4>
           <div className="flex gap-2">
