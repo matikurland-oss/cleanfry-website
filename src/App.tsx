@@ -27,6 +27,7 @@ import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 // ייבוא הדפים הנוספים
 import ContactPage from './ContactPage';
 import LegalPage from './LegalPage';
+import CancellationPage from './CancellationPage';
 import BlogPage from './BlogPage';
 import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
@@ -481,7 +482,8 @@ export default function App() {
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/cancellation-policy" element={<LegalPage />} />
+          <Route path="/legal" element={<LegalPage />} />
+<Route path="/cancellation-policy" element={<CancellationPage />} /> {/* עדכון השורה הזו */}
         </Routes>
       </main>
       <Footer />
