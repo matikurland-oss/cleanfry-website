@@ -24,7 +24,7 @@ const CheckoutPage = () => {
 
   // הגדרות מחיר
   const UNIT_PRICE = 59;
-  const SHIPPING_COST = 39;
+  const SHIPPING_COST = 35;
   const FREE_SHIPPING_THRESHOLD = 299;
 
   // זיהוי כמות מה-URL
