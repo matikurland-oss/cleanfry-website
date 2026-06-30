@@ -243,7 +243,7 @@ export default function App() {
   
   const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;
-  const isFreeShipping = totalPrice >= 299;
+  const isFreeShipping = totalPrice >= 249;
 
   const scrollToPurchase = () => {
     if (location.pathname === '/') {
@@ -353,7 +353,7 @@ export default function App() {
                     </div>
 ) : (
             <>
-              <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 299 ₪</p>
+              <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
               <p className="text-sm text-gray-600 font-medium">אפשרות לאיסוף עצמי ללא עלות</p>
             </>
           )}
@@ -470,7 +470,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       <ScrollToTop />
-      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 299 ש״ח!</div>
+      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 249 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
         <Routes>
