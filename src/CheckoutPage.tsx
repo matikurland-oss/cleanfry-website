@@ -259,6 +259,12 @@ const CheckoutPage = () => {
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
               </h2>
               
+              {/* ⚠️ קוביית ההערה לגבי חברות האשראי ⚠️ */}
+              <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
+                <span className="text-base mt-0.5">⚠️</span>
+                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
+              </div>
+              
               {!showPayment ? (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
