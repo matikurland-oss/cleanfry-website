@@ -102,11 +102,7 @@ const CheckoutPage = () => {
 
       // בדיקת אישור העסקה בהצלחה (מכל סוגי המבנים האפשריים)
       if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000' || (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))))) {
-        
-        // שליחת המייל ברקע
         sendOrderNotificationEmail();
-        
-        // העברת הלקוח לדף התודה של החנות
         navigate('/thanks?type=order');
       }
     };
