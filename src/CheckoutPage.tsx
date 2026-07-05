@@ -53,7 +53,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. האזנה לתשובה מטרנזילה, שליחת מייל שקט ושבירת ה-iFrame החוצה
+  // 5. האזנה לתשובה מטרנזילה, שליחת מייל שקט ושבירת ה-iFrame החוצה לדף ההצלחה הייעודי
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -108,14 +108,17 @@ const CheckoutPage = () => {
       );
 
       if (isSuccess) {
+        // שמירת שיטת המשלוח בזיכרון זמני כדי שדף התודה החדש יציג טקסט מתאים
+        sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
+
         // א. שלח קודם את התראת המייל בצורה מאובטחת ושקטה ברקע
         await sendOrderNotificationEmail();
         
-        // ב. פרוץ את מסגרת ה-iFrame והעבר את הדפדפן הראשי לדף התודה המותאם
+        // ב. פרוץ את מסגרת ה-iFrame והעבר את הדפדפן הראשי לדף ההצלחה החדש
         if (window.top) {
-          window.top.location.href = `${window.location.origin}/thanks?type=order`;
+          window.top.location.href = `${window.location.origin}/order-success`;
         } else {
-          window.location.href = `/thanks?type=order`;
+          window.location.href = `/order-success`;
         }
       }
     };
