@@ -31,7 +31,11 @@ const CheckoutPage = () => {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
-  const [apartment, setApartment] = useState(''); // שדה אופציונלי חדש לדירה
+  const [apartment, setApartment] = useState(''); 
+
+  // States אופציונליים חדשים לחשבונית
+  const [invoiceName, setInvoiceName] = useState('');
+  const [companyId, setCompanyId] = useState('');
 
   // שליטה בהצגת ה-iFrame של התשלום
   const [showPayment, setShowPayment] = useState(false);
@@ -95,30 +99,30 @@ const CheckoutPage = () => {
 
   const totalPrice = subtotal - discount + currentShipping;
 
-  // פונקציית מעבר לתשלום הכוללת בדיקת חובה של עיר וכתובת במידה ונבחר משלוח
+  // פונקציית מעבר לתשלום עם בדיקת חובה מאוחדת ומדויקת
   const handleProceedToPayment = () => {
+    // בדיקת חובה בסיסית לכל סוגי ההזמנות
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      alert('אנא מלא את פרטי החובה: שם, טלפון ואימייל');
+      alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
     
-    // אם נבחר משלוח, עיר וכתובת הופכים לחובה לחלוטין
-    if (shippingMethod === 'delivery') {
-      if (!city.trim() || !address.trim()) {
-        alert('אנא מלא את פרטי החובה למשלוח: עיר, כתובת ומספר בית');
-        return;
-      }
+    // אם נבחר משלוח - מוודאים שגם עיר וכתובת מולאו, אחרת חוסמים ומראים Alert ייעודי
+    if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
+      alert('נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
+      return;
     }
     
     setShowPayment(true);
   };
 
-  // שרשור הכתובת המלאה כולל דירה לטרנזילה (אם הוזנה דירה)
+  // שרשור הכתובת המלאה כולל דירה לטרנזילה
   const fullAddressString = apartment.trim() 
     ? `${address}, דירה ${apartment}` 
     : address;
 
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}`;
+  // בניית ה-URL עבור ה-iFrame של טרנזילה כולל פרטי החשבונית (company ו-pdesc)
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}`;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -194,26 +198,26 @@ const CheckoutPage = () => {
             {/* פרטי משלוח/קשר */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות
+                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input 
                   type="text" 
-                  placeholder="שם מלא" 
+                  placeholder="שם מלא *" 
                   value={fullName}
                   onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }}
                   className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
                 <input 
                   type="tel" 
-                  placeholder="טלפון" 
+                  placeholder="טלפון *" 
                   value={phone}
                   onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }}
                   className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
                 <input 
                   type="email" 
-                  placeholder="אימייל לאישור הזמנה" 
+                  placeholder="אימייל לאישור הזמנה *" 
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }}
                   className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
@@ -223,27 +227,48 @@ const CheckoutPage = () => {
                   <>
                     <input 
                       type="text" 
-                      placeholder="עיר" 
+                      placeholder="עיר *" 
                       value={city}
                       onChange={(e) => { setCity(e.target.value); setShowPayment(false); }}
                       className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
                     <input 
                       type="text" 
-                      placeholder="כתובת ומספר בית" 
+                      placeholder="כתובת ומספר בית *" 
                       value={address}
                       onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }}
                       className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
                     <input 
                       type="text" 
-                      placeholder="דירה (אופציונלי)" 
+                      placeholder="מספר דירה (אופציונלי)" 
                       value={apartment}
                       onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }}
                       className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
                   </>
                 )}
+              </div>
+
+              {/* שדות חדשים ואופציונליים לחשבונית */}
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h3 className="text-md font-bold mb-3 text-slate-700">פרטי חשבונית (אופציונלי)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input 
+                    type="text" 
+                    placeholder="חשבונית על שם" 
+                    value={invoiceName}
+                    onChange={(e) => { setInvoiceName(e.target.value); setShowPayment(false); }}
+                    className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="ח.פ / ת.ז" 
+                    value={companyId}
+                    onChange={(e) => { setCompanyId(e.target.value); setShowPayment(false); }}
+                    className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                  />
+                </div>
               </div>
             </div>
 
