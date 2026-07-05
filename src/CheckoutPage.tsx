@@ -52,17 +52,41 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-// האזנה לתשובה מטרנזילה בתוך ה-iFrame
+  // האזנה לתשובה מטרנזילה בתוך ה-iFrame (גרסה עמידה ומורחבת לכל סוגי המבנים)
   useEffect(() => {
     const handleTranzilaMessage = (event: MessageEvent) => {
-      if (!event.origin.includes('tranzila.com')) return;
+      console.log("Tranzila Message Received From:", event.origin, "Data:", event.data);
 
-      const data = event.data;
+      // אבטחה: וודא שההודעה מגיעה מאחד השרתים של טרנזילה
+      if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
+
+      let data = event.data;
       
-      if (data && (data.Response === '000' || data.res === '000')) {
-        navigate('/thanks?type=order'); // השינוי כאן
-      } else if (data && data.Response) {
-        alert(`התשלום נכשל: ${data.message || 'אנא בדוק את פרטי הכרטיס ונסה שוב'}`);
+      // אם טרנזילה שלחה את הנתונים כטקסט מחובר (Query String), נהפוך אותו לאובייקט נוח
+      if (typeof data === 'string') {
+        try {
+          const urlParams = new URLSearchParams(data);
+          if (urlParams.has('Response') || urlParams.has('res')) {
+            data = {
+              Response: urlParams.get('Response'),
+              res: urlParams.get('res'),
+              message: urlParams.get('message')
+            };
+          }
+        } catch (e) {
+          console.error("Failed to parse Tranzila string data", e);
+        }
+      }
+
+      // בדיקת אישור העסקה (תומך באובייקט, טקסט מפורק או מחרוזת קבועה של טרנזילה)
+      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000')) {
+        console.log("Payment Successful! Navigating to thanks page...");
+        navigate('/thanks?type=order');
+      } else if (data && (data.Response || data.res)) {
+        console.log("Payment Failed or Cancelled:", data);
+        if (data.Response !== '000' && data.res !== '000') {
+          alert(`התשלום נכשל: ${data.message || 'אנא בדוק את פרטי הכרטיס ונסה שוב'}`);
+        }
       }
     };
 
