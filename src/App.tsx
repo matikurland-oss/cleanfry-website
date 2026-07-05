@@ -32,6 +32,7 @@ import BlogPage from './BlogPage';
 import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
 import AccessibilityPage from './AccessibilityPage';
+import OrderSuccessPage from './OrderSuccessPage'; // ◄ ייבוא דף התודה החדש של ההזמנות!
 
 // --- רכיב עזר לגלילה לראש הדף במעבר בין נתיבים ---
 const ScrollToTop = () => {
@@ -150,7 +151,7 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden text-right">
-            <p className="pb-6 text-slate-600 leading-relaxed">{answer}</p>
+            <p className="p-6 text-slate-600 leading-relaxed">{answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -171,36 +172,31 @@ const Footer = () => (
             הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
           </p>
           <div className="flex gap-4 justify-end">
-  {/* אינסטגרם */}
-  <a 
-    href="https://www.instagram.com/cleanfry_official/" 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
-  >
-    <Instagram className="w-5 h-5" />
-  </a>
-
-  {/* פייסבוק */}
-  <a 
-    href="https://www.facebook.com/profile.php?id=61574285984183" 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
-  >
-    <Facebook className="w-5 h-5" />
-  </a>
-
-  {/* וואטסאפ - תחליף את המספר למטה למספר שלך */}
-  <a 
-    href="https://wa.me/972559550453" 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
-  >
-    <MessageCircle className="w-5 h-5" />
-  </a>
-</div>
+            <a 
+              href="https://www.instagram.com/cleanfry_official/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a 
+              href="https://www.facebook.com/profile.php?id=61574285984183" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+            >
+              <Facebook className="w-5 h-5" />
+            </a>
+            <a 
+              href="https://wa.me/972559550453" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-brand-blue transition-colors"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </a>
+          </div>
         </div>
         <div>
           <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
@@ -211,14 +207,14 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-  <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
-  <ul className="space-y-4 text-slate-400">
-    <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
-    <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
-    <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
-    <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
-  </ul>
-</div>
+          <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
+          <ul className="space-y-4 text-slate-400">
+            <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
+            <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
+            <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
+            <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
+          </ul>
+        </div>
         <div>
           <h4 className="text-lg font-bold mb-6">הצטרפו לקהילה</h4>
           <div className="flex gap-2">
@@ -277,36 +273,29 @@ export default function App() {
                     disablePictureInPicture
                   />
                 </div>
-                {/* כותרת נסתרת לגוגל לשיפור ה-SEO */}
-<h2 className="sr-only">CleanFry - אבקה למיצוק שמן בישול, הפתרון המושלם למיצוק שמן טיגון משומש</h2>
-
-<h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
-  <span className="text-brand-blue">טיגון מושלם.</span><br />
-  <span className="text-brand-green">ניקוי קל.</span>
-</h1>
+                <h2 className="sr-only">CleanFry - אבקה למיצוק שמן בישול, הפתרון המושלם למיצוק שמן טיגון משומש</h2>
+                <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
+                  <span className="text-brand-blue">טיגון מושלם.</span><br />
+                  <span className="text-brand-green">ניקוי קל.</span>
+                </h1>
               </div>
               <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
                 אבקה חדשנית, 100% ממקור צמחי, למיצוק שמן בישול. הופכת את השמן המשומש לגוש מוצק וקשיח, המאפשר השלכה בטוחה ונקייה לאשפה. זהו פתרון ידידותי לסביבה השומר על מטבח נקי ומגן על צנרת הניקוז.
               </p>
               <div className="flex flex-wrap justify-start items-center gap-2 sm:gap-4 mt-8">
-  {/* כפתור 1 - צהוב */}
-  <div className="flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
-    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0" />
-    <span className="text-yellow-800 text-sm sm:text-base font-extrabold">100% רכיבים צמחיים</span>
-  </div>
-
-  {/* כפתור 2 - ירוק */}
-  <div className="flex items-center gap-2 bg-green-100 border-2 border-green-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
-    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
-    <span className="text-green-800 text-sm sm:text-base font-extrabold">ידידותי לסביבה</span>
-  </div>
-
-  {/* כפתור 3 - כחול - הבוסט לגוגל */}
-  <div className="flex items-center gap-2 bg-blue-100 border-2 border-blue-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
-    <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
-    <h2 className="text-blue-800 text-sm sm:text-base font-extrabold m-0">אבקה למיצוק שמן בישול</h2>
-  </div>
-</div>
+                <div className="flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 flex-shrink-0" />
+                  <span className="text-yellow-800 text-sm sm:text-base font-extrabold">100% רכיבים צמחיים</span>
+                </div>
+                <div className="flex items-center gap-2 bg-green-100 border-2 border-green-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+                  <span className="text-green-800 text-sm sm:text-base font-extrabold">ידידותי לסביבה</span>
+                </div>
+                <div className="flex items-center gap-2 bg-blue-100 border-2 border-blue-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                  <h2 className="text-blue-800 text-sm sm:text-base font-extrabold m-0">אבקה למיצוק שמן בישול</h2>
+                </div>
+              </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
               <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
@@ -351,21 +340,21 @@ export default function App() {
                     <div className="flex items-center gap-2 text-brand-green font-bold bg-green-50 px-4 py-1 rounded-full animate-pulse">
                       <Truck className="w-5 h-5" /><span>משלוח חינם!</span>
                     </div>
-) : (
-            <>
-              <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
-              <p className="text-sm text-gray-600 font-medium">אפשרות לאיסוף עצמי ללא עלות</p>
-            </>
-          )}
+                  ) : (
+                    <>
+                      <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+                      <p className="text-sm text-gray-600 font-medium">אפשרות לאיסוף עצמי ללא עלות</p>
+                    </>
+                  )}
                 </div>
 
                 <button 
-  onClick={() => navigate(`/checkout?q=${quantity}`)}
-  className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px] flex items-center justify-center gap-3"
->
-  <ShoppingCart className="w-8 h-8" />
-  {getButtonText()}
-</button>
+                  onClick={() => navigate(`/checkout?q=${quantity}`)}
+                  className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px] flex items-center justify-center gap-3"
+                >
+                  <ShoppingCart className="w-8 h-8" />
+                  {getButtonText()}
+                </button>
               </div>
             </div>
           </div>
@@ -413,47 +402,47 @@ export default function App() {
       </section>
 
       {/* FAQ Section */}
-  <section className="py-24">
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
-      </div>
-      <div className="space-y-2">
-        <FAQItem 
-          question="איך נפטרים משמן טיגון משומש בצורה בטוחה?"
-          answer="הדרך הבטוחה ביותר היא להפוך את השמן למוצק באמצעות CleanFry. לאחר שהשמן מתקשה, ניתן פשוט להשליך אותו לפח האשפה הרגיל בתוך שקית, ללא חשש מנזילות או ריחות."
-        />
-        <FAQItem 
-          question="למה אסור לשפוך שמן לכיור?"
-          answer="שמן טיגון שמושלך לכיור מתקרר בצנרת, נצמד לדפנות וגורם לסתימות קשות ויקרות לתיקון. בנוסף, השמן מגיע למערכות הביוב העירוניות ומזהם את הסביבה."
-        />
-        <FAQItem 
-          question="האם CleanFry ידידותי לסביבה?"
-          answer="בהחלט. CleanFry מבוסס על רכיבים טבעיים שהופכים את השמן לפסולת מוצקה המתפרקת באופן טבעי (Biodegradable), ובכך מונעת זיהום של מקורות מים."
-        />
-        <FAQItem 
-          question="לאיזה סוגי שמן CleanFry מתאים?"
-          answer="המוצר מתאים לכל סוגי שמני המאכל: שמן קנולה, שמן חמניות, שמן תירס, שמן זית וכו׳, ואפילו לשומן מן החי."
-        />
-        <FAQItem 
-          question="האם האבקה למיצוק שמן בטוחה לשימוש?" 
-          answer="בהחלט. CleanFry מבוססת על רכיבים ממקור צמחי, היא אינה רעילה ובטוחה לחלוטין לשימוש במטבח הביתי. האבקה פותחה במיוחד כדי לתת מענה אקולוגי ונקי לטיפול בשמן משומש ללא חשש. חשוב לציין שהאבקה היא לא למאכל ויש להרחיקה מילדים." 
-        />
-        <FAQItem 
-          question="כמה אבקה צריך להוסיף כדי למצק את השמן?" 
-          answer="המינון המומלץ הוא כף אחת של אבקת CleanFry לכל כוס שמן (כ-200-250 מ״ל). במידה והשמן מלוכלך מאוד משאריות טיגון, ניתן להוסיף מעט יותר כדי להבטיח מיצוק מלא ומהיר בתוך כ-25 דקות." 
-        />
-        <FAQItem 
-          question="איך משליכים את השמן אחרי שהשתמשתי בממצק שמן בישול?" 
-          answer="ברגע שהשמן התקרר והפך לגוש מוצק וקשיח, ניתן פשוט להפריד אותו מהמחבת או מהסיר בעזרת מרית ולהשליך אותו ישירות לפח האשפה הביתי. אין צורך בשקיות מיוחדות." 
-        />
-        <FAQItem 
-          question="האם ניתן להשתמש בשמן שוב אחרי המיצוק?" 
-          answer="לא. אבקת CleanFry נועדה למטרת פינוי והשלכה בטוחה של שמן משומש בלבד. ברגע שהשמן עבר תהליך מיצוק, הוא הופך לחומר מוצק שאינו מתאים לבישול חוזר." 
-        />
-      </div>
-    </div>
-  </section>
+      <section className="py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-right">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-slate-900 mb-4">שאלות ותשובות</h2>
+          </div>
+          <div className="space-y-2">
+            <FAQItem 
+              question="איך נפטרים משמן טיגון משומש בצורה בטוחה?"
+              answer="הדרך הבטוחה ביותר היא להפוך את השמן למוצק באמצעות CleanFry. לאחר שהשמן מתקשה, ניתן פשוט להשליך אותו לפח האשפה הרגיל בתוך שקית, ללא חשש מנזילות או ריחות."
+            />
+            <FAQItem 
+              question="למה אסור לשפוך שמן לכיור?"
+              answer="שמן טיגון שמושלך לכיור מתקרר בצנרת, נצמד לדפנות וגורם לסתימות קשות ויקרות לתיקון. בנוסף, השמן מגיע למערכות הביוב העירוניות ומזהם את הסביבה."
+            />
+            <FAQItem 
+              question="האם CleanFry ידידותי לסביבה?"
+              answer="בהחלט. CleanFry מבוסס על רכיבים טבעיים שהופכים את השמן לפסולת מוצקה המתפרקת באופן טבעי (Biodegradable), ובכך מונעת זיהום של מקורות מים."
+            />
+            <FAQItem 
+              question="לאיזה סוגי שמן CleanFry מתאים?"
+              answer="המוצר מתאים לכל סוגי שמני המאכל: שמן קנולה, שמן חמניות, שמן תירס, שמן זית וכו׳, ואפילו לשומן מן החי."
+            />
+            <FAQItem 
+              question="האם האבקה למיצוק שמן בטוחה לשימוש?" 
+              answer="בהחלט. CleanFry מבוססת על רכיבים ממקור צמחי, היא אינה רעילה ובטוחה לחלוטין לשימוש במטבח הביתי. האבקה פותחה במיוחד כדי לתת מענה אקולוגי ונקי לטיפול בשמן משומש ללא חשש. חשוב לציין שהאבקה היא לא למאכל ויש להרחיקה מילדים." 
+            />
+            <FAQItem 
+              question="כמה אבקה צריך להוסיף כדי למצק את השמן?" 
+              answer="המינון המומלץ הוא כף אחת של אבקת CleanFry לכל כוס שמן (כ-200-250 מ״ל). במידה והשמן מלוכלך מאוד משאריות טיגון, ניתן להוסיף מעט יותר כדי להבטיח מיצוק מלא ומהיר בתוך כ-25 דקות." 
+            />
+            <FAQItem 
+              question="איך משליכים את השמן אחרי שהשתמשתי בממצק שמן בישול?" 
+              answer="ברגע שהשמן התקרר והפך לגוש מוצק וקשיח, ניתן פשוט להפריד אותו מהמחבת או מהסיר בעזרת מרית ולהשליך אותו ישירות לפח האשפה הביתי. אין צורך בשקיות מיוחדות." 
+            />
+            <FAQItem 
+              question="האם ניתן להשתמש בשמן שוב אחרי המיצוק?" 
+              answer="לא. אבקת CleanFry נועדה למטרת פינוי והשלכה בטוחה של שמן משומש בלבד. ברגע שהשמן עבר תהליך מיצוק, הוא הופך לחומר מוצק שאינו מתאים לבישול חוזר." 
+            />
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-brand-blue text-center">
@@ -479,11 +468,11 @@ export default function App() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:id" element={<BlogPostDetail />} />
           <Route path="/thanks" element={<SuccessPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} /> {/* ◄ הנתיב החדש והייעודי להזמנות מוצלחות! */}
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/legal" element={<LegalPage />} />
-<Route path="/cancellation-policy" element={<CancellationPage />} /> {/* עדכון השורה הזו */}
+          <Route path="/cancellation-policy" element={<CancellationPage />} />
         </Routes>
       </main>
       <Footer />
