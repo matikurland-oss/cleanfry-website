@@ -45,6 +45,9 @@ const CheckoutPage = () => {
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
 
+  // הקישור המעודכן שלך מ-Formspree
+  const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
+
   // זיהוי כמות מה-URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -52,27 +55,32 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // האזנה לתשובה מטרנזילה ושליחת הודעת וואטסאפ אוטומטית בהצלחה
+  // האזנה לתשובה מטרנזילה ושליחת מייל שקט ברקע ללא מעורבות הלקוח
   useEffect(() => {
-    const sendWhatsAppNotification = () => {
-      const myPhoneNumber = "972526060860"; 
-      
-      // ניסוח ההודעה המלאה שתקבל לוואטסאפ
-      const messageText = `🔥 בוצעה עסקה חדשה באתר CleanFry! 🔥
+    const sendOrderNotificationEmail = async () => {
+      if (!fullName.trim() || !phone.trim()) return;
 
-👤 שם הלקוח: ${fullName}
-📞 טלפון: ${phone}
-📧 אימייל: ${email}
-📦 כמות מארזים: ${quantity}
-🚚 שיטת קבלה: ${shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי'}
-📍 כתובת: ${shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי'}
-💰 סה"כ שולם: ₪${totalPrice.toFixed(0)}
-
-📋 פרטי חשבונית: ${invoiceName || 'לא הוגדר'} ${companyId ? `(ח.פ/ת.ז: ${companyId})` : ''}`;
-
-      // פתיחת הקישור של וואטסאפ בחלון חדש
-      const whatsappUrl = `https://wa.me/${myPhoneNumber}?text=${encodeURIComponent(messageText)}`;
-      window.open(whatsappUrl, '_blank');
+      try {
+        await fetch(FORMSPREE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            "נושא": "הזמנה חדשה מאתר CleanFry",
+            "שם הלקוח": fullName,
+            "טלפון": phone,
+            "אימייל": email,
+            "כמות מארזים": quantity,
+            "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי',
+            "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי',
+            "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`,
+            "חשבונית על שם": invoiceName || 'לא הוגדר',
+            "ח.פ / ת.ז": companyId || 'לא הוגדר'
+          })
+        });
+        console.log("Notification email sent successfully via Formspree!");
+      } catch (error) {
+        console.error("Failed to send notification email:", error);
+      }
     };
 
     const handleTranzilaMessage = (event: MessageEvent) => {
@@ -92,13 +100,13 @@ const CheckoutPage = () => {
         } catch (e) {}
       }
 
-      // בדיקת אישור העסקה בהצלחה (באובייקט, מחרוזת, או זיהוי הגעה לדף תודה ב-iFrame)
+      // בדיקת אישור העסקה בהצלחה (מכל סוגי המבנים האפשריים)
       if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000' || (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))))) {
         
-        // מפעיל את פתיחת הוואטסאפ אליך עם כל הנתונים
-        sendWhatsAppNotification();
+        // שליחת המייל ברקע
+        sendOrderNotificationEmail();
         
-        // מעביר את הלקוח לדף התודה המלא של האתר
+        // העברת הלקוח לדף התודה של החנות
         navigate('/thanks?type=order');
       }
     };
@@ -151,7 +159,7 @@ const CheckoutPage = () => {
     ? `${address}, דירה ${apartment}` 
     : address;
 
-  // בניית ה-URL עבור ה-iFrame של טרנזילה כולל פקודת expari=0 לשבירת מסגרות מובנית
+  // בניית ה-URL המלא עבור ה-iFrame של טרנזילה
   const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}&expari=0`;
 
   return (
@@ -167,10 +175,10 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* עמודה ימנית */}
+          {/* עמודה ימנית: פרטים ושיטת קבלה */}
           <div className="lg:col-span-7 space-y-6 text-right">
             
-            {/* שיטת קבלה */}
+            {/* בחירת שיטת קבלה */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <Truck className="text-blue-500" size={28} /> איך תרצו לקבל את החבילה?
@@ -217,7 +225,7 @@ const CheckoutPage = () => {
                     <div className="text-right">
                       <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                       <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                      <p className="font-medium">• כפר סבא: רח' - בן גוריון 7</p>
+                      <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
                     </div>
                   </motion.div>
                 )}
@@ -313,7 +321,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* עמודה שמאלית */}
+          {/* עמודה שמאלית: סיכום הזמנה */}
           <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
@@ -324,10 +332,57 @@ const CheckoutPage = () => {
                   <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
+                  <button 
+                    onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} 
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"
+                  >
+                    <Minus size={18} />
+                  </button>
                   <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
+                  <button 
+                    onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} 
+                    className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"
+                  >
+                    <Plus size={18} />
+                  </button>
                 </div>
+              </div>
+
+              {shippingMethod === 'delivery' && !isFreeShipping && (
+                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
+                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
+                  <div className="w-full bg-orange-200 h-2 rounded-full mt-2 overflow-hidden">
+                    <div className="bg-orange-500 h-full transition-all duration-500" style={{ width: `${(subtotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}></div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-8">
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="קוד קופון" 
+                    value={coupon}
+                    onChange={(e) => { setCoupon(e.target.value); setShowPayment(false); }}
+                    disabled={isCouponApplied}
+                    className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right"
+                  />
+                  {!isCouponApplied ? (
+                    <button onClick={handleApplyCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition">החל</button>
+                  ) : (
+                    <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1">
+                      <X size={18} /> ביטול
+                    </button>
+                  )}
+                </div>
+                {isCouponApplied && (
+                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} />
+                      <span>קופון הופעל! חסכת ₪{discount.toFixed(0)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
@@ -335,16 +390,32 @@ const CheckoutPage = () => {
                   <span>סיכום ביניים ({quantity} יח'):</span>
                   <span className="font-bold">₪{subtotal}</span>
                 </div>
+                
                 <div className="flex justify-between">
                   <span>דמי משלוח:</span>
                   <span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>
                     {shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}
                   </span>
                 </div>
+
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600 font-bold">
+                    <span>הנחה:</span>
+                    <span>-₪{discount.toFixed(0)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100">
                   <span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span>
                   <span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span>
                 </div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
+                <ShieldCheck size={16} className="text-blue-600" />
+                <span>SSL SECURED</span>
+                <span>•</span>
+                <span>PCI COMPLIANT</span>
               </div>
             </div>
           </div>
