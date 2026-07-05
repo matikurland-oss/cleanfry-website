@@ -210,8 +210,8 @@ const CheckoutPage = () => {
                     <MapPin className="flex-shrink-0 mt-1 text-blue-600" size={20} />
                     <div className="text-right">
                       <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
-                      <p className="font-medium">• תל אביב: רח' משה וילנסקי</p>
-                      <p className="font-medium">• כפר סבא: רח' בן גוריון</p>
+                      <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
+                      <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
                       <p className="mt-2 text-xs font-medium opacity-90 italic">* אנחנו נתקשר ונתאם את נקודת האיסוף הנוחה לכם לאחר ביצוע ההזמנה.</p>
                     </div>
                   </motion.div>
