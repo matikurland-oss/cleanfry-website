@@ -52,29 +52,60 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // מנגנון האזנה חכם: תופס מתי ה-iFrame משתנה או שולח הודעת הצלחה
+  // האזנה לתשובה מטרנזילה ושליחת הודעת וואטסאפ אוטומטית בהצלחה
   useEffect(() => {
+    const sendWhatsAppNotification = () => {
+      const myPhoneNumber = "972526060860"; 
+      
+      // ניסוח ההודעה המלאה שתקבל לוואטסאפ
+      const messageText = `🔥 בוצעה עסקה חדשה באתר CleanFry! 🔥
+
+👤 שם הלקוח: ${fullName}
+📞 טלפון: ${phone}
+📧 אימייל: ${email}
+📦 כמות מארזים: ${quantity}
+🚚 שיטת קבלה: ${shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי'}
+📍 כתובת: ${shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי'}
+💰 סה"כ שולם: ₪${totalPrice.toFixed(0)}
+
+📋 פרטי חשבונית: ${invoiceName || 'לא הוגדר'} ${companyId ? `(ח.פ/ת.ז: ${companyId})` : ''}`;
+
+      // פתיחת הקישור של וואטסאפ בחלון חדש
+      const whatsappUrl = `https://wa.me/${myPhoneNumber}?text=${encodeURIComponent(messageText)}`;
+      window.open(whatsappUrl, '_blank');
+    };
+
     const handleTranzilaMessage = (event: MessageEvent) => {
-      // תפיסת הודעות postMessage רגילות
-      const data = event.data;
-      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000')) {
-        navigate('/thanks?type=order');
-        return;
+      if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
+
+      let data = event.data;
+      
+      if (typeof data === 'string') {
+        try {
+          const urlParams = new URLSearchParams(data);
+          if (urlParams.has('Response') || urlParams.has('res')) {
+            data = {
+              Response: urlParams.get('Response'),
+              res: urlParams.get('res')
+            };
+          }
+        } catch (e) {}
       }
 
-      // הגנה עוקפת: אם ה-iFrame מנסה לטעון בתוכו את דף ה-thanks, נשבור את המסגרת ונעביר את כל האתר
-      try {
-        if (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))) {
-          navigate('/thanks?type=order');
-        }
-      } catch (e) {
-        console.error(e);
+      // בדיקת אישור העסקה בהצלחה (באובייקט, מחרוזת, או זיהוי הגעה לדף תודה ב-iFrame)
+      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000' || (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))))) {
+        
+        // מפעיל את פתיחת הוואטסאפ אליך עם כל הנתונים
+        sendWhatsAppNotification();
+        
+        // מעביר את הלקוח לדף התודה המלא של האתר
+        navigate('/thanks?type=order');
       }
     };
 
     window.addEventListener('message', handleTranzilaMessage);
     return () => window.removeEventListener('message', handleTranzilaMessage);
-  }, [navigate]);
+  }, [navigate, fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
 
   // חישובים
   const subtotal = UNIT_PRICE * quantity;
@@ -120,8 +151,8 @@ const CheckoutPage = () => {
     ? `${address}, דירה ${apartment}` 
     : address;
 
-  // בניית ה-URL עבור ה-iFrame של טרנזילה
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}`;
+  // בניית ה-URL עבור ה-iFrame של טרנזילה כולל פקודת expari=0 לשבירת מסגרות מובנית
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}&expari=0`;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -186,14 +217,14 @@ const CheckoutPage = () => {
                     <div className="text-right">
                       <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                       <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                      <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
+                      <p className="font-medium">• כפר סבא: רח' - בן גוריון 7</p>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* פרטי התקשרות */}
+            {/* פרטי משלוח/קשר */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
