@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Truck, 
@@ -14,7 +14,6 @@ import {
 
 const CheckoutPage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   // 1. הגדרת כל ה-States הבסיסיים
   const [quantity, setQuantity] = useState(1);
@@ -35,7 +34,7 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר לטסט
+  // 2. הגדרות מחיר וקישורים
   const UNIT_PRICE = 1;
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
@@ -54,7 +53,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. האזנה לתשובה מטרנזילה ושליחת מייל שקט ברקע
+  // 5. האזנה לתשובה מטרנזילה, שליחת מייל שקט ושבירת ה-iFrame החוצה
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -82,7 +81,7 @@ const CheckoutPage = () => {
       }
     };
 
-    const handleTranzilaMessage = (event: MessageEvent) => {
+    const handleTranzilaMessage = async (event: MessageEvent) => {
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
@@ -99,15 +98,31 @@ const CheckoutPage = () => {
         } catch (e) {}
       }
 
-      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000' || (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))))) {
-        sendOrderNotificationEmail();
-        navigate('/thanks?type=order');
+      // בדיקת תנאי אישור עסקה מוצלח מטרנזילה
+      const isSuccess = data && (
+        data.Response === '000' || 
+        data.res === '000' || 
+        data === 'Response=000' || 
+        data === 'res=000' || 
+        (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order')))
+      );
+
+      if (isSuccess) {
+        // א. שלח קודם את התראת המייל בצורה מאובטחת ושקטה ברקע
+        await sendOrderNotificationEmail();
+        
+        // ב. פרוץ את מסגרת ה-iFrame והעבר את הדפדפן הראשי לדף התודה המותאם
+        if (window.top) {
+          window.top.location.href = `${window.location.origin}/thanks?type=order`;
+        } else {
+          window.location.href = `/thanks?type=order`;
+        }
       }
     };
 
     window.addEventListener('message', handleTranzilaMessage);
     return () => window.removeEventListener('message', handleTranzilaMessage);
-  }, [navigate, fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
+  }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
 
   // 6. פונקציות תפעוליות של הטופס
   const handleApplyCoupon = () => {
@@ -202,7 +217,7 @@ const CheckoutPage = () => {
                   <div className="text-right">
                     <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                     <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                    <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
+                    <p className="font-medium">• כפר סבא: רח' - בן גוריון 7</p>
                   </div>
                 </div>
               )}
