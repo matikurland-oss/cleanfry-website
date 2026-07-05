@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { 
   Ticket, 
   ShieldCheck, 
@@ -16,11 +16,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const CheckoutPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // States לפרטי הזמנה
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
+
+  // States לפרטי לקוח עבור טרנזילה
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+
+  // שליטה בהצגת ה-iFrame של התשלום
+  const [showPayment, setShowPayment] = useState(false);
 
   // הגדרות מחיר
   const UNIT_PRICE = 59;
@@ -33,6 +46,26 @@ const CheckoutPage = () => {
     const qParam = parseInt(params.get('q') || '1');
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
+
+  // האזנה לתשובה מטרנזילה בתוך ה-iFrame
+  useEffect(() => {
+    const handleTranzilaMessage = (event: MessageEvent) => {
+      // אבטחה: וודא שההודעה מגיעה מטרנזילה
+      if (!event.origin.includes('tranzila.com')) return;
+
+      const data = event.data;
+      
+      // Response = '000' או res = '000' מסמל עסקה מאושרת בהצלחה
+      if (data && (data.Response === '000' || data.res === '000')) {
+        navigate('/thanks');
+      } else if (data && data.Response) {
+        alert(`התשלום נכשל: ${data.message || 'אנא בדוק את פרטי הכרטיס ונסה שוב'}`);
+      }
+    };
+
+    window.addEventListener('message', handleTranzilaMessage);
+    return () => window.removeEventListener('message', handleTranzilaMessage);
+  }, [navigate]);
 
   // חישובים
   const subtotal = UNIT_PRICE * quantity;
@@ -65,6 +98,22 @@ const CheckoutPage = () => {
 
   const totalPrice = subtotal - discount + currentShipping;
 
+  // פונקציית מעבר לתשלום ובדיקת תקינות פרטים בסיסית
+  const handleProceedToPayment = () => {
+    if (!fullName.trim() || !phone.trim() || !email.trim()) {
+      alert('אנא מלא את פרטי החובה: שם, טלפון ואימייל');
+      return;
+    }
+    if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
+      alert('אנא מלא עיר וכתובת למשלוח');
+      return;
+    }
+    setShowPayment(true);
+  };
+
+  // בניית ה-URL עבור ה-iFrame של טרנזילה עם כל הפרטים מוצפנים בצורה בטוחה
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(address)}`;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
       {/* Header */}
@@ -89,7 +138,7 @@ const CheckoutPage = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div 
-                  onClick={() => setShippingMethod('delivery')}
+                  onClick={() => { setShippingMethod('delivery'); setShowPayment(false); }}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'delivery' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
                   <div className="text-right">
@@ -102,13 +151,12 @@ const CheckoutPage = () => {
                 </div>
 
                 <div 
-                  onClick={() => setShippingMethod('pickup')}
+                  onClick={() => { setShippingMethod('pickup'); setShowPayment(false); }}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
                   <div className="text-right">
                     <p className="font-bold text-slate-800">איסוף עצמי</p>
                     <p className="text-xs text-green-600 font-bold underline">חינם</p>
-                    {/* המידע המקדים שהוספנו בתוך הכפתור */}
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">ת"א / כפר סבא בלבד</p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
@@ -143,28 +191,79 @@ const CheckoutPage = () => {
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder="שם מלא" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                <input 
+                  type="text" 
+                  placeholder="שם מלא" 
+                  value={fullName}
+                  onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }}
+                  className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                />
                 <input 
                   type="tel" 
                   placeholder="טלפון" 
+                  value={phone}
+                  onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }}
                   className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
-                <input type="email" placeholder="אימייל לאישור הזמנה" className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                <input 
+                  type="email" 
+                  placeholder="אימייל לאישור הזמנה" 
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }}
+                  className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                />
                 
                 {shippingMethod === 'delivery' && (
                   <>
-                    <input type="text" placeholder="עיר" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                    <input type="text" placeholder="כתובת ומספר בית" className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                    <input 
+                      type="text" 
+                      placeholder="עיר" 
+                      value={city}
+                      onChange={(e) => { setCity(e.target.value); setShowPayment(false); }}
+                      className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="כתובת ומספר בית" 
+                      value={address}
+                      onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }}
+                      className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                    />
                   </>
                 )}
               </div>
             </div>
 
+            {/* חלק תשלום מאובטח עם iFrame דינמי */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
               </h2>
-              <p className="text-slate-500 text-sm italic">הסליקה תתבצע בדף מאובטח לאחר לחיצה על כפתור ההזמנה.</p>
+              
+              {!showPayment ? (
+                <div>
+                  <p className="text-slate-500 text-sm mb-4">מלא את פרטי הקשר והמשלוח למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
+                  <button 
+                    onClick={handleProceedToPayment}
+                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all"
+                  >
+                    המשך לתשלום מאובטח
+                  </button>
+                </div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full mt-2"
+                >
+                  <iframe 
+                    src={tranzilaUrl}
+                    className="w-full h-[480px] border border-slate-100 rounded-2xl shadow-inner"
+                    title="Tranzila Secure Payment"
+                    id="tranzila-iframe"
+                  />
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -179,9 +278,19 @@ const CheckoutPage = () => {
                   <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button onClick={() => quantity > 1 && setQuantity(q => q - 1)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
+                  <button 
+                    onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} 
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"
+                  >
+                    <Minus size={18} />
+                  </button>
                   <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button onClick={() => quantity < 10 && setQuantity(q => q + 1)} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
+                  <button 
+                    onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} 
+                    className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"
+                  >
+                    <Plus size={18} />
+                  </button>
                 </div>
               </div>
 
@@ -200,7 +309,7 @@ const CheckoutPage = () => {
                     type="text" 
                     placeholder="קוד קופון" 
                     value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
+                    onChange={(e) => { setCoupon(e.target.value); setShowPayment(false); }}
                     disabled={isCouponApplied}
                     className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right"
                   />
@@ -248,10 +357,12 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-blue-600 text-white py-5 rounded-2xl mt-8 font-black text-2xl shadow-xl hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                <ShieldCheck size={28} />
-                בצע הזמנה
-              </button>
+              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
+                <ShieldCheck size={16} className="text-blue-600" />
+                <span>SSL SECURED</span>
+                <span>•</span>
+                <span>PCI COMPLIANT</span>
+              </div>
             </div>
           </div>
 
