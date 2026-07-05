@@ -145,9 +145,8 @@ const CheckoutPage = () => {
     ? `${address}, דירה ${apartment}` 
     : address;
 
-  // בניית ה-URL עבור ה-iFrame של טרנזילה כולל פרטי החשבונית (company ו-pdesc)
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}`;
-
+  // בניית ה-URL המלא עבור ה-iFrame כולל פקודת שבירת מסגרת בהפניה (expari=0)
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}&expari=0`;
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
       {/* Header */}
