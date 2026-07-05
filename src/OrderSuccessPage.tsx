@@ -48,7 +48,7 @@ const OrderSuccessPage = () => {
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">הישארו מעודכנים בקהילת CleanFry</p>
           <div className="flex justify-center gap-4">
             <a 
-              href="https://www.instagram.com/cleanfry.co.il/" 
+              href="https://www.instagram.com/cleanfry_official/" 
               target="_blank" 
               rel="noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition"
@@ -56,7 +56,7 @@ const OrderSuccessPage = () => {
               <Instagram size={16} /> אינסטגרם
             </a>
             <a 
-              href="https://www.facebook.com/profile.php?id=61567290038446" 
+              href="https://www.facebook.com/profile.php?id=61574285984183" 
               target="_blank" 
               rel="noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition"
