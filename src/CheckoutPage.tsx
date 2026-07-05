@@ -52,7 +52,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // האזנה לתשובה מטרנזילה בתוך ה-iFrame
+// האזנה לתשובה מטרנזילה בתוך ה-iFrame
   useEffect(() => {
     const handleTranzilaMessage = (event: MessageEvent) => {
       if (!event.origin.includes('tranzila.com')) return;
@@ -60,7 +60,7 @@ const CheckoutPage = () => {
       const data = event.data;
       
       if (data && (data.Response === '000' || data.res === '000')) {
-        navigate('/thanks');
+        navigate('/thanks?type=order'); // השינוי כאן
       } else if (data && data.Response) {
         alert(`התשלום נכשל: ${data.message || 'אנא בדוק את פרטי הכרטיס ונסה שוב'}`);
       }
