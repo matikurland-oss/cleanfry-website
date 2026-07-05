@@ -33,14 +33,14 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState('');
   const [apartment, setApartment] = useState(''); 
 
-  // States אופציונליים חדשים לחשבונית
+  // States אופציונליים לחשבונית
   const [invoiceName, setInvoiceName] = useState('');
   const [companyId, setCompanyId] = useState('');
 
   // שליטה בהצגת ה-iFrame של התשלום
   const [showPayment, setShowPayment] = useState(false);
 
-  // הגדרות מחיר
+  // הגדרות מחיר לטסט
   const UNIT_PRICE = 1;
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
@@ -52,41 +52,23 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // האזנה לתשובה מטרנזילה בתוך ה-iFrame (גרסה עמידה ומורחבת לכל סוגי המבנים)
+  // מנגנון האזנה חכם: תופס מתי ה-iFrame משתנה או שולח הודעת הצלחה
   useEffect(() => {
     const handleTranzilaMessage = (event: MessageEvent) => {
-      console.log("Tranzila Message Received From:", event.origin, "Data:", event.data);
-
-      // אבטחה: וודא שההודעה מגיעה מאחד השרתים של טרנזילה
-      if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
-
-      let data = event.data;
-      
-      // אם טרנזילה שלחה את הנתונים כטקסט מחובר (Query String), נהפוך אותו לאובייקט נוח
-      if (typeof data === 'string') {
-        try {
-          const urlParams = new URLSearchParams(data);
-          if (urlParams.has('Response') || urlParams.has('res')) {
-            data = {
-              Response: urlParams.get('Response'),
-              res: urlParams.get('res'),
-              message: urlParams.get('message')
-            };
-          }
-        } catch (e) {
-          console.error("Failed to parse Tranzila string data", e);
-        }
+      // תפיסת הודעות postMessage רגילות
+      const data = event.data;
+      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000')) {
+        navigate('/thanks?type=order');
+        return;
       }
 
-      // בדיקת אישור העסקה (תומך באובייקט, טקסט מפורק או מחרוזת קבועה של טרנזילה)
-      if (data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000')) {
-        console.log("Payment Successful! Navigating to thanks page...");
-        navigate('/thanks?type=order');
-      } else if (data && (data.Response || data.res)) {
-        console.log("Payment Failed or Cancelled:", data);
-        if (data.Response !== '000' && data.res !== '000') {
-          alert(`התשלום נכשל: ${data.message || 'אנא בדוק את פרטי הכרטיס ונסה שוב'}`);
+      // הגנה עוקפת: אם ה-iFrame מנסה לטעון בתוכו את דף ה-thanks, נשבור את המסגרת ונעביר את כל האתר
+      try {
+        if (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order'))) {
+          navigate('/thanks?type=order');
         }
+      } catch (e) {
+        console.error(e);
       }
     };
 
@@ -102,7 +84,6 @@ const CheckoutPage = () => {
 
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
-    
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
@@ -123,30 +104,25 @@ const CheckoutPage = () => {
 
   const totalPrice = subtotal - discount + currentShipping;
 
-  // פונקציית מעבר לתשלום עם בדיקת חובה מאוחדת ומדויקת
   const handleProceedToPayment = () => {
-    // בדיקת חובה בסיסית לכל סוגי ההזמנות
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
       alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
-    
-    // אם נבחר משלוח - מוודאים שגם עיר וכתובת מולאו, אחרת חוסמים ומראים Alert ייעודי
     if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
       alert('נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
       return;
     }
-    
     setShowPayment(true);
   };
 
-  // שרשור הכתובת המלאה כולל דירה לטרנזילה
   const fullAddressString = apartment.trim() 
     ? `${address}, דירה ${apartment}` 
     : address;
 
-  // בניית ה-URL המלא עבור ה-iFrame כולל פקודת שבירת מסגרת בהפניה (expari=0)
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}&expari=0`;
+  // בניית ה-URL עבור ה-iFrame של טרנזילה
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}`;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
       {/* Header */}
@@ -160,10 +136,10 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* עמודה ימנית: פרטים ושיטת קבלה */}
+          {/* עמודה ימנית */}
           <div className="lg:col-span-7 space-y-6 text-right">
             
-            {/* בחירת שיטת קבלה */}
+            {/* שיטת קבלה */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <Truck className="text-blue-500" size={28} /> איך תרצו לקבל את החבילה?
@@ -211,37 +187,30 @@ const CheckoutPage = () => {
                       <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                       <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
                       <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
-                      <p className="mt-2 text-xs font-medium opacity-90 italic">* אנחנו נתקשר ונתאם את נקודת האיסוף הנוחה לכם לאחר ביצוע ההזמנה.</p>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* פרטי משלוח/קשר */}
+            {/* פרטי התקשרות */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input 
-                  type="text" 
-                  placeholder="שם מלא *" 
-                  value={fullName}
+                  type="text" placeholder="שם מלא *" value={fullName}
                   onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }}
                   className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
                 <input 
-                  type="tel" 
-                  placeholder="טלפון *" 
-                  value={phone}
+                  type="tel" placeholder="טלפון *" value={phone}
                   onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }}
                   className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
                 <input 
-                  type="email" 
-                  placeholder="אימייל לאישור הזמנה *" 
-                  value={email}
+                  type="email" placeholder="אימייל לאישור הזמנה *" value={email}
                   onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }}
                   className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                 />
@@ -249,23 +218,17 @@ const CheckoutPage = () => {
                 {shippingMethod === 'delivery' && (
                   <>
                     <input 
-                      type="text" 
-                      placeholder="עיר *" 
-                      value={city}
+                      type="text" placeholder="עיר *" value={city}
                       onChange={(e) => { setCity(e.target.value); setShowPayment(false); }}
                       className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
                     <input 
-                      type="text" 
-                      placeholder="כתובת ומספר בית *" 
-                      value={address}
+                      type="text" placeholder="כתובת ומספר בית *" value={address}
                       onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }}
                       className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
                     <input 
-                      type="text" 
-                      placeholder="מספר דירה (אופציונלי)" 
-                      value={apartment}
+                      type="text" placeholder="מספר דירה (אופציונלי)" value={apartment}
                       onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }}
                       className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
@@ -273,21 +236,16 @@ const CheckoutPage = () => {
                 )}
               </div>
 
-              {/* שדות חדשים ואופציונליים לחשבונית */}
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <h3 className="text-md font-bold mb-3 text-slate-700">פרטי חשבונית (אופציונלי)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    type="text" 
-                    placeholder="חשבונית על שם" 
-                    value={invoiceName}
+                    type="text" placeholder="חשבונית על שם" value={invoiceName}
                     onChange={(e) => { setInvoiceName(e.target.value); setShowPayment(false); }}
                     className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                   />
                   <input 
-                    type="text" 
-                    placeholder="ח.פ / ת.ז" 
-                    value={companyId}
+                    type="text" placeholder="ח.פ / ת.ז" value={companyId}
                     onChange={(e) => { setCompanyId(e.target.value); setShowPayment(false); }}
                     className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                   />
@@ -312,11 +270,7 @@ const CheckoutPage = () => {
                   </button>
                 </div>
               ) : (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full mt-2"
-                >
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full mt-2">
                   <iframe 
                     src={tranzilaUrl}
                     className="w-full h-[480px] border border-slate-100 rounded-2xl shadow-inner"
@@ -328,7 +282,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* עמודה שמאלית: סיכום הזמנה */}
+          {/* עמודה שמאלית */}
           <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
@@ -339,57 +293,10 @@ const CheckoutPage = () => {
                   <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button 
-                    onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} 
-                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"
-                  >
-                    <Minus size={18} />
-                  </button>
+                  <button onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
                   <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button 
-                    onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} 
-                    className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"
-                  >
-                    <Plus size={18} />
-                  </button>
+                  <button onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
                 </div>
-              </div>
-
-              {shippingMethod === 'delivery' && !isFreeShipping && (
-                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
-                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
-                  <div className="w-full bg-orange-200 h-2 rounded-full mt-2 overflow-hidden">
-                    <div className="bg-orange-500 h-full transition-all duration-500" style={{ width: `${(subtotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}></div>
-                  </div>
-                </div>
-              )}
-
-              <div className="mb-8">
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="קוד קופון" 
-                    value={coupon}
-                    onChange={(e) => { setCoupon(e.target.value); setShowPayment(false); }}
-                    disabled={isCouponApplied}
-                    className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right"
-                  />
-                  {!isCouponApplied ? (
-                    <button onClick={handleApplyCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition">החל</button>
-                  ) : (
-                    <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1">
-                      <X size={18} /> ביטול
-                    </button>
-                  )}
-                </div>
-                {isCouponApplied && (
-                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 size={16} />
-                      <span>קופון הופעל! חסכת ₪{discount.toFixed(0)}</span>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
@@ -397,32 +304,16 @@ const CheckoutPage = () => {
                   <span>סיכום ביניים ({quantity} יח'):</span>
                   <span className="font-bold">₪{subtotal}</span>
                 </div>
-                
                 <div className="flex justify-between">
                   <span>דמי משלוח:</span>
                   <span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>
                     {shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}
                   </span>
                 </div>
-
-                {discount > 0 && (
-                  <div className="flex justify-between text-green-600 font-bold">
-                    <span>הנחה:</span>
-                    <span>-₪{discount.toFixed(0)}</span>
-                  </div>
-                )}
-
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100">
                   <span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span>
                   <span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span>
                 </div>
-              </div>
-
-              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
-                <ShieldCheck size={16} className="text-blue-600" />
-                <span>SSL SECURED</span>
-                <span>•</span>
-                <span>PCI COMPLIANT</span>
               </div>
             </div>
           </div>
