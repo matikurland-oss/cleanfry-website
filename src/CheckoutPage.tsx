@@ -40,7 +40,7 @@ const CheckoutPage = () => {
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
-  // 3. ביצוע חישובי סכומים (חייב להופיע לפני השימוש בהם ב-useEffect!)
+  // 3. ביצוע חישובי סכומים
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
@@ -75,46 +75,58 @@ const CheckoutPage = () => {
             "ח.פ / ת.ז": companyId || 'לא הוגדר'
           })
         });
-        console.log("Notification email sent successfully via Formspree!");
       } catch (error) {
         console.error("Failed to send notification email:", error);
       }
     };
 
+    // מנגנון הגנה עוקף: אם ה-iFrame מנסה לטעון בתוכו דף כלשהו של האתר, נזהה את זה ונפרוץ החוצה!
+    const checkIframeRedirect = setInterval(() => {
+      try {
+        const iframe = document.getElementById('tranzila-iframe') as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          const iframeUrl = iframe.contentWindow.location.href;
+          // אם ה-iFrame מכיל את כתובת האתר שלך (כמו שרואים בצילום מסך שהפוטר נטען שם)
+          if (iframeUrl.includes(window.location.origin)) {
+            clearInterval(checkIframeRedirect);
+            sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
+            sendOrderNotificationEmail();
+            if (window.top) {
+              window.top.location.href = `${window.location.origin}/order-success`;
+            }
+          }
+        }
+      } catch (e) {
+        // מונע שגיאות Cross-Origin קשוחות של הדפדפן בזמן שהלקוח עוד במסך של טרנזילה
+      }
+    }, 1000);
+
     const handleTranzilaMessage = async (event: MessageEvent) => {
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
-      
       if (typeof data === 'string') {
         try {
           const urlParams = new URLSearchParams(data);
           if (urlParams.has('Response') || urlParams.has('res')) {
-            data = {
-              Response: urlParams.get('Response'),
-              res: urlParams.get('res')
-            };
+            data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
           }
         } catch (e) {}
       }
 
-      // בדיקת תנאי אישור עסקה מוצלח מטרנזילה
       const isSuccess = data && (
         data.Response === '000' || 
         data.res === '000' || 
         data === 'Response=000' || 
         data === 'res=000' || 
-        (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order')))
+        (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order') || data.includes('order-success')))
       );
 
       if (isSuccess) {
-        // שמירת שיטת המשלוח בזיכרון זמני כדי שדף התודה החדש יציג טקסט מתאים
+        clearInterval(checkIframeRedirect);
         sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
-
-        // א. שלח קודם את התראת המייל בצורה מאובטחת ושקטה ברקע
         await sendOrderNotificationEmail();
         
-        // ב. פרוץ את מסגרת ה-iFrame והעבר את הדפדפן הראשי לדף ההצלחה החדש
         if (window.top) {
           window.top.location.href = `${window.location.origin}/order-success`;
         } else {
@@ -124,7 +136,10 @@ const CheckoutPage = () => {
     };
 
     window.addEventListener('message', handleTranzilaMessage);
-    return () => window.removeEventListener('message', handleTranzilaMessage);
+    return () => {
+      window.removeEventListener('message', handleTranzilaMessage);
+      clearInterval(checkIframeRedirect);
+    };
   }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
 
   // 6. פונקציות תפעוליות של הטופס
@@ -259,10 +274,9 @@ const CheckoutPage = () => {
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
               </h2>
               
-              {/* ⚠️ קוביית ההערה קבועה ובולטת לכל משתמש ⚠️ */}
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
                 <span className="text-base mt-0.5">⚠️</span>
-                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
+                <p>שימו לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
               </div>
               
               {!showPayment ? (
