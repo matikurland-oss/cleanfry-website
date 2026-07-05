@@ -121,7 +121,7 @@ const CheckoutPage = () => {
         <Link to="/" className="text-blue-600 font-bold flex items-center gap-1 hover:opacity-80">
           <ChevronRight size={18} /> חזרה לחנות
         </Link>
-        <span className="font-black text-xl text-slate-800 tracking-tight">CleanFry Checkout</span>
+        <span className="font-black text-xl text-slate-800 tracking-tight">הסל שלי</span>
       </div>
 
       <div className="max-w-6xl mx-auto px-4">
