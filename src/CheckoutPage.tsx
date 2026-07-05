@@ -35,8 +35,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר וקישורים
-  const UNIT_PRICE = 1;
-  const SHIPPING_COST = 0;
+  const UNIT_PRICE = 59;
+  const SHIPPING_COST = 35;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -86,7 +86,6 @@ const CheckoutPage = () => {
         const iframe = document.getElementById('tranzila-iframe') as HTMLIFrameElement;
         if (iframe && iframe.contentWindow) {
           const iframeUrl = iframe.contentWindow.location.href;
-          // אם ה-iFrame מכיל את כתובת האתר שלך (כמו שרואים בצילום מסך שהפוטר נטען שם)
           if (iframeUrl.includes(window.location.origin)) {
             clearInterval(checkIframeRedirect);
             sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
@@ -142,11 +141,14 @@ const CheckoutPage = () => {
     };
   }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
 
-  // 6. פונקציות תפעוליות של הטופס
+  // 6. פונקציות תפעוליות של הטופס (כאן התווסף קוד הקופון החדש)
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
+      setIsCouponApplied(true);
+    } else if (code === 'FIRST15') { // ◄ קוד הקופון החדש שלכם
+      setDiscount(subtotal * 0.15);
       setIsCouponApplied(true);
     } else if (code === 'CLEAN10') {
       setDiscount(subtotal * 0.10);
@@ -276,7 +278,7 @@ const CheckoutPage = () => {
               
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
                 <span className="text-base mt-0.5">⚠️</span>
-                <p>שימו לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
+                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
               </div>
               
               {!showPayment ? (
