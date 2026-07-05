@@ -31,6 +31,7 @@ const CheckoutPage = () => {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [apartment, setApartment] = useState(''); // שדה אופציונלי חדש לדירה
 
   // שליטה בהצגת ה-iFrame של התשלום
   const [showPayment, setShowPayment] = useState(false);
@@ -50,12 +51,10 @@ const CheckoutPage = () => {
   // האזנה לתשובה מטרנזילה בתוך ה-iFrame
   useEffect(() => {
     const handleTranzilaMessage = (event: MessageEvent) => {
-      // אבטחה: וודא שההודעה מגיעה מטרנזילה
       if (!event.origin.includes('tranzila.com')) return;
 
       const data = event.data;
       
-      // Response = '000' או res = '000' מסמל עסקה מאושרת בהצלחה
       if (data && (data.Response === '000' || data.res === '000')) {
         navigate('/thanks');
       } else if (data && data.Response) {
@@ -71,13 +70,11 @@ const CheckoutPage = () => {
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   
-  // לוגיקת משלוח: אם איסוף עצמי זה 0, אחרת בודק אם מעל רף משלוח חינם
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
 
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     
-    // קביעת קוד קופון של 20%
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
@@ -98,21 +95,30 @@ const CheckoutPage = () => {
 
   const totalPrice = subtotal - discount + currentShipping;
 
-  // פונקציית מעבר לתשלום ובדיקת תקינות פרטים בסיסית
+  // פונקציית מעבר לתשלום הכוללת בדיקת חובה של עיר וכתובת במידה ונבחר משלוח
   const handleProceedToPayment = () => {
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
       alert('אנא מלא את פרטי החובה: שם, טלפון ואימייל');
       return;
     }
-    if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
-      alert('אנא מלא עיר וכתובת למשלוח');
-      return;
+    
+    // אם נבחר משלוח, עיר וכתובת הופכים לחובה לחלוטין
+    if (shippingMethod === 'delivery') {
+      if (!city.trim() || !address.trim()) {
+        alert('אנא מלא את פרטי החובה למשלוח: עיר, כתובת ומספר בית');
+        return;
+      }
     }
+    
     setShowPayment(true);
   };
 
-  // בניית ה-URL עבור ה-iFrame של טרנזילה עם כל הפרטים מוצפנים בצורה בטוחה
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(address)}`;
+  // שרשור הכתובת המלאה כולל דירה לטרנזילה (אם הוזנה דירה)
+  const fullAddressString = apartment.trim() 
+    ? `${address}, דירה ${apartment}` 
+    : address;
+
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}`;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -229,12 +235,19 @@ const CheckoutPage = () => {
                       onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }}
                       className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
                     />
+                    <input 
+                      type="text" 
+                      placeholder="דירה (אופציונלי)" 
+                      value={apartment}
+                      onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }}
+                      className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" 
+                    />
                   </>
                 )}
               </div>
             </div>
 
-            {/* חלק תשלום מאובטח עם iFrame דינמי */}
+            {/* חלק תשלום מאובטח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
@@ -242,7 +255,7 @@ const CheckoutPage = () => {
               
               {!showPayment ? (
                 <div>
-                  <p className="text-slate-500 text-sm mb-4">מלא את פרטי הקשר והמשלוח למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
+                  <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
                   <button 
                     onClick={handleProceedToPayment}
                     className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all"
