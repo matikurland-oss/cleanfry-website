@@ -24,14 +24,14 @@ const OrderSuccessPage = () => {
             <ShoppingBag size={18} /> מה קורה עכשיו?
           </p>
           
-          <p className="font-medium">• אישור הזמנה מפורט וחשבונית נשלחו לכתובת המייל שלך.</p>
+          <p className="font-medium">• אישור ההזמנה וחשבונית נשלחו לכתובת המייל שלך.</p>
           
           {savedMethod === 'pickup' ? (
             <div className="pt-2 border-t border-blue-200 text-blue-900">
               <p className="font-bold flex items-center gap-1 text-slate-800 mb-1">
                 <MapPin size={16} className="text-blue-600" /> הנחיות לאיסוף עצמי:
               </p>
-              <p>המארז ממתין לך מוכן. נציג שלנו יתקשר או ישלח וואטסאפ בדקות הקרובות כדי לתאם איתך את רגע ההגעה (תל אביב או כפר סבא).</p>
+              <p>המארז ממתין לך מוכן. נציג שלנו יתקשר או ישלח וואטסאפ בכדי לתאם איתך את מועד האיסוף (תל אביב או כפר סבא).</p>
             </div>
           ) : (
             <div className="pt-2 border-t border-blue-200 text-blue-900">
