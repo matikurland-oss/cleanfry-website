@@ -16,7 +16,7 @@ const OrderSuccessPage = () => {
         </div>
 
         <h1 className="text-3xl font-black text-slate-800 mb-3">ההזמנה התקבלה!</h1>
-        <p className="text-slate-600 font-medium mb-6">תודה רבה על רכישתך. המארז שלך כבר בדרך לעבודה.</p>
+        <p className="text-slate-600 font-medium mb-6">תודה רבה על רכישתך. אנחנו מכינים את ההזמנה למשלוח/איסוף.</p>
         
         {/* קוביית מידע משתנה לפי שיטת קבלה */}
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-right text-blue-950 text-sm mb-6 space-y-3">
@@ -38,7 +38,7 @@ const OrderSuccessPage = () => {
               <p className="font-bold flex items-center gap-1 text-slate-800 mb-1">
                 <Truck size={16} className="text-blue-600" /> עדכון משלוח:
               </p>
-              <p>צוות המחסן אורז את ההזמנה שלך. המשלוח ייצא אליך עם שליח עד הבית ויגיע תוך 3-5 ימי עסקים. תקבל הודעת SMS כשהשליח בדרך.</p>
+              <p>צוות המחסן אורז את ההזמנה שלך. המשלוח ייצא אליך עם שליח עד הבית ויגיע תוך 3-5 ימי עסקים. תקבלו הודעת SMS כשהשליח בדרך.</p>
             </div>
           )}
         </div>
