@@ -210,7 +210,8 @@ const Footer = () => (
           <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
           <ul className="space-y-4 text-slate-400">
             <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
-            <li><a href="#" className="hover:text-white transition-colors">מדיניות משלוחים</a></li>
+            {/* ◄ השינוי כאן: הוחלף מ-a עם # ל-Link עם נתיב אמיתי */}
+            <li><Link to="/shipping-policy" className="hover:text-white transition-colors">מדיניות משלוחים</Link></li>
             <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
             <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
           </ul>
@@ -470,6 +471,8 @@ export default function App() {
           <Route path="/thanks" element={<SuccessPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} /> {/* ◄ הנתיב החדש והייעודי להזמנות מוצלחות! */}
           <Route path="/legal" element={<LegalPage />} />
+          {/* ◄ התוספת החדשה: חיבור נתיב המשלוחים לקומפוננטת המשפטים */}
+          <Route path="/shipping-policy" element={<LegalPage />} /> 
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/cancellation-policy" element={<CancellationPage />} />
