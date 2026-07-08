@@ -159,6 +159,61 @@ const FAQItem = ({ question, answer }: { question: string, answer: string }) => 
   );
 };
 
+// --- קומפוננטת קבוצת ההרשמה (Community Form) ל-MailerLite ---
+const CommunityForm = () => {
+  const [email, setEmail] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('fields[email]', email);
+    formData.append('ml-submit', '1');
+    formData.append('anticsrf', 'true');
+
+    try {
+      await fetch('https://assets.mailerlite.com/jsonp/2287697/forms/192459816098071872/subscribe', {
+        method: 'POST',
+        body: formData,
+        mode: 'no-cors'
+      });
+
+      setIsSubmitted(true);
+      setEmail('');
+    } catch (error) {
+      console.error('MailerLite subscription error:', error);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input 
+          type="email" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required 
+          placeholder="האימייל שלך" 
+          className="bg-slate-800 border-none rounded-lg px-4 py-2 w-full text-right outline-none text-white" 
+        />
+        <button 
+          type="submit" 
+          className="bg-brand-green px-4 py-2 rounded-lg font-bold text-white hover:bg-brand-green/90 transition-colors"
+        >
+          שלח
+        </button>
+      </form>
+
+      {isSubmitted && (
+        <p className="text-brand-green text-sm font-bold mt-1 text-right animate-pulse">
+          ✓ נרשמתם בהצלחה!
+        </p>
+      )}
+    </div>
+  );
+};
+
 // --- קומפוננטת Footer ---
 const Footer = () => (
   <footer id="contact" className="bg-slate-900 text-white pt-20 pb-10 text-right">
@@ -210,7 +265,6 @@ const Footer = () => (
           <h4 className="text-lg font-bold mb-6">שירות לקוחות</h4>
           <ul className="space-y-4 text-slate-400">
             <li><Link to="/contact" className="hover:text-white transition-colors">צור קשר</Link></li>
-            {/* ◄ השינוי כאן: הוחלף מ-a עם # ל-Link עם נתיב אמיתי */}
             <li><Link to="/shipping-policy" className="hover:text-white transition-colors">מדיניות משלוחים</Link></li>
             <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
             <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
@@ -218,10 +272,8 @@ const Footer = () => (
         </div>
         <div>
           <h4 className="text-lg font-bold mb-6">הצטרפו לקהילה</h4>
-          <div className="flex gap-2">
-            <input type="email" placeholder="האימייל שלך" className="bg-slate-800 border-none rounded-lg px-4 py-2 w-full text-right outline-none" />
-            <button className="bg-brand-green px-4 py-2 rounded-lg font-bold">שלח</button>
-          </div>
+          {/* ◄ כאן שולב רכיב הרישום השקט והחכם */}
+          <CommunityForm />
         </div>
       </div>
       <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
@@ -435,7 +487,7 @@ export default function App() {
             />
             <FAQItem 
               question="איך משליכים את השמן אחרי שהשתמשתי בממצק שמן בישול?" 
-              answer="ברגע שהשמן התקרר והפך לגוש מוצק וקשיח, ניתן פשוט להפריד אותו מהמחבת או מהסיר בעזרת מרית ולהשליך אותו ישירות לפח האשפה הביתי. אין צורך בשקיות מיוחדות." 
+              answer="ברגע שהשמן התקרר והפך לגוש מוצק וקשיח, ניתן פשוט להפרד אותו מהמחבת או מהסיר בעזרת מרית ולהשליך אותו ישירות לפח האשפה הביתי. אין צורך בשקיות מיוחדות." 
             />
             <FAQItem 
               question="האם ניתן להשתמש בשמן שוב אחרי המיצוק?" 
@@ -471,7 +523,6 @@ export default function App() {
           <Route path="/thanks" element={<SuccessPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} /> {/* ◄ הנתיב החדש והייעודי להזמנות מוצלחות! */}
           <Route path="/legal" element={<LegalPage />} />
-          {/* ◄ התוספת החדשה: חיבור נתיב המשלוחים לקומפוננטת המשפטים */}
           <Route path="/shipping-policy" element={<LegalPage />} /> 
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
