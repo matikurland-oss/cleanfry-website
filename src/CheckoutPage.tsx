@@ -35,8 +35,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר וקישורים
-  const UNIT_PRICE = 59;
-  const SHIPPING_COST = 35;
+  const UNIT_PRICE = 1;
+  const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -141,13 +141,13 @@ const CheckoutPage = () => {
     };
   }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
 
-  // 6. פונקציות תפעוליות של הטופס (כאן התווסף קוד הקופון החדש)
+  // 6. פונקציות תפעוליות של הטופס
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
-    } else if (code === 'FIRST15') { // ◄ קוד הקופון החדש שלכם
+    } else if (code === 'FIRST15' || code === 'ROTEM') { // ◄ קוד הקופון החדש התווסף כאן!
       setDiscount(subtotal * 0.15);
       setIsCouponApplied(true);
     } else if (code === 'CLEAN10') {
@@ -237,7 +237,7 @@ const CheckoutPage = () => {
                   <div className="text-right">
                     <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                     <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                    <p className="font-medium">• כפר סבא: רח' - בן גוריון 7</p>
+                    <p className="font-medium">• כפר סבא: רח' - - בן גוריון 7</p>
                   </div>
                 </div>
               )}
