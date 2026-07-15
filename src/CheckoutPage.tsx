@@ -34,9 +34,9 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר וקישורים
-  const UNIT_PRICE = 59;
-  const SHIPPING_COST = 35;
+  // 2. הגדרות מחיר וקישורים (המחיר האמיתי של מארז הוא 59 ש"ח)
+  const UNIT_PRICE = 59; 
+  const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -45,6 +45,9 @@ const CheckoutPage = () => {
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
+
+  // חישוב מחיר סופי משוקלל ליחידה עבור החשבונית (כולל הנחת הקופון שחולקה שווה בשווה בין המארזים)
+  const pricePerUnitAfterDiscount = (subtotal - discount) / quantity;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -147,7 +150,7 @@ const CheckoutPage = () => {
     if (code === 'CLEAN20' || code === 'SAVE20') { 
       setDiscount(subtotal * 0.20);
       setIsCouponApplied(true);
-    } else if (code === 'FIRST15' || code === 'ROTEM') { // ◄ קוד הקופון החדש התווסף כאן!
+    } else if (code === 'FIRST15' || code === 'ROTEM') {
       setDiscount(subtotal * 0.15);
       setIsCouponApplied(true);
     } else if (code === 'CLEAN10') {
@@ -178,7 +181,30 @@ const CheckoutPage = () => {
   };
 
   const fullAddressString = apartment.trim() ? `${address}, דירה ${apartment}` : address;
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?sum=${totalPrice.toFixed(0)}&currency=1&lang=il&tranmode=A&contact=${encodeURIComponent(fullName)}&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&city=${encodeURIComponent(city)}&address=${encodeURIComponent(fullAddressString)}&company=${encodeURIComponent(invoiceName)}&pdesc=${encodeURIComponent(companyId)}&expari=0`;
+
+  // בניית מחרוזת שם החברה משולבת ח.פ/ת.ז כדי שיוצג למעלה תחת פרטי הלקוח
+  const companyWithIdString = invoiceName.trim() && companyId.trim()
+    ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
+    : (invoiceName.trim() || companyId.trim());
+
+  // בניית ה-URL המלא והמעודכן עבור מערכת החשבוניות של טרנזילה
+  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?` + 
+    `sum=${totalPrice.toFixed(0)}` + 
+    `&currency=1` + 
+    `&lang=il` + 
+    `&tranmode=A` + 
+    `&contact=${encodeURIComponent(fullName)}` + 
+    `&phone=${encodeURIComponent(phone)}` + 
+    `&email=${encodeURIComponent(email)}` + 
+    `&city=${encodeURIComponent(city)}` + 
+    `&address=${encodeURIComponent(fullAddressString)}` + 
+    `&company=${encodeURIComponent(companyWithIdString)}` + // ◄ מציג את ה-ח.פ למעלה תחת "לכבוד"
+    `&company_id=${encodeURIComponent(companyId)}` + // ◄ שומר את ה-ח.פ בשדה הפנימי הרשמי
+    `&pdesc=${encodeURIComponent("מארז CleanFry")}` + // ◄ תיאור מוצר קבוע וברור בחשבונית
+    `&prd_id=CF-01` + // ◄ קוד מוצר קבוע
+    `&count=${quantity}` + // ◄ כמות המוצרים המדויקת שנרכשה
+    `&uprice=${pricePerUnitAfterDiscount.toFixed(2)}` + // ◄ מחיר ליחידה לאחר הנחה
+    `&expari=0`;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
