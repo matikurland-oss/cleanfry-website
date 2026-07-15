@@ -46,8 +46,11 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חישוב מחיר סופי משוקלל ליחידה עבור החשבונית (כולל הנחת הקופון שחולקה שווה בשווה בין המארזים)
-  const pricePerUnitAfterDiscount = (subtotal - discount) / quantity;
+  // חישוב מחיר סופי כולל מע"מ ליחידה בודדת (לאחר הנחת קופון)
+  const pricePerUnitAfterDiscountValue = (subtotal - discount) / quantity;
+  
+  // מערכת החשבוניות של טרנזילה דורשת לקבל את מחיר היחידה *לפני מע"מ* (היא מוסיפה 18% מע"מ בעצמה בחשבונית פריטים)
+  const priceUnitBeforeVat = pricePerUnitAfterDiscountValue / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -187,7 +190,7 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית ה-URL המלא והמעודכן עבור מערכת החשבוניות של טרנזילה
+  // בניית ה-URL המלא והמעודכן בפורמט מערך הפריטים הרשמי של טרנזילה
   const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?` + 
     `sum=${totalPrice.toFixed(0)}` + 
     `&currency=1` + 
@@ -200,11 +203,10 @@ const CheckoutPage = () => {
     `&address=${encodeURIComponent(fullAddressString)}` + 
     `&company=${encodeURIComponent(companyWithIdString)}` + 
     `&company_id=${encodeURIComponent(companyId)}` + 
-    `&inv_items=1` + // ◄ הפעלת מצב פירוט פריטים לחשבונית
-    `&pdesc=${encodeURIComponent("מארז CleanFry")}` + 
-    `&prd_id=CF-01` + 
-    `&count=${quantity}` + 
-    `&uprice=${pricePerUnitAfterDiscount.toFixed(2)}` + 
+    `&o_cre_invoice=1` + // ◄ מפעיל פקודה אקטיבית ליצירת חשבונית פריטים מפורטת
+    `&L_desc0=${encodeURIComponent("מארז CleanFry")}` + // ◄ שם הפריט הראשון במערך
+    `&L_qty0=${quantity}` + // ◄ כמות מפורשת לפריט הראשון במערך
+    `&L_amt0=${priceUnitBeforeVat.toFixed(2)}` + // ◄ מחיר ליחידה בודדת לפני מע"מ
     `&expari=0`;
 
   return (
