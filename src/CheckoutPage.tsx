@@ -35,7 +35,7 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר וקישורים (המחיר האמיתי של מארז הוא 59 ש"ח)
-  const UNIT_PRICE = 59; 
+  const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
