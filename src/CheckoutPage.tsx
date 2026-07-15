@@ -198,12 +198,13 @@ const CheckoutPage = () => {
     `&email=${encodeURIComponent(email)}` + 
     `&city=${encodeURIComponent(city)}` + 
     `&address=${encodeURIComponent(fullAddressString)}` + 
-    `&company=${encodeURIComponent(companyWithIdString)}` + // ◄ מציג את ה-ח.פ למעלה תחת "לכבוד"
-    `&company_id=${encodeURIComponent(companyId)}` + // ◄ שומר את ה-ח.פ בשדה הפנימי הרשמי
-    `&pdesc=${encodeURIComponent("מארז CleanFry")}` + // ◄ תיאור מוצר קבוע וברור בחשבונית
-    `&prd_id=CF-01` + // ◄ קוד מוצר קבוע
-    `&count=${quantity}` + // ◄ כמות המוצרים המדויקת שנרכשה
-    `&uprice=${pricePerUnitAfterDiscount.toFixed(2)}` + // ◄ מחיר ליחידה לאחר הנחה
+    `&company=${encodeURIComponent(companyWithIdString)}` + 
+    `&company_id=${encodeURIComponent(companyId)}` + 
+    `&inv_items=1` + // ◄ הפעלת מצב פירוט פריטים לחשבונית
+    `&pdesc=${encodeURIComponent("מארז CleanFry")}` + 
+    `&prd_id=CF-01` + 
+    `&count=${quantity}` + 
+    `&uprice=${pricePerUnitAfterDiscount.toFixed(2)}` + 
     `&expari=0`;
 
   return (
