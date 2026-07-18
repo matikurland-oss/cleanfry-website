@@ -35,8 +35,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר וקישורים (המחיר האמיתי של מארז הוא 59 ש"ח)
-  const UNIT_PRICE = 59; 
-  const SHIPPING_COST = 35;
+  const UNIT_PRICE = 1; 
+  const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -46,11 +46,11 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חישוב מחיר סופי כולל מע"מ ליחידה בודדת (לאחר הנחת קופון)
-  const pricePerUnitAfterDiscountValue = (subtotal - discount) / quantity;
-  
-  // מערכת החשבוניות של טרנזילה דורשת לקבל את מחיר היחידה *לפני מע"מ* (היא מוסיפה 18% מע"מ בעצמה בחשבונית פריטים)
-  const priceUnitBeforeVat = pricePerUnitAfterDiscountValue / 1.18;
+  // חישוב מחיר סופי משוקלל ליחידה (כולל מע"מ) לאחר קופונים והנחות
+  const pricePerUnitAfterDiscount = (subtotal - discount) / quantity;
+
+  // חילוץ המע"מ (18%) עבור טרנזילה כדי שמחיר היחידה יוצג לפני מע"מ במערכת הפריטים שלהם
+  const priceUnitBeforeVat = pricePerUnitAfterDiscount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -190,7 +190,16 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית ה-URL המלא והמעודכן בפורמט מערך הפריטים הרשמי של טרנזילה
+  // ◄ בניית מערך הפריטים (Product List) בפורמט JSON הרשמי של טרנזילה
+  const productsArray = [
+    {
+      product_name: "מארז CleanFry",
+      product_quantity: quantity,
+      product_price: priceUnitBeforeVat.toFixed(2) // מחיר יחידה לפני מע"מ כנדרש במדריך
+    }
+  ];
+
+  // בניית ה-URL המלא עבור ה-iFrame של טרנזילה
   const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?` + 
     `sum=${totalPrice.toFixed(0)}` + 
     `&currency=1` + 
@@ -203,10 +212,8 @@ const CheckoutPage = () => {
     `&address=${encodeURIComponent(fullAddressString)}` + 
     `&company=${encodeURIComponent(companyWithIdString)}` + 
     `&company_id=${encodeURIComponent(companyId)}` + 
-    `&o_cre_invoice=1` + // ◄ מפעיל פקודה אקטיבית ליצירת חשבונית פריטים מפורטת
-    `&L_desc0=${encodeURIComponent("מארז CleanFry")}` + // ◄ שם הפריט הראשון במערך
-    `&L_qty0=${quantity}` + // ◄ כמות מפורשת לפריט הראשון במערך
-    `&L_amt0=${priceUnitBeforeVat.toFixed(2)}` + // ◄ מחיר ליחידה בודדת לפני מע"מ
+    `&u71=1` + // ◄ פרמטר חובה שמפעיל את הצגת רשימת המוצרים בחשבונית
+    `&json_details=${encodeURIComponent(JSON.stringify(productsArray))}` + // ◄ העברת המערך כסטרינג JSON מקודד
     `&expari=0`;
 
   return (
@@ -266,7 +273,7 @@ const CheckoutPage = () => {
                   <div className="text-right">
                     <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
                     <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                    <p className="font-medium">• כפר סבא: רח' - - בן גוריון 7</p>
+                    <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
                   </div>
                 </div>
               )}
