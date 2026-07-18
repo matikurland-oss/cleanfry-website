@@ -206,15 +206,8 @@ const CheckoutPage = () => {
     }
   ];
   
-  const rawJsonString = JSON.stringify(jsonObject);
-  const encodedJsonPurchaseData = encodeURIComponent(rawJsonString)
-    .replace(/r/g, '%0D')
-    .replace(/n/g, '%0A')
-    .replace(/!/g, '%21')
-    .replace(/'/g, '%27')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29')
-    .replace(/\*/g, '%2A');
+  // התיקון כאן: קידוד נקי של ה-JSON ללא פונקציות החלפה שעלולות לעוות מילים באנגלית
+  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(jsonObject));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
