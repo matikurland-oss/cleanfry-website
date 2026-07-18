@@ -46,12 +46,6 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חישוב מחיר סופי משוקלל ליחידה (כולל מע"מ) לאחר קופונים והנחות
-  const pricePerUnitAfterDiscount = (subtotal - discount) / quantity;
-
-  // חילוץ המע"מ (18%) עבור טרנזילה כדי שמחיר היחידה יוצג לפני מע"מ במערכת הפריטים שלהם
-  const priceUnitBeforeVat = pricePerUnitAfterDiscount / 1.18;
-
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -76,6 +70,7 @@ const CheckoutPage = () => {
             "כמות מארזים": quantity,
             "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי',
             "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי',
+            "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון', // ◄ שדה קופון חדש במייל
             "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`,
             "חשבונית על שם": invoiceName || 'לא הוגדר',
             "ח.פ / ת.ז": companyId || 'לא הוגדר'
@@ -86,7 +81,7 @@ const CheckoutPage = () => {
       }
     };
 
-    // מנגנון הגנה עוקף: אם ה-iFrame מנסה לטעון בתוכו דף כלשהו של האתר, נזהה את זה ונפרוץ החוצה!
+    // מנגנון הגנה עוקף פריצה מה-iFrame
     const checkIframeRedirect = setInterval(() => {
       try {
         const iframe = document.getElementById('tranzila-iframe') as HTMLIFrameElement;
@@ -101,9 +96,7 @@ const CheckoutPage = () => {
             }
           }
         }
-      } catch (e) {
-        // מונע שגיאות Cross-Origin קשוחות של הדפדפן בזמן שהלקוח עוד במסך של טרנזילה
-      }
+      } catch (e) {}
     }, 1000);
 
     const handleTranzilaMessage = async (event: MessageEvent) => {
@@ -145,7 +138,8 @@ const CheckoutPage = () => {
       window.removeEventListener('message', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
-  }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId]);
+    // ◄ הוספת קופון ל-Dependencies כדי שהמייל יישלח מעודכן
+  }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
 
   // 6. פונקציות תפעוליות של הטופס
   const handleApplyCoupon = () => {
@@ -185,21 +179,11 @@ const CheckoutPage = () => {
 
   const fullAddressString = apartment.trim() ? `${address}, דירה ${apartment}` : address;
 
-  // בניית מחרוזת שם החברה משולבת ח.פ/ת.ז כדי שיוצג למעלה תחת פרטי הלקוח
   const companyWithIdString = invoiceName.trim() && companyId.trim()
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ בניית מערך הפריטים (Product List) בפורמט JSON הרשמי של טרנזילה
-  const productsArray = [
-    {
-      product_name: "מארז CleanFry",
-      product_quantity: quantity,
-      product_price: priceUnitBeforeVat.toFixed(2) // מחיר יחידה לפני מע"מ כנדרש במדריך
-    }
-  ];
-
-  // בניית ה-URL המלא עבור ה-iFrame של טרנזילה
+  // בניית ה-URL המלא - שרשור כמות לתיאור והוספת קוד קופון להערות
   const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?` + 
     `sum=${totalPrice.toFixed(0)}` + 
     `&currency=1` + 
@@ -212,8 +196,8 @@ const CheckoutPage = () => {
     `&address=${encodeURIComponent(fullAddressString)}` + 
     `&company=${encodeURIComponent(companyWithIdString)}` + 
     `&company_id=${encodeURIComponent(companyId)}` + 
-    `&u71=1` + // ◄ פרמטר חובה שמפעיל את הצגת רשימת המוצרים בחשבונית
-    `&json_details=${encodeURIComponent(JSON.stringify(productsArray))}` + // ◄ העברת המערך כסטרינג JSON מקודד
+    `&pdesc=${encodeURIComponent(`מארז CleanFry - כמות: ${quantity}`)}` + 
+    `&comment=${encodeURIComponent(isCouponApplied ? `קופון שהופעל: ${coupon.toUpperCase().trim()}` : '')}` + 
     `&expari=0`;
 
   return (
@@ -229,7 +213,7 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* עמודה ימנית: פרטים ושיטת קבלה */}
+          {/* עמודה ימנית */}
           <div className="lg:col-span-7 space-y-6 text-right">
             
             {/* בחירת שיטת קבלה */}
@@ -279,7 +263,7 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* פרטי משלוח/קשר */}
+            {/* פרטי משלוח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
@@ -306,7 +290,7 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* חלק תשלום מאובטח */}
+            {/* תשלום */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
@@ -330,7 +314,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* עמודה שמאלית: סיכום הזמנה */}
+          {/* עמודה שמאלית */}
           <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
