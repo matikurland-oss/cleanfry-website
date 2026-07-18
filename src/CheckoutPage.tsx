@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -14,6 +14,7 @@ import {
 
 const CheckoutPage = () => {
   const location = useLocation();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // 1. הגדרת כל ה-States הבסיסיים
   const [quantity, setQuantity] = useState(1);
@@ -34,9 +35,9 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר וקישורים (המחיר האמיתי של מארז הוא 59 ש"ח)
-  const UNIT_PRICE = 59; 
-  const SHIPPING_COST = 35;
+  // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
+  const UNIT_PRICE = 1; 
+  const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -46,6 +47,12 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
+  // חישוב מחיר סופי משוקלל ליחידה (כולל מע"מ) לאחר קיזוז ההנחה של הקופון
+  const finalPricePerUnitAfterDiscount = (subtotal - discount) / quantity;
+  
+  // חילוץ המע"מ (18%) עבור טרנזילה כדי שמחיר היחידה המעודכן יישלח לפני מע"מ
+  const priceBeforeVat = finalPricePerUnitAfterDiscount / 1.18;
+
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -53,7 +60,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. האזנה לתשובה מטרנזילה, שליחת מייל שקט ושבירת ה-iFrame החוצה לדף ההצלחה הייעודי
+  // 5. מנגנון מעקב והאזנה לטרנזילה + שליחת המייל
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -70,7 +77,7 @@ const CheckoutPage = () => {
             "כמות מארזים": quantity,
             "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי',
             "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי',
-            "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון', // ◄ שדה קופון חדש במייל
+            "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
             "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`,
             "חשבונית על שם": invoiceName || 'לא הוגדר',
             "ח.פ / ת.ז": companyId || 'לא הוגדר'
@@ -81,7 +88,6 @@ const CheckoutPage = () => {
       }
     };
 
-    // מנגנון הגנה עוקף פריצה מה-iFrame
     const checkIframeRedirect = setInterval(() => {
       try {
         const iframe = document.getElementById('tranzila-iframe') as HTMLIFrameElement;
@@ -116,8 +122,7 @@ const CheckoutPage = () => {
         data.Response === '000' || 
         data.res === '000' || 
         data === 'Response=000' || 
-        data === 'res=000' || 
-        (typeof data === 'string' && (data.includes('thanks') || data.includes('type=order') || data.includes('order-success')))
+        data === 'res=000'
       );
 
       if (isSuccess) {
@@ -127,8 +132,6 @@ const CheckoutPage = () => {
         
         if (window.top) {
           window.top.location.href = `${window.location.origin}/order-success`;
-        } else {
-          window.location.href = `/order-success`;
         }
       }
     };
@@ -138,8 +141,14 @@ const CheckoutPage = () => {
       window.removeEventListener('message', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
-    // ◄ הוספת קופון ל-Dependencies כדי שהמייל יישלח מעודכן
   }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
+
+  // הפעלת שליחת הטופס אוטומטית ברגע שה-iFrame נוצר ב-DOM
+  useEffect(() => {
+    if (showPayment && formRef.current) {
+      formRef.current.submit();
+    }
+  }, [showPayment]);
 
   // 6. פונקציות תפעוליות של הטופס
   const handleApplyCoupon = () => {
@@ -183,22 +192,29 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית ה-URL המלא - שרשור כמות לתיאור והוספת קוד קופון להערות
-  const tranzilaUrl = `https://direct.tranzila.com/cleanfry/iframe.php?` + 
-    `sum=${totalPrice.toFixed(0)}` + 
-    `&currency=1` + 
-    `&lang=il` + 
-    `&tranmode=A` + 
-    `&contact=${encodeURIComponent(fullName)}` + 
-    `&phone=${encodeURIComponent(phone)}` + 
-    `&email=${encodeURIComponent(email)}` + 
-    `&city=${encodeURIComponent(city)}` + 
-    `&address=${encodeURIComponent(fullAddressString)}` + 
-    `&company=${encodeURIComponent(companyWithIdString)}` + 
-    `&company_id=${encodeURIComponent(companyId)}` + 
-    `&pdesc=${encodeURIComponent(`מארז CleanFry - כמות: ${quantity}`)}` + 
-    `&comment=${encodeURIComponent(isCouponApplied ? `קופון שהופעל: ${coupon.toUpperCase().trim()}` : '')}` + 
-    `&expari=0`;
+  // הגדרת שם מוצר דינמי הכולל את קוד הקופון במידה והופעל
+  const productNameWithCoupon = isCouponApplied 
+    ? `מארז CleanFry (קופון: ${coupon.toUpperCase().trim()})` 
+    : "מארז CleanFry";
+
+  // בניית מערך הפריטים לחשבונית המפורטת עם מחיר סופי מעודכן ליחידה
+  const jsonObject = [
+    {
+      product_name: productNameWithCoupon,
+      product_quantity: quantity,
+      product_price: Number(priceBeforeVat.toFixed(2))
+    }
+  ];
+  
+  const rawJsonString = JSON.stringify(jsonObject);
+  const encodedJsonPurchaseData = encodeURIComponent(rawJsonString)
+    .replace(/r/g, '%0D')
+    .replace(/n/g, '%0A')
+    .replace(/!/g, '%21')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
+    .replace(/\*/g, '%2A');
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -308,7 +324,36 @@ const CheckoutPage = () => {
                 </div>
               ) : (
                 <div className="w-full mt-2">
-                  <iframe src={tranzilaUrl} className="w-full h-[480px] border border-slate-100 rounded-2xl shadow-inner" title="Tranzila Secure Payment" id="tranzila-iframe" />
+                  <form 
+                    ref={formRef}
+                    action="https://direct.tranzila.com/cleanfry/iframe.php" 
+                    method="POST" 
+                    target="tranzila-target-frame"
+                    className="hidden"
+                  >
+                    <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
+                    <input type="hidden" name="currency" value="1" />
+                    <input type="hidden" name="lang" value="il" />
+                    <input type="hidden" name="tranmode" value="A" />
+                    <input type="hidden" name="u71" value="1" />
+                    <input type="hidden" name="inv_items" value="1" />
+                    <input type="hidden" name="contact" value={fullName} />
+                    <input type="hidden" name="phone" value={phone} />
+                    <input type="hidden" name="email" value={email} />
+                    <input type="hidden" name="city" value={city} />
+                    <input type="hidden" name="address" value={fullAddressString} />
+                    <input type="hidden" name="company" value={companyWithIdString} />
+                    <input type="hidden" name="company_id" value={companyId} />
+                    <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
+                    <input type="hidden" name="expari" value="0" />
+                  </form>
+
+                  <iframe 
+                    name="tranzila-target-frame"
+                    id="tranzila-iframe" 
+                    className="w-full h-[480px] border border-slate-100 rounded-2xl shadow-inner" 
+                    title="Tranzila Secure Payment" 
+                  />
                 </div>
               )}
             </div>
