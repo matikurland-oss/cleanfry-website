@@ -176,7 +176,7 @@ const CheckoutPage = () => {
 
   const handleProceedToPayment = () => {
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      alert('אננא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
+      alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
     if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
@@ -198,35 +198,21 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ שינוי קריטי: שם מוצר סטטי ונקי באנגלית למניעת שגיאות קידוד/תווים בטרנזילה
-  const productNameForInvoice = "CleanFry Pack";
+  // ◄ עיגול שלם מוחלט: חישוב מחיר הפריט הבודד ללא שברים (כולל מע"מ)
+  const finalTranzilaSum = Math.round(totalPrice);
+  
+  // מחיר היחידה לפני מע"מ מעוגל למספר שלם או חצי שלם כדי למנוע זנב עשרוני ארוך
+  const exactPriceBeforeVat = finalTranzilaSum / 1.18;
+  const roundedItemPrice = Number(exactPriceBeforeVat.toFixed(2));
 
-  // ◄ חישוב דינמי של מחיר היחידה המשוקלל האמיתי לפני מע"מ (לאחר הנחת הקופון)
-  const finalPriceForProductsOnly = totalPrice - currentShipping;
-  const unitPriceBeforeVat = (finalPriceForProductsOnly / quantity) / 1.18;
-
-  // בניית מערך הפריטים לחשבונית - מציג את כמות המארזים המדויקת
+  // בניית שורת מוצר אחת נקייה בכמות 1 עם ערכים עגולים
   const jsonProductsList = [
     {
-      product_name: productNameForInvoice,
-      product_quantity: quantity, 
-      product_price: Number(unitPriceBeforeVat.toFixed(2))
+      product_name: "CleanFry Order",
+      product_quantity: 1, 
+      product_price: roundedItemPrice
     }
   ];
-
-  if (currentShipping > 0) {
-    jsonProductsList.push({
-      product_name: "Shipping",
-      product_quantity: 1,
-      product_price: Number((currentShipping / 1.18).toFixed(2))
-    });
-  }
-
-  // גזירת ה-Sum הכללי מתוך סכימת ה-JSON כדי למנוע הבדלי אגורות מעוגלות
-  const calculatedSumFromIms = jsonProductsList.reduce((acc, item) => {
-    return acc + (item.product_price * item.product_quantity * 1.18);
-  }, 0);
-  const finalTranzilaSum = Math.round(calculatedSumFromIms);
 
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
