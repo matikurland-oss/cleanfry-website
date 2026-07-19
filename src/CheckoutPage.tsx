@@ -201,13 +201,13 @@ const CheckoutPage = () => {
   // בניית שם מוצר דינמי לחשבונית
   let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' ? " (איסוף עצמי - כ"ס)" : " (איסוף עצמי - ת"א)";
+    productNameForInvoice += pickupLocation === 'kfar-saba' ? " (איסוף עצמי - כ\"ס)" : " (איסוף עצמי - ת\"א)";
   }
   if (isCouponApplied) {
     productNameForInvoice += ` [קופון: ${coupon.toUpperCase().trim()}]`;
   }
 
-  // ◄ חישוב מחיר היחידה המשוקלל האמיתי כולל מע"מ (לאחר הנחה)
+  // חישוב מחיר היחידה המשוקלל האמיתי כולל מע"מ (לאחר הנחה)
   const totalProductPriceAfterDiscountWithVat = subtotal - discount;
   const actualUnitWithVat = totalProductPriceAfterDiscountWithVat / quantity;
   
@@ -218,8 +218,8 @@ const CheckoutPage = () => {
   const jsonProductsList: any[] = [
     {
       product_name: productNameForInvoice, 
-      product_quantity: quantity, // ◄ מציג את הכמות האמיתית (למשל 5)
-      product_price: Number(actualUnitBeforeVat.toFixed(2)) // ◄ מחיר ליחידה משוקלל לפני מע"מ
+      product_quantity: quantity, // מציג את הכמות האמיתית
+      product_price: Number(actualUnitBeforeVat.toFixed(2)) // מחיר ליחידה משוקלל לפני מע"מ
     }
   ];
 
@@ -231,7 +231,7 @@ const CheckoutPage = () => {
     });
   }
 
-  // ◄ גזירת ה-Sum הכללי ישירות מסכימת שורות ה-JSON כדי למנוע הבדלי אגורות שיוצרים System Error
+  // גזירת ה-Sum הכללי ישירות מסכימת שורות ה-JSON כדי למנוע הבדלי אגורות שיוצרים System Error
   const calculatedSumFromIms = jsonProductsList.reduce((acc, item) => {
     return acc + (item.product_price * item.product_quantity * 1.18);
   }, 0);
@@ -394,13 +394,11 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    {/* המחיר הסופי המדויק התואם למתמטיקה של ה-JSON */}
                     <input type="hidden" name="sum" value={finalTranzilaSum} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
                     <input type="hidden" name="u71" value="1" />
-                    {/* משאירים דולק כדי שטרנזילה תייצר פירוט חשבונית מושלם */}
                     <input type="hidden" name="inv_items" value="1" />
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
