@@ -50,7 +50,6 @@ const CheckoutPage = () => {
 
   // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי של טרנזילה
   const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
-  const totalDiscountBeforeVat = discount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -202,7 +201,7 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ עדכון שם המוצר לחשבונית על בסיס בחירת האיסוף העצמי
+  // ◄ עדכון שם המוצר לחשבונית על בסיס בחירת האיסוף העצמי (ללא ציון קופונים)
   let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
     productNameForInvoice += pickupLocation === 'kfar-saba' 
@@ -210,10 +209,10 @@ const CheckoutPage = () => {
       : " (איסוף עצמי - תל אביב)";
   }
 
-  // בניית מערך הפריטים לחשבונית
+  // בניית מערך פריטים נקי של מוצרים פיזיים בלבד במחיר המלא המקורי שלהם
   const jsonProductsList = [
     {
-      product_name: productNameForInvoice, // ישקף "איסוף עצמי" ושם העיר ישירות בחשבונית
+      product_name: productNameForInvoice, 
       product_quantity: quantity,
       product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
@@ -230,11 +229,6 @@ const CheckoutPage = () => {
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
-
-  if (isCouponApplied && discount > 0) {
-    tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
-    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
-  }
   
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
 
@@ -389,6 +383,12 @@ const CheckoutPage = () => {
                     className="hidden"
                   >
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
+                    
+                    {/* שליחת סכום ההנחה הראשי (כולל מע"מ) כפרמטר של הטופס לטובת בלוק הסיכומים */}
+                    {isCouponApplied && discount > 0 && (
+                      <input type="hidden" name="discount" value={discount.toFixed(2)} />
+                    )}
+
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
