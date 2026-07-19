@@ -198,22 +198,22 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית שם מוצר דינמי לחשבונית
-  let productNameForInvoice = "מארז CleanFry";
+  // ◄ בניית שם מוצר חלק לחלוטין - ללא סוגריים או תווים מיוחדים שיכולים לשבור את טרנזילה
+  let productNameForInvoice = "מארז קלינפריי";
   if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' ? " (איסוף עצמי - כ\"ס)" : " (איסוף עצמי - ת\"א)";
+    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כפר סבא" : " איסוף עצמי תל אביב";
   }
 
-  // הזרקת קוד הקופון ואחוז ההנחה ישירות לתוך תיאור שורת המוצר (ולא כשורה נפרדת)
+  // הזרקת מידע ההנחה בטקסט חלק ללא סוגריים מרובעים או נקודתיים
   if (isCouponApplied) {
     const code = coupon.toUpperCase().trim();
     let percentageText = "";
-    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20%";
-    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15%";
-    else if (code === 'CLEAN10') percentageText = "10%";
+    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20";
+    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15";
+    else if (code === 'CLEAN10') percentageText = "10";
 
     if (percentageText) {
-      productNameForInvoice += ` [קופון: ${code} - הנחה ${percentageText}]`;
+      productNameForInvoice += ` קופון ${code} הנחה ${percentageText} אחוז`;
     }
   }
 
@@ -227,11 +227,10 @@ const CheckoutPage = () => {
 
   jsonProductsList.push({
     product_name: productNameForInvoice,
-    product_quantity: quantity, // כמות מדויקת ואמיתית
+    product_quantity: quantity, 
     product_price: Number(adjustedUnitBeforeVat.toFixed(4))
   });
 
-  // הוספת דמי משלוח רק במידה וקיימים
   if (currentShipping > 0) {
     jsonProductsList.push({
       product_name: "דמי משלוח",
@@ -358,7 +357,7 @@ const CheckoutPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 <input type="tel" placeholder="טלפון *" value={phone} onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none opacity-100 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 {shippingMethod === 'delivery' && (
                   <>
                     <input type="text" placeholder="עיר *" value={city} onChange={(e) => { setCity(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
