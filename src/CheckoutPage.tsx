@@ -22,6 +22,7 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
+  const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); // שדה למיקום האיסוף
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -63,6 +64,11 @@ const CheckoutPage = () => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
 
+      let pickupText = '';
+      if (shippingMethod === 'pickup') {
+        pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב';
+      }
+
       try {
         await fetch(FORMSPREE_URL, {
           method: "POST",
@@ -73,8 +79,8 @@ const CheckoutPage = () => {
             "טלפון": phone,
             "אימייל": email,
             "כמות מארזים": quantity,
-            "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : 'איסוף עצמי',
-            "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : 'איסוף עצמי',
+            "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : pickupText,
+            "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : pickupText,
             "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
             "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`,
             "חשבונית על שם": invoiceName || 'לא הוגדר',
@@ -139,7 +145,7 @@ const CheckoutPage = () => {
       window.removeEventListener('message', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
-  }, [fullName, phone, email, shippingMethod, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
+  }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
 
   // הפעלת שליחת הטופס אוטומטית ברגע שה-iFrame נוצר ב-DOM
   useEffect(() => {
@@ -181,25 +187,38 @@ const CheckoutPage = () => {
       alert('נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
       return;
     }
+    if (shippingMethod === 'pickup' && !pickupLocation) {
+      alert('אנא בחר מיקום לאיסוף עצמי (כפר סבא או תל אביב) כדי להמשיך.');
+      return;
+    }
     setShowPayment(true);
   };
 
-  const fullAddressString = apartment.trim() ? `${address}, דירה ${apartment}` : address;
+  const fullAddressString = shippingMethod === 'pickup' 
+    ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
+    : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
   const companyWithIdString = invoiceName.trim() && companyId.trim()
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ בניית מערך הפריטים לחשבונית - מציג מוצרים פיזיים בלבד
+  // ◄ עדכון שם המוצר לחשבונית על בסיס בחירת האיסוף העצמי
+  let productNameForInvoice = "מארז CleanFry";
+  if (shippingMethod === 'pickup') {
+    productNameForInvoice += pickupLocation === 'kfar-saba' 
+      ? " (איסוף עצמי - כפר סבא)" 
+      : " (איסוף עצמי - תל אביב)";
+  }
+
+  // בניית מערך הפריטים לחשבונית
   const jsonProductsList = [
     {
-      product_name: "מארז CleanFry",
+      product_name: productNameForInvoice, // ישקף "איסוף עצמי" ושם העיר ישירות בחשבונית
       product_quantity: quantity,
       product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
   ];
 
-  // הוספת דמי משלוח כפריט נפרד בטבלה רק אם יש עלות משלוח אמיתית
   if (currentShipping > 0) {
     jsonProductsList.push({
       product_name: "דמי משלוח",
@@ -208,18 +227,15 @@ const CheckoutPage = () => {
     });
   }
 
-  // ◄ בניית האובייקט המלא של טרנזילה המכיל את הפריטים ואת שדות ההנחה לבלוק הסיכום
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
 
-  // הטמעת ההנחה בשדות הסיכום המובנים של טרנזילה (יופיע לפני ה-סה"כ)
   if (isCouponApplied && discount > 0) {
     tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
     tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
   }
   
-  // קידוד בטוח ומדויק של ה-JSON לטובת ה-POST Form
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
 
   return (
@@ -235,7 +251,7 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* עמודה ימנית: פרטי הלקוח והטופס */}
+          {/* עמודה ימנית */}
           <div className="lg:col-span-7 space-y-6 text-right">
             
             {/* בחירת שיטת קבלה */}
@@ -246,7 +262,7 @@ const CheckoutPage = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div 
-                  onClick={() => { setShippingMethod('delivery'); setShowPayment(false); }}
+                  onClick={() => { setShippingMethod('delivery'); setPickupLocation(''); setShowPayment(false); }}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'delivery' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
                 >
                   <div className="text-right">
@@ -265,7 +281,7 @@ const CheckoutPage = () => {
                   <div className="text-right">
                     <p className="font-bold text-slate-800">איסוף עצמי</p>
                     <p className="text-xs text-green-600 font-bold underline">חינם</p>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">ת"א / כפר סבא בלבד</p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">ת"א / כפר סבא</p>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
                     {shippingMethod === 'pickup' && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -273,22 +289,57 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
+              {/* שדה בחירת מיקום חובה לאיסוף עצמי */}
               {shippingMethod === 'pickup' && (
-                <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl text-blue-800 flex gap-3 shadow-md">
-                  <MapPin className="flex-shrink-0 mt-1 text-blue-600" size={20} />
-                  <div className="text-right">
-                    <p className="font-bold mb-1 text-lg underline decoration-blue-300 underline-offset-4">איסוף עצמי ניתן מתל אביב או כפר סבא בלבד:</p>
-                    <p className="font-medium">• תל אביב: רח' משה וילנסקי 11</p>
-                    <p className="font-medium">• כפר סבא: רח' בן גוריון 7</p>
+                <div className="mt-5 p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl text-blue-900 shadow-sm animate-fadeIn">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="text-blue-600 flex-shrink-0" size={22} />
+                    <p className="font-black text-lg">אנא בחר מיקום לאיסוף עצמי *</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label 
+                      onClick={() => { setPickupLocation('kfar-saba'); setShowPayment(false); }}
+                      className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'kfar-saba' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="pickup-location" 
+                        checked={pickupLocation === 'kfar-saba'} 
+                        onChange={() => {}} 
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" 
+                      />
+                      <div className="text-right">
+                        <span className="font-bold text-slate-800">כפר סבא</span>
+                        <span className="text-xs text-slate-500 block">רח' בן גוריון 7</span>
+                      </div>
+                    </label>
+
+                    <label 
+                      onClick={() => { setPickupLocation('tel-aviv'); setShowPayment(false); }}
+                      className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'tel-aviv' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="pickup-location" 
+                        checked={pickupLocation === 'tel-aviv'} 
+                        onChange={() => {}} 
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" 
+                      />
+                      <div className="text-right">
+                        <span className="font-bold text-slate-800">תל אביב</span>
+                        <span className="text-xs text-slate-500 block">רח' משה וילנסקי 11</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* פרטי התקשרות ומשלוח */}
+            {/* פרטי משלוח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
+                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות {shippingMethod === 'delivery' && 'ומשלוח'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
@@ -312,7 +363,7 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* בלוק תשלום מאובטח עם iFrame */}
+            {/* תשלום */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
@@ -346,7 +397,7 @@ const CheckoutPage = () => {
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
-                    <input type="hidden" name="city" value={city} />
+                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city} />
                     <input type="hidden" name="address" value={fullAddressString} />
                     <input type="hidden" name="company" value={companyWithIdString} />
                     <input type="hidden" name="company_id" value={companyId} />
@@ -365,7 +416,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* עמודה שמאלית: סיכום הזמנה בעגלה */}
+          {/* עמודה שמאלית */}
           <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
@@ -406,7 +457,12 @@ const CheckoutPage = () => {
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
+                <div className="flex justify-between"><span>שיטת קבלה:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>
+                  {shippingMethod === 'pickup' 
+                    ? `איסוף עצמי ${pickupLocation === 'kfar-saba' ? '(כ"ס)' : pickupLocation === 'tel-aviv' ? '(ת"א)' : ''}`
+                    : (isFreeShipping ? "משלוח חינם" : `₪${SHIPPING_COST}`)
+                  }
+                </span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount.toFixed(0)}</span></div>}
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span></div>
               </div>
