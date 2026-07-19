@@ -16,7 +16,7 @@ const CheckoutPage = () => {
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // 1. הגדרת ה-States הבסיסיים
+  // 1. States
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -33,7 +33,7 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר מקוריות
+  // 2. הגדרות מחיר
   const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
@@ -43,9 +43,7 @@ const CheckoutPage = () => {
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  
-  // סכום סופי לתשלום (מוגדר כערך מספרי קבוע)
-  const totalPrice = subtotal - discount + currentShipping;
+  const totalPrice = Math.round(subtotal - discount + currentShipping);
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -61,7 +59,7 @@ const CheckoutPage = () => {
 
       let pickupText = '';
       if (shippingMethod === 'pickup') {
-        pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב';
+        pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא (בן גוריון 7)' : 'איסוף עצמי - תל אביב (משה וילנסקי 11)';
       }
 
       try {
@@ -77,7 +75,7 @@ const CheckoutPage = () => {
             "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : pickupText,
             "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : pickupText,
             "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
-            "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`
+            "סה\"כ שולם": `₪${totalPrice}`
           })
         });
       } catch (error) {
@@ -135,24 +133,23 @@ const CheckoutPage = () => {
     };
   }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, coupon, isCouponApplied]);
 
-  // הפעלת הטופס ברגע שהוא מופיע
   useEffect(() => {
     if (showPayment && formRef.current) {
       formRef.current.submit();
     }
   }, [showPayment]);
 
-  // 6. פונקציות הטופס
+  // 6. קופונים
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     if (code === 'CLEAN20' || code === 'SAVE20') { 
-      setDiscount(subtotal * 0.20);
+      setDiscount(Math.round(subtotal * 0.20));
       setIsCouponApplied(true);
     } else if (code === 'FIRST15' || code === 'ROTEM') {
-      setDiscount(subtotal * 0.15);
+      setDiscount(Math.round(subtotal * 0.15));
       setIsCouponApplied(true);
     } else if (code === 'CLEAN10') {
-      setDiscount(subtotal * 0.10);
+      setDiscount(Math.round(subtotal * 0.10));
       setIsCouponApplied(true);
     } else {
       alert('קוד קופון לא תקין');
@@ -182,9 +179,44 @@ const CheckoutPage = () => {
     setShowPayment(true);
   };
 
-  // התאמת הכתובת הכללית לפי סוג המשלוח
+  // קביעת הכתובות הדינמיות שיוצגו בראש החשבונית
   const tranzilaCity = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city;
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
+
+  // בניית מערך הפריטים לחשבונית
+  const jsonProductsList: any[] = [
+    {
+      product_name: `מארז CleanFry (כמות: ${quantity})`,
+      product_quantity: quantity,
+      product_price: UNIT_PRICE
+    }
+  ];
+
+  // הוספת פריט איסוף עצמי או משלוח ישירות לחשבונית בשביל התיעוד והבהירות
+  if (shippingMethod === 'pickup') {
+    jsonProductsList.push({
+      product_name: pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב",
+      product_quantity: 1,
+      product_price: 0
+    });
+  } else if (currentShipping > 0) {
+    jsonProductsList.push({
+      product_name: "דמי משלוח עד הבית",
+      product_quantity: 1,
+      product_price: currentShipping
+    });
+  }
+
+  const tranzilaPurchasePayload: any = {
+    products: jsonProductsList
+  };
+
+  if (isCouponApplied && discount > 0) {
+    tranzilaPurchasePayload.discount = discount;
+    tranzilaPurchasePayload.discount_desc = `קופון הנחה ${coupon.toUpperCase().trim()}`;
+  }
+  
+  const encodedJsonPurchaseData = JSON.stringify(tranzilaPurchasePayload);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -237,7 +269,6 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* שדה בחירת מיקום חובה לאיסוף עצמי */}
               {shippingMethod === 'pickup' && (
                 <div className="mt-5 p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl text-blue-900 shadow-sm animate-fadeIn">
                   <div className="flex items-center gap-2 mb-4">
@@ -250,16 +281,10 @@ const CheckoutPage = () => {
                       onClick={() => { setPickupLocation('kfar-saba'); setShowPayment(false); }}
                       className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'kfar-saba' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
                     >
-                      <input 
-                        type="radio" 
-                        name="pickup-location" 
-                        checked={pickupLocation === 'kfar-saba'} 
-                        onChange={() => {}} 
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" 
-                      />
+                      <input type="radio" name="pickup-location" checked={pickupLocation === 'kfar-saba'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">כפר סבא</span>
-                        <span className="text-xs text-slate-500 block">רח' בן גוריון 7</span>
+                        <span className="text-xs text-slate-500 block">רח' - בן גוריון 7</span>
                       </div>
                     </label>
 
@@ -267,16 +292,10 @@ const CheckoutPage = () => {
                       onClick={() => { setPickupLocation('tel-aviv'); setShowPayment(false); }}
                       className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'tel-aviv' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
                     >
-                      <input 
-                        type="radio" 
-                        name="pickup-location" 
-                        checked={pickupLocation === 'tel-aviv'} 
-                        onChange={() => {}} 
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" 
-                      />
+                      <input type="radio" name="pickup-location" checked={pickupLocation === 'tel-aviv'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">תל אביב</span>
-                        <span className="text-xs text-slate-500 block">רח' משה וילנסקי 11</span>
+                        <span className="text-xs text-slate-500 block">רח' - משה וילנסקי 11</span>
                       </div>
                     </label>
                   </div>
@@ -311,7 +330,7 @@ const CheckoutPage = () => {
               
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
                 <span className="text-base mt-0.5">⚠️</span>
-                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס (American Express) ודיינרס (Diners)**.</p>
+                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס ודיינרס**.</p>
               </div>
               
               {!showPayment ? (
@@ -321,7 +340,6 @@ const CheckoutPage = () => {
                 </div>
               ) : (
                 <div className="w-full mt-2">
-                  {/* ◄ שינוי קריטי: שליחת השדות במבנה שטוח ויציב ללא json_purchase_data בעייתי */}
                   <form 
                     ref={formRef}
                     action="https://direct.tranzila.com/cleanfry/iframe.php" 
@@ -329,23 +347,19 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
+                    <input type="hidden" name="sum" value={totalPrice} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
                     <input type="hidden" name="u71" value="1" />
+                    <input type="hidden" name="inv_items" value="1" />
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
                     <input type="hidden" name="city" value={tranzilaCity} />
                     <input type="hidden" name="address" value={tranzilaAddress} />
                     <input type="hidden" name="company" value={fullName} />
-                    
-                    {/* העברת פירוט הפריט במבנה השטוח הרשמי של טרנזילה */}
-                    <input type="hidden" name="pname" value="מארז CleanFry" />
-                    <input type="hidden" name="pquantity" value={quantity.toString()} />
-                    <input type="hidden" name="price" value={totalPrice.toFixed(2)} />
-
+                    <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
                   </form>
 
@@ -394,7 +408,7 @@ const CheckoutPage = () => {
                 </div>
                 {isCouponApplied && (
                   <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{discount.toFixed(0)}</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{discount}</span></div>
                   </div>
                 )}
               </div>
@@ -402,8 +416,8 @@ const CheckoutPage = () => {
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
                 <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
-                {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount.toFixed(0)}</span></div>}
-                <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span></div>
+                {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
+                <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice}</span></div>
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
