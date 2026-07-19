@@ -203,40 +203,48 @@ const CheckoutPage = () => {
   if (shippingMethod === 'pickup') {
     productNameForInvoice += pickupLocation === 'kfar-saba' ? " (איסוף עצמי - כ\"ס)" : " (איסוף עצמי - ת\"א)";
   }
+
+  // הזרקת קוד הקופון ואחוז ההנחה ישירות לתוך תיאור שורת המוצר (ולא כשורה נפרדת)
   if (isCouponApplied) {
-    productNameForInvoice += ` [קופון: ${coupon.toUpperCase().trim()}]`;
+    const code = coupon.toUpperCase().trim();
+    let percentageText = "";
+    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20%";
+    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15%";
+    else if (code === 'CLEAN10') percentageText = "10%";
+
+    if (percentageText) {
+      productNameForInvoice += ` [קופון: ${code} - הנחה ${percentageText}]`;
+    }
   }
 
-  // חישוב מחיר היחידה המשוקלל האמיתי כולל מע"מ (לאחר הנחה)
-  const totalProductPriceAfterDiscountWithVat = subtotal - discount;
-  const actualUnitWithVat = totalProductPriceAfterDiscountWithVat / quantity;
-  
-  // חילוץ המחיר לפני מע"מ עבור ה-JSON
-  const actualUnitBeforeVat = actualUnitWithVat / 1.18;
+  // בניית שורות ה-JSON באופן מסונכרן וחסין שגיאות עבור טרנזילה
+  let finalTranzilaSum = totalPrice;
+  const jsonProductsList: any[] = [];
 
-  // בניית שורות ה-JSON עם הכמות האמיתית והמחיר המשוקלל המדויק
-  const jsonProductsList: any[] = [
-    {
-      product_name: productNameForInvoice, 
-      product_quantity: quantity, // מציג את הכמות האמיתית
-      product_price: Number(actualUnitBeforeVat.toFixed(2)) // מחיר ליחידה משוקלל לפני מע"מ
-    }
-  ];
+  // חישוב המחיר הסופי ליחידה לאחר קיזוז ההנחה
+  const productsPriceWithVat = totalPrice - currentShipping;
+  const adjustedUnitBeforeVat = (productsPriceWithVat / quantity) / 1.18;
 
+  jsonProductsList.push({
+    product_name: productNameForInvoice,
+    product_quantity: quantity, // כמות מדויקת ואמיתית
+    product_price: Number(adjustedUnitBeforeVat.toFixed(4))
+  });
+
+  // הוספת דמי משלוח רק במידה וקיימים
   if (currentShipping > 0) {
     jsonProductsList.push({
       product_name: "דמי משלוח",
       product_quantity: 1,
-      product_price: Number((currentShipping / 1.18).toFixed(2))
+      product_price: Number((currentShipping / 1.18).toFixed(4))
     });
   }
 
-  // גזירת ה-Sum הכללי ישירות מסכימת שורות ה-JSON כדי למנוע הבדלי אגורות שיוצרים System Error
+  // סנכרון סכום ה-Sum הכללי למניעת שגיאות אגורות מעוגלות
   const calculatedSumFromIms = jsonProductsList.reduce((acc, item) => {
     return acc + (item.product_price * item.product_quantity * 1.18);
   }, 0);
-
-  const finalTranzilaSum = Math.round(calculatedSumFromIms);
+  finalTranzilaSum = Math.round(calculatedSumFromIms);
 
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
@@ -350,7 +358,7 @@ const CheckoutPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 <input type="tel" placeholder="טלפון *" value={phone} onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none opacity-100 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 {shippingMethod === 'delivery' && (
                   <>
                     <input type="text" placeholder="עיר *" value={city} onChange={(e) => { setCity(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
