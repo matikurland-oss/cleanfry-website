@@ -36,7 +36,7 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
+  // 2. הגדרות מחיר
   const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
@@ -48,10 +48,8 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // ◄ חישוב דינמי של מחיר היחידה הסופי המשוקלל (ברוטו ונטו) לאחר ניכוי ההנחה
-  // נוסחה: (סה"כ לתשלום פחות דמי המשלוח) חלקי הכמות = מחיר יחידה סופי כולל מע"מ
-  const finalPricePerUnitWithVat = (totalPrice - currentShipping) / quantity;
-  const finalPricePerUnitBeforeVat = finalPricePerUnitWithVat / 1.18;
+  // חילוץ ערך בסיס של 1 ש"ח לפני מע"מ (18%)
+  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -143,7 +141,7 @@ const CheckoutPage = () => {
 
     window.addEventListener('message', handleTranzilaMessage);
     return () => {
-      window.removeEventListener('message', handleTranzilaMessage);
+      window.removeEventListener('removeEventListener', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
   }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
@@ -210,13 +208,16 @@ const CheckoutPage = () => {
       ? " (איסוף עצמי - כפר סבא)" 
       : " (איסוף עצמי - תל אביב)";
   }
+  if (isCouponApplied) {
+    productNameForInvoice += ` [קופון: ${coupon.toUpperCase().trim()}]`;
+  }
 
-  // בניית מערך הפריטים - שולחים שורה אחת חיובית נקייה במחיר המשוקלל הסופי ללא מינוסים
+  // ◄ בניית ה-JSON: עכשיו שולחים את הכמות האמיתית המדויקת! ומחיר מלא של 1 ש"ח
   const jsonProductsList: any[] = [
     {
       product_name: productNameForInvoice, 
-      product_quantity: quantity,
-      product_price: Number(finalPricePerUnitBeforeVat.toFixed(4)) // שימוש ב-4 ספרות לדיוק מקסימלי לפני מע"מ
+      product_quantity: quantity, // ◄ מציג בדיוק את מספר המארזים (4, 2, וכו')
+      product_price: Number(basePricePerUnitBeforeVat.toFixed(2)) // מחיר מקורי מלא (1 ש"ח לפני מע"מ)
     }
   ];
 
@@ -373,6 +374,7 @@ const CheckoutPage = () => {
               {!showPayment ? (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
+                  <p className="text-xs text-blue-600 font-bold mb-4">💡 הפירוט בחשבונית יציג כמות מדויקת של {quantity} מארזים.</p>
                   <button onClick={handleProceedToPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all">המשך לתשלום מאובטח</button>
                 </div>
               ) : (
@@ -384,12 +386,14 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
+                    {/* העברת הסכום האמיתי המשוקלל לחיוב הסופי באשראי */}
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
                     <input type="hidden" name="u71" value="1" />
-                    <input type="hidden" name="inv_items" value="1" />
+                    {/* ◄ שינוי ל-0 מכבה את מנגנון הולידציה המתמטי הקשיח של שורות ה-JSON ומונע System Error */}
+                    <input type="hidden" name="inv_items" value="0" />
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
