@@ -48,6 +48,10 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
+  // ◄ חזרה ללוגיקה המקורית והיציבה של חישוב הערכים לפני מע"מ
+  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
+  const totalDiscountBeforeVat = discount / 1.18;
+
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -198,25 +202,44 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ עיגול שלם מוחלט: חישוב מחיר הפריט הבודד ללא שברים (כולל מע"מ)
-  const finalTranzilaSum = Math.round(totalPrice);
-  
-  // מחיר היחידה לפני מע"מ מעוגל למספר שלם או חצי שלם כדי למנוע זנב עשרוני ארוך
-  const exactPriceBeforeVat = finalTranzilaSum / 1.18;
-  const roundedItemPrice = Number(exactPriceBeforeVat.toFixed(2));
+  // בניית שם מוצר סטטי ונקי בעברית חלק ללא תווים מיוחדים
+  let productNameForInvoice = "מארז קלינפריי";
+  if (shippingMethod === 'pickup') {
+    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כס" : " איסוף עצמי תא";
+  }
 
-  // בניית שורת מוצר אחת נקייה בכמות 1 עם ערכים עגולים
+  // בניית מערך הפריטים במחיר המקורי המלא ללא חישובי שברים דינמיים
   const jsonProductsList = [
     {
-      product_name: "CleanFry Order",
-      product_quantity: 1, 
-      product_price: roundedItemPrice
+      product_name: productNameForInvoice,
+      product_quantity: quantity,
+      product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
   ];
+
+  if (currentShipping > 0) {
+    jsonProductsList.push({
+      product_name: "דמי משלוח",
+      product_quantity: 1,
+      product_price: Number((currentShipping / 1.18).toFixed(2))
+    });
+  }
 
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
+
+  // ◄ הזרקת שדות ההנחה המקוריים אל בלוק הסיכום של טרנזילה - ללא תווים מיוחדים שיכולים לשבור את הפענוח
+  if (isCouponApplied && discount > 0) {
+    const code = coupon.toUpperCase().trim();
+    let percentageText = "";
+    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20 אחוז";
+    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15 אחוז";
+    else if (code === 'CLEAN10') percentageText = "10 אחוז";
+
+    tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
+    tranzilaPurchasePayload.discount_desc = `קופון ${code} הנחה ${percentageText}`;
+  }
   
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
 
@@ -293,7 +316,7 @@ const CheckoutPage = () => {
                       />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">כפר סבא</span>
-                        <span className="text-xs text-slate-500 block">רח' בן גוריון 7</span>
+                        <span className="text-xs text-slate-500 block">רח' - בן גוריון 7</span>
                       </div>
                     </label>
 
@@ -370,7 +393,8 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    <input type="hidden" name="sum" value={finalTranzilaSum} />
+                    {/* שליחת שדה sum המקורי ישירות מה-totalPrice המעוגל */}
+                    <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
