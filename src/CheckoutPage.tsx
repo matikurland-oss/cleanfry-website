@@ -19,7 +19,7 @@ const CheckoutPage = () => {
   // 1. States
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
@@ -34,15 +34,35 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר
-  const UNIT_PRICE = 59; 
+  const UNIT_PRICE = 59;
   const SHIPPING_COST = 35;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
+  // קופון בדיקות בלבד — מוריד את הסה"כ לתשלום ל-1 ש"ח. להסיר לפני/אחרי בדיקות בפרודקשן!
+  const TEST_COUPON = 'MKTEST1';
+
+  // TEMP DEBUG: שולח אירועי סליקה ללוגר מקומי לצורך איתור תקלה. להסיר אחרי הדיבוג!
+  const debugLog = (event: string, data: unknown) => {
+    try {
+      fetch('http://localhost:3999/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event, data })
+      }).catch(() => {});
+      console.log('[TRANZILA-DEBUG]', event, data);
+    } catch (e) {}
+  };
 
   // 3. חישובי סכומים
+  // ההנחה נגזרת מאחוז הקופון בכל רינדור, כך שהיא תמיד מעודכנת גם אם הלקוח שינה כמות אחרי הפעלת הקופון.
+  // ההנחה מחושבת על מחיר המוצרים בלבד (subtotal) — המשלוח מתווסף במלואו אחרי ההנחה.
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
+  const isTestCoupon = isCouponApplied && coupon.toUpperCase().trim() === TEST_COUPON;
+  const discount = !isCouponApplied ? 0
+    : isTestCoupon ? Math.max(0, subtotal + currentShipping - 1)
+    : Math.round(subtotal * discountPercent);
   const totalPrice = Math.round(subtotal - discount + currentShipping);
 
   // 4. זיהוי כמות מה-URL
@@ -101,6 +121,10 @@ const CheckoutPage = () => {
     }, 1000);
 
     const handleTranzilaMessage = async (event: MessageEvent) => {
+      // TEMP DEBUG: מתעד כל הודעה שמגיעה מה-iframe, מכל מקור
+      if (event.origin.includes('tranzila')) {
+        debugLog('postMessage', { origin: event.origin, data: event.data });
+      }
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
@@ -135,6 +159,8 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (showPayment && formRef.current) {
+      // TEMP DEBUG: מתעד את הנתונים שנשלחים לטרנזילה ברגע פתיחת טופס הסליקה
+      debugLog('form-submit', { sum: totalPrice, shippingMethod, pickupLocation, quantity, discount, json_purchase_data: encodedJsonPurchaseData });
       formRef.current.submit();
     }
   }, [showPayment]);
@@ -142,14 +168,17 @@ const CheckoutPage = () => {
   // 6. קופונים
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
-    if (code === 'CLEAN20' || code === 'SAVE20') { 
-      setDiscount(Math.round(subtotal * 0.20));
+    if (code === 'CLEAN20' || code === 'SAVE20') {
+      setDiscountPercent(0.20);
       setIsCouponApplied(true);
     } else if (code === 'FIRST15' || code === 'ROTEM') {
-      setDiscount(Math.round(subtotal * 0.15));
+      setDiscountPercent(0.15);
       setIsCouponApplied(true);
     } else if (code === 'CLEAN10') {
-      setDiscount(Math.round(subtotal * 0.10));
+      setDiscountPercent(0.10);
+      setIsCouponApplied(true);
+    } else if (code === TEST_COUPON) {
+      setDiscountPercent(0);
       setIsCouponApplied(true);
     } else {
       alert('קוד קופון לא תקין');
@@ -159,7 +188,7 @@ const CheckoutPage = () => {
 
   const handleRemoveCoupon = () => {
     setCoupon('');
-    setDiscount(0);
+    setDiscountPercent(0);
     setIsCouponApplied(false);
   };
 
@@ -184,22 +213,23 @@ const CheckoutPage = () => {
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
   // בניית מערך הפריטים לחשבונית
-  const jsonProductsList: any[] = [
+  // טרנזילה מצפה למערך שטוח של פריטים (ללא עטיפת אובייקט), וסכום כל השורות חייב להיות שווה בדיוק לשדה sum
+  const jsonProductsList = [
     {
-      product_name: `מארז CleanFry (כמות: ${quantity})`,
+      product_name: 'מארז CleanFry',
       product_quantity: quantity,
       product_price: UNIT_PRICE
     }
   ];
 
-  // הוספת פריט איסוף עצמי או משלוח ישירות לחשבונית בשביל התיעוד והבהירות
+  // איסוף עצמי מופיע בחשבונית כשורה בעלות 0, משלוח בתשלום מופיע עם עלותו
   if (shippingMethod === 'pickup') {
     jsonProductsList.push({
       product_name: pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב",
       product_quantity: 1,
       product_price: 0
     });
-  } else if (currentShipping > 0) {
+  } else {
     jsonProductsList.push({
       product_name: "דמי משלוח עד הבית",
       product_quantity: 1,
@@ -207,16 +237,16 @@ const CheckoutPage = () => {
     });
   }
 
-  const tranzilaPurchasePayload: any = {
-    products: jsonProductsList
-  };
-
+  // קופון מופיע כשורה במחיר שלילי, כך שסך השורות שווה לסכום החיוב
   if (isCouponApplied && discount > 0) {
-    tranzilaPurchasePayload.discount = discount;
-    tranzilaPurchasePayload.discount_desc = `קופון הנחה ${coupon.toUpperCase().trim()}`;
+    jsonProductsList.push({
+      product_name: `קופון הנחה ${coupon.toUpperCase().trim()}`,
+      product_quantity: 1,
+      product_price: -discount
+    });
   }
-  
-  const encodedJsonPurchaseData = JSON.stringify(tranzilaPurchasePayload);
+
+  const encodedJsonPurchaseData = JSON.stringify(jsonProductsList);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -330,7 +360,7 @@ const CheckoutPage = () => {
               
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
                 <span className="text-base mt-0.5">⚠️</span>
-                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, **למעט כרטיסי אמריקן אקספרס ודיינרס**.</p>
+                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, <strong>למעט כרטיסי אמריקן אקספרס ודיינרס</strong>.</p>
               </div>
               
               {!showPayment ? (
