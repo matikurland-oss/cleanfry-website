@@ -139,18 +139,13 @@ const CheckoutPage = () => {
     }
   }, [showPayment]);
 
-  // 6. קופונים - פונקציה מעודכנת ל-1 ש"ח
+// 6. קופונים - פונקציה מנוטרלת
   const handleApplyCoupon = () => {
-    const code = coupon.trim();
-    if (code === 'MKtest1') { 
-      // החישוב: ההנחה היא הסכום הכולל פחות 1 ש"ח
-      setDiscount(subtotal + currentShipping - 1);
-      setIsCouponApplied(true);
-      alert('קופון הופעל! המחיר עודכן ל-1 ש"ח');
-    } else {
-      alert('קוד קופון לא תקין');
-      handleRemoveCoupon();
-    }
+    // הפונקציה מנוטרלת כפי שביקשת
+    alert('קוד הקופון שהוזן אינו תקף כרגע.');
+    setCoupon('');
+    setDiscount(0);
+    setIsCouponApplied(false);
   };
 
   const handleRemoveCoupon = () => {
@@ -280,7 +275,7 @@ const CheckoutPage = () => {
                       <input type="radio" name="pickup-location" checked={pickupLocation === 'kfar-saba'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">כפר סבא</span>
-                        <span className="text-xs text-slate-500 block">רח' בן גוריון 7</span>
+                        <span className="text-xs text-slate-500 block">רח' - בן גוריון 7</span>
                       </div>
                     </label>
 
@@ -291,7 +286,7 @@ const CheckoutPage = () => {
                       <input type="radio" name="pickup-location" checked={pickupLocation === 'tel-aviv'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">תל אביב</span>
-                        <span className="text-xs text-slate-500 block">רח' משה וילנסקי 11</span>
+                        <span className="text-xs text-slate-500 block">רח' - משה וילנסקי 11</span>
                       </div>
                     </label>
                   </div>
@@ -414,7 +409,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice}</span></div>
-        </div>
+              </div>
 
               <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
                 <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
