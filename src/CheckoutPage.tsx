@@ -34,8 +34,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר
-  const UNIT_PRICE = 1; 
-  const SHIPPING_COST = 0;
+  const UNIT_PRICE = 59; 
+  const SHIPPING_COST = 35;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
