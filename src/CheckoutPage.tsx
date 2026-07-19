@@ -36,7 +36,7 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
+  // 2. הגדרות מחיר
   const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
@@ -48,7 +48,6 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי היציב של טרנזילה
   const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
   const totalDiscountBeforeVat = discount / 1.18;
 
@@ -109,31 +108,28 @@ const CheckoutPage = () => {
       } catch (e) {}
     }, 1000);
 
-    // ◄ שינוי קריטי: סינון קשוח ומחמיר של ההודעות הנכנסות מה-iFrame למניעת הגשה כפולה
     const handleTranzilaMessage = async (event: MessageEvent) => {
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
-      
-      // אם מדובר במחרוזת טקסט פשוטה (כמו הודעות טעינה פנימיות של טרנזילה), נתעלם ממנה לחלוטין
       if (typeof data === 'string') {
-        if (!data.includes('Response=') && !data.includes('res=')) {
-          return; // מתעלם ומפסיק את הריצה כדי לא ליצור לולאה בשוגג
-        }
         try {
           const urlParams = new URLSearchParams(data);
-          data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
-        } catch (e) {
-          return;
-        }
+          if (urlParams.has('Response') || urlParams.has('res')) {
+            data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
+          }
+        } catch (e) {}
       }
 
-      // ולידציה קשיחה על קוד תגובה של הצלחה בלבד
-      const isSuccess = data && (data.Response === '000' || data.res === '000');
+      const isSuccess = data && (
+        data.Response === '000' || 
+        data.res === '000' || 
+        data === 'Response=000' || 
+        data === 'res=000'
+      );
 
       if (isSuccess) {
         clearInterval(checkIframeRedirect);
-        window.removeEventListener('message', handleTranzilaMessage); // מנתק מיד את המאזין
         sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
         await sendOrderNotificationEmail();
         
@@ -197,15 +193,18 @@ const CheckoutPage = () => {
     setShowPayment(true);
   };
 
-  const fullAddressString = shippingMethod === 'pickup' 
-    ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
-    : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
+  // ◄ בניית ערכי כתובת ועיר נקיים ופשוטים לחלוטין עבור שרת טרנזילה
+  const tranzilaCity = shippingMethod === 'pickup' 
+    ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') 
+    : city;
 
-  const productNameForInvoice = "מארז CleanFry";
+  const tranzilaAddress = shippingMethod === 'pickup'
+    ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11')
+    : (apartment.trim() ? `${address} דירה ${apartment}` : address);
 
   const jsonProductsList = [
     {
-      product_name: productNameForInvoice,
+      product_name: "מארז CleanFry",
       product_quantity: quantity,
       product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
@@ -225,7 +224,7 @@ const CheckoutPage = () => {
 
   if (isCouponApplied && discount > 0) {
     tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
-    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
+    tranzilaPurchasePayload.discount_desc = `קופון הנחה`;
   }
   
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
@@ -380,6 +379,7 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
+                    {/* ◄ ערכים נקיים וסטטיים לחלוטין למניעת שגיאות שרת */}
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
@@ -389,8 +389,8 @@ const CheckoutPage = () => {
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
-                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? 'Pickup' : city} />
-                    <input type="hidden" name="address" value={fullAddressString} />
+                    <input type="hidden" name="city" value={tranzilaCity} />
+                    <input type="hidden" name="address" value={tranzilaAddress} />
                     <input type="hidden" name="company" value={fullName} />
                     <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
