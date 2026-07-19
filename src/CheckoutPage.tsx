@@ -36,8 +36,8 @@ const CheckoutPage = () => {
 
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר
-  const UNIT_PRICE = 1; // ◄ ישונה ל-59 באוויר
+  // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
+  const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
@@ -48,7 +48,7 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // ◄ חזרה ללוגיקה המקורית והיציבה של חישוב הערכים לפני מע"מ
+  // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי היציב של טרנזילה
   const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
   const totalDiscountBeforeVat = discount / 1.18;
 
@@ -198,17 +198,10 @@ const CheckoutPage = () => {
     ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
     : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
-  const companyWithIdString = invoiceName.trim() && companyId.trim()
-    ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
-    : (invoiceName.trim() || companyId.trim());
+  // ◄ שחזור שם המוצר המקורי והחלק לחלוטין שעבד בעבר
+  const productNameForInvoice = "מארז CleanFry";
 
-  // בניית שם מוצר סטטי ונקי בעברית חלק ללא תווים מיוחדים
-  let productNameForInvoice = "מארז קלינפריי";
-  if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כס" : " איסוף עצמי תא";
-  }
-
-  // בניית מערך הפריטים במחיר המקורי המלא ללא חישובי שברים דינמיים
+  // ◄ בניית מערך הפריטים המקורי ללא שום מניפולציות של שברים
   const jsonProductsList = [
     {
       product_name: productNameForInvoice,
@@ -225,20 +218,14 @@ const CheckoutPage = () => {
     });
   }
 
+  // שחזור האובייקט המקורי המדויק של הפיילוד
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
 
-  // ◄ הזרקת שדות ההנחה המקוריים אל בלוק הסיכום של טרנזילה - ללא תווים מיוחדים שיכולים לשבור את הפענוח
   if (isCouponApplied && discount > 0) {
-    const code = coupon.toUpperCase().trim();
-    let percentageText = "";
-    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20 אחוז";
-    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15 אחוז";
-    else if (code === 'CLEAN10') percentageText = "10 אחוז";
-
     tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
-    tranzilaPurchasePayload.discount_desc = `קופון ${code} הנחה ${percentageText}`;
+    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
   }
   
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
@@ -316,7 +303,7 @@ const CheckoutPage = () => {
                       />
                       <div className="text-right">
                         <span className="font-bold text-slate-800">כפר סבא</span>
-                        <span className="text-xs text-slate-500 block">רח' - בן גוריון 7</span>
+                        <span className="text-xs text-slate-500 block">רח' בן גוריון 7</span>
                       </div>
                     </label>
 
@@ -393,7 +380,7 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    {/* שליחת שדה sum המקורי ישירות מה-totalPrice המעוגל */}
+                    {/* ◄ שחזור מוחלט של הפרמטרים המקוריים שעבדו ללא תקלות */}
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
@@ -403,10 +390,9 @@ const CheckoutPage = () => {
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
-                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city} />
+                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? 'Pickup' : city} />
                     <input type="hidden" name="address" value={fullAddressString} />
-                    <input type="hidden" name="company" value={companyWithIdString} />
-                    <input type="hidden" name="company_id" value={companyId} />
+                    <input type="hidden" name="company" value={fullName} /> {/* ◄ שחזור ל-fullName למניעת קריסת המערכת */}
                     <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
                   </form>
