@@ -176,7 +176,7 @@ const CheckoutPage = () => {
 
   const handleProceedToPayment = () => {
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
+      alert('אננא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
     if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
@@ -198,23 +198,8 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית שם מוצר דינמי ללא תווים מיוחדים וללא סימן אחוז (%)
-  let productNameForInvoice = "מארז CleanFry";
-  if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כס" : " איסוף עצמי תא";
-  }
-
-  if (isCouponApplied) {
-    const code = coupon.toUpperCase().trim();
-    let percentageText = "";
-    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20 אחוז";
-    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15 אחוז";
-    else if (code === 'CLEAN10') percentageText = "10 אחוז";
-
-    if (percentageText) {
-      productNameForInvoice += ` קופון ${code} הנחה ${percentageText}`;
-    }
-  }
+  // ◄ שינוי קריטי: שם מוצר סטטי ונקי באנגלית למניעת שגיאות קידוד/תווים בטרנזילה
+  const productNameForInvoice = "CleanFry Pack";
 
   // ◄ חישוב דינמי של מחיר היחידה המשוקלל האמיתי לפני מע"מ (לאחר הנחת הקופון)
   const finalPriceForProductsOnly = totalPrice - currentShipping;
@@ -224,14 +209,14 @@ const CheckoutPage = () => {
   const jsonProductsList = [
     {
       product_name: productNameForInvoice,
-      product_quantity: quantity, // ◄ מציג בדיוק את מספר המארזים (למשל 5)
+      product_quantity: quantity, 
       product_price: Number(unitPriceBeforeVat.toFixed(2))
     }
   ];
 
   if (currentShipping > 0) {
     jsonProductsList.push({
-      product_name: "דמי משלוח",
+      product_name: "Shipping",
       product_quantity: 1,
       product_price: Number((currentShipping / 1.18).toFixed(2))
     });
