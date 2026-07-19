@@ -139,11 +139,11 @@ const CheckoutPage = () => {
     }
   }, [showPayment]);
 
-  // 6. פונקציית הקופון המעודכנת
+// 6. קופונים - פונקציה מעודכנת
   const handleApplyCoupon = () => {
-    const code = coupon.toUpperCase().trim();
-    if (code === 'MKTEST1') { 
-      // הנחה שמביאה את הסכום ל-1 ש"ח
+    const code = coupon.trim(); // הסרתי את ה-toUpperCase כדי לשמור על דיוק
+    if (code === 'MKtest1') { 
+      // הנחה שמביאה את הסכום ל-1 ש"ח בדיוק
       setDiscount(totalPrice - 1);
       setIsCouponApplied(true);
       alert('קופון הופעל! המחיר עודכן ל-1 ש"ח.');
