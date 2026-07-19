@@ -15,9 +15,8 @@ import {
 const CheckoutPage = () => {
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
-  const isSubmittedRef = useRef(false);
 
-  // 1. הגדרת כל ה-States הבסיסיים
+  // 1. הגדרת ה-States המקוריים + תמיכה באיסוף עצמי
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -32,27 +31,22 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState('');
   const [apartment, setApartment] = useState(''); 
 
-  const [invoiceName, setInvoiceName] = useState('');
-  const [companyId, setCompanyId] = useState('');
-
   const [showPayment, setShowPayment] = useState(false);
 
-  // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
+  // 2. הגדרות מחיר מקוריות
   const UNIT_PRICE = 1; 
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
-  // 3. ביצוע חישובי סכומים
+  // 3. חישובי סכומים
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  
-  // ◄ קביעת סכום החיוב הסופי כשלם מעוגל מראש למניעת שברים
-  const finalTranzilaSum = Math.round(subtotal - discount + currentShipping);
+  const totalPrice = subtotal - discount + currentShipping;
 
-  // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי היציב של טרנזילה
   const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
+  const totalDiscountBeforeVat = discount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -61,7 +55,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. מנגנון מעקב והאזנה לטרנזילה + שליחת המייל ל-Formspree
+  // 5. מנגנון האזנה לטרנזילה ו-Formspree המקורי
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -84,9 +78,7 @@ const CheckoutPage = () => {
             "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : pickupText,
             "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}, דירה ${apartment}` : pickupText,
             "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
-            "סה\"כ שולם": `₪${finalTranzilaSum}`,
-            "חשבונית על שם": invoiceName || 'לא הוגדר',
-            "ח.פ / ת.ז": companyId || 'לא הוגדר'
+            "סה\"כ שולם": `₪${totalPrice.toFixed(0)}`
           })
         });
       } catch (error) {
@@ -116,18 +108,18 @@ const CheckoutPage = () => {
 
       let data = event.data;
       if (typeof data === 'string') {
-        if (!data.includes('Response=') && !data.includes('res=')) return;
         try {
           const urlParams = new URLSearchParams(data);
-          data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
-        } catch (e) { return; }
+          if (urlParams.has('Response') || urlParams.has('res')) {
+            data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
+          }
+        } catch (e) {}
       }
 
-      const isSuccess = data && (data.Response === '000' || data.res === '000');
+      const isSuccess = data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000');
 
       if (isSuccess) {
         clearInterval(checkIframeRedirect);
-        window.removeEventListener('message', handleTranzilaMessage);
         sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
         await sendOrderNotificationEmail();
         
@@ -142,20 +134,16 @@ const CheckoutPage = () => {
       window.removeEventListener('message', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
-  }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, finalTranzilaSum, invoiceName, companyId, coupon, isCouponApplied]);
+  }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, coupon, isCouponApplied]);
 
-  // מנגנון הגשת טופס מאובטח למניעת הגשה כפולה ברינדור
+  // הפעלת הטופס
   useEffect(() => {
-    if (showPayment && formRef.current && !isSubmittedRef.current) {
-      isSubmittedRef.current = true;
+    if (showPayment && formRef.current) {
       formRef.current.submit();
-    }
-    if (!showPayment) {
-      isSubmittedRef.current = false;
     }
   }, [showPayment]);
 
-  // 6. פונקציות תפעוליות של הטופס
+  // 6. פונקציות הטופס
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase().trim();
     if (code === 'CLEAN20' || code === 'SAVE20') { 
@@ -189,24 +177,17 @@ const CheckoutPage = () => {
       return;
     }
     if (shippingMethod === 'pickup' && !pickupLocation) {
-      alert('אנא בחר מיקום לאיסוף עצמי (כפר סבא או תל אביב) כדי להמשיך.');
+      alert('אנא בחר מיקום לאיסוף עצמי כדי להמשיך.');
       return;
     }
     setShowPayment(true);
   };
 
-  const fullAddressString = shippingMethod === 'pickup' 
-    ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
-    : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
-
-  const companyWithIdString = invoiceName.trim() && companyId.trim()
-    ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
-    : (invoiceName.trim() || companyId.trim());
-
-  // בניית שורות ה-JSON באופן מסונכרן לחלוטין
+  // התאמת הכתובת הנשלחת לטרנזילה לפי סוג המשלוח
   const tranzilaCity = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city;
-  const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : fullAddressString;
+  const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
+  // אובייקט ה-JSON המקורי והפשוט
   const jsonProductsList = [
     {
       product_name: "מארז CleanFry",
@@ -223,23 +204,13 @@ const CheckoutPage = () => {
     });
   }
 
-  // חישוב מדויק כולל מע"מ של סכום הפריטים במחירון מלא בטבלה
-  const totalItemsSumWithVat = jsonProductsList.reduce((acc, item) => {
-    return acc + (item.product_price * item.product_quantity * 1.18);
-  }, 0);
-
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
 
-  // ◄ תיקון הסנכרון החשוב: סכום ה-Discount ב-JSON יחושב כהפרש המדויק שבין הטבלה לחיוב
   if (isCouponApplied && discount > 0) {
-    const code = coupon.toUpperCase().trim();
-    const exactVatDiscount = totalItemsSumWithVat - finalTranzilaSum;
-    const synchronizedDiscountBeforeVat = exactVatDiscount / 1.18;
-
-    tranzilaPurchasePayload.discount = Number(synchronizedDiscountBeforeVat.toFixed(2));
-    tranzilaPurchasePayload.discount_desc = `קופון ${code}`;
+    tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
+    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
   }
   
   const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
@@ -359,14 +330,6 @@ const CheckoutPage = () => {
                   </>
                 )}
               </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-100">
-                <h3 className="text-md font-bold mb-3 text-slate-700">פרטי חשבונית (אופציונלי)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="text" placeholder="חשבונית על שם" value={invoiceName} onChange={(e) => { setInvoiceName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                  <input type="text" placeholder="ח.פ / ת.ז" value={companyId} onChange={(e) => { setCompanyId(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                </div>
-              </div>
             </div>
 
             {/* תשלום */}
@@ -394,7 +357,7 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    <input type="hidden" name="sum" value={finalTranzilaSum} />
+                    <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
@@ -405,7 +368,7 @@ const CheckoutPage = () => {
                     <input type="hidden" name="email" value={email} />
                     <input type="hidden" name="city" value={tranzilaCity} />
                     <input type="hidden" name="address" value={tranzilaAddress} />
-                    <input type="hidden" name="company" value={companyWithIdString || fullName} />
+                    <input type="hidden" name="company" value={fullName} />
                     <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
                   </form>
@@ -464,7 +427,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
                 <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount.toFixed(0)}</span></div>}
-                <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{finalTranzilaSum}</span></div>
+                <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span></div>
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
