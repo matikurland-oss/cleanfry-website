@@ -37,19 +37,16 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר
-  const UNIT_PRICE = 1; 
+  const UNIT_PRICE = 1; // ◄ ישונה ל-59 באוויר
   const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
-  // 3. ביצוע חישובי סכומים
+  // 3. ביצוע חישובי סכומים בצד הלקוח (לתצוגה ב-UI)
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
-
-  // חילוץ ערך בסיס של 1 ש"ח לפני מע"מ (18%)
-  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -141,7 +138,7 @@ const CheckoutPage = () => {
 
     window.addEventListener('message', handleTranzilaMessage);
     return () => {
-      window.removeEventListener('removeEventListener', handleTranzilaMessage);
+      window.removeEventListener('message', handleTranzilaMessage);
       clearInterval(checkIframeRedirect);
     };
   }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
@@ -201,23 +198,28 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית שם מוצר לחשבונית
+  // בניית שם מוצר דינמי לחשבונית
   let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' 
-      ? " (איסוף עצמי - כפר סבא)" 
-      : " (איסוף עצמי - תל אביב)";
+    productNameForInvoice += pickupLocation === 'kfar-saba' ? " (איסוף עצמי - כ"ס)" : " (איסוף עצמי - ת"א)";
   }
   if (isCouponApplied) {
     productNameForInvoice += ` [קופון: ${coupon.toUpperCase().trim()}]`;
   }
 
-  // ◄ בניית ה-JSON: עכשיו שולחים את הכמות האמיתית המדויקת! ומחיר מלא של 1 ש"ח
+  // ◄ חישוב מחיר היחידה המשוקלל האמיתי כולל מע"מ (לאחר הנחה)
+  const totalProductPriceAfterDiscountWithVat = subtotal - discount;
+  const actualUnitWithVat = totalProductPriceAfterDiscountWithVat / quantity;
+  
+  // חילוץ המחיר לפני מע"מ עבור ה-JSON
+  const actualUnitBeforeVat = actualUnitWithVat / 1.18;
+
+  // בניית שורות ה-JSON עם הכמות האמיתית והמחיר המשוקלל המדויק
   const jsonProductsList: any[] = [
     {
       product_name: productNameForInvoice, 
-      product_quantity: quantity, // ◄ מציג בדיוק את מספר המארזים (4, 2, וכו')
-      product_price: Number(basePricePerUnitBeforeVat.toFixed(2)) // מחיר מקורי מלא (1 ש"ח לפני מע"מ)
+      product_quantity: quantity, // ◄ מציג את הכמות האמיתית (למשל 5)
+      product_price: Number(actualUnitBeforeVat.toFixed(2)) // ◄ מחיר ליחידה משוקלל לפני מע"מ
     }
   ];
 
@@ -228,6 +230,13 @@ const CheckoutPage = () => {
       product_price: Number((currentShipping / 1.18).toFixed(2))
     });
   }
+
+  // ◄ גזירת ה-Sum הכללי ישירות מסכימת שורות ה-JSON כדי למנוע הבדלי אגורות שיוצרים System Error
+  const calculatedSumFromIms = jsonProductsList.reduce((acc, item) => {
+    return acc + (item.product_price * item.product_quantity * 1.18);
+  }, 0);
+
+  const finalTranzilaSum = Math.round(calculatedSumFromIms);
 
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
@@ -374,7 +383,6 @@ const CheckoutPage = () => {
               {!showPayment ? (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
-                  <p className="text-xs text-blue-600 font-bold mb-4">💡 הפירוט בחשבונית יציג כמות מדויקת של {quantity} מארזים.</p>
                   <button onClick={handleProceedToPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all">המשך לתשלום מאובטח</button>
                 </div>
               ) : (
@@ -386,14 +394,14 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    {/* העברת הסכום האמיתי המשוקלל לחיוב הסופי באשראי */}
-                    <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
+                    {/* המחיר הסופי המדויק התואם למתמטיקה של ה-JSON */}
+                    <input type="hidden" name="sum" value={finalTranzilaSum} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
                     <input type="hidden" name="u71" value="1" />
-                    {/* ◄ שינוי ל-0 מכבה את מנגנון הולידציה המתמטי הקשיח של שורות ה-JSON ומונע System Error */}
-                    <input type="hidden" name="inv_items" value="0" />
+                    {/* משאירים דולק כדי שטרנזילה תייצר פירוט חשבונית מושלם */}
+                    <input type="hidden" name="inv_items" value="1" />
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
