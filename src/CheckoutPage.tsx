@@ -198,7 +198,7 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // בניית שם מוצר דינמי הכולל את פרטי הקופון וההנחה בצורה נקייה כפי שביקשת
+  // בניית שם מוצר דינמי ללא תווים מיוחדים וללא סימן אחוז (%)
   let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
     productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כס" : " איסוף עצמי תא";
@@ -207,9 +207,9 @@ const CheckoutPage = () => {
   if (isCouponApplied) {
     const code = coupon.toUpperCase().trim();
     let percentageText = "";
-    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20%";
-    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15%";
-    else if (code === 'CLEAN10') percentageText = "10%";
+    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20 אחוז";
+    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15 אחוז";
+    else if (code === 'CLEAN10') percentageText = "10 אחוז";
 
     if (percentageText) {
       productNameForInvoice += ` קופון ${code} הנחה ${percentageText}`;
