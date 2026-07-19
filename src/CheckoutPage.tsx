@@ -42,7 +42,7 @@ const CheckoutPage = () => {
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
-  // 3. ביצוע חישובי סכומים בצד הלקוח (לתצוגה ב-UI)
+  // 3. ביצוע חישובי סכומים
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
@@ -198,52 +198,50 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ בניית שם מוצר חלק לחלוטין - ללא סוגריים או תווים מיוחדים שיכולים לשבור את טרנזילה
-  let productNameForInvoice = "מארז קלינפריי";
+  // בניית שם מוצר דינמי הכולל את פרטי הקופון וההנחה בצורה נקייה כפי שביקשת
+  let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
-    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כפר סבא" : " איסוף עצמי תל אביב";
+    productNameForInvoice += pickupLocation === 'kfar-saba' ? " איסוף עצמי כס" : " איסוף עצמי תא";
   }
 
-  // הזרקת מידע ההנחה בטקסט חלק ללא סוגריים מרובעים או נקודתיים
   if (isCouponApplied) {
     const code = coupon.toUpperCase().trim();
     let percentageText = "";
-    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20";
-    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15";
-    else if (code === 'CLEAN10') percentageText = "10";
+    if (code === 'CLEAN20' || code === 'SAVE20') percentageText = "20%";
+    else if (code === 'FIRST15' || code === 'ROTEM') percentageText = "15%";
+    else if (code === 'CLEAN10') percentageText = "10%";
 
     if (percentageText) {
-      productNameForInvoice += ` קופון ${code} הנחה ${percentageText} אחוז`;
+      productNameForInvoice += ` קופון ${code} הנחה ${percentageText}`;
     }
   }
 
-  // בניית שורות ה-JSON באופן מסונכרן וחסין שגיאות עבור טרנזילה
-  let finalTranzilaSum = totalPrice;
-  const jsonProductsList: any[] = [];
+  // ◄ חישוב דינמי של מחיר היחידה המשוקלל האמיתי לפני מע"מ (לאחר הנחת הקופון)
+  const finalPriceForProductsOnly = totalPrice - currentShipping;
+  const unitPriceBeforeVat = (finalPriceForProductsOnly / quantity) / 1.18;
 
-  // חישוב המחיר הסופי ליחידה לאחר קיזוז ההנחה
-  const productsPriceWithVat = totalPrice - currentShipping;
-  const adjustedUnitBeforeVat = (productsPriceWithVat / quantity) / 1.18;
-
-  jsonProductsList.push({
-    product_name: productNameForInvoice,
-    product_quantity: quantity, 
-    product_price: Number(adjustedUnitBeforeVat.toFixed(4))
-  });
+  // בניית מערך הפריטים לחשבונית - מציג את כמות המארזים המדויקת
+  const jsonProductsList = [
+    {
+      product_name: productNameForInvoice,
+      product_quantity: quantity, // ◄ מציג בדיוק את מספר המארזים (למשל 5)
+      product_price: Number(unitPriceBeforeVat.toFixed(2))
+    }
+  ];
 
   if (currentShipping > 0) {
     jsonProductsList.push({
       product_name: "דמי משלוח",
       product_quantity: 1,
-      product_price: Number((currentShipping / 1.18).toFixed(4))
+      product_price: Number((currentShipping / 1.18).toFixed(2))
     });
   }
 
-  // סנכרון סכום ה-Sum הכללי למניעת שגיאות אגורות מעוגלות
+  // גזירת ה-Sum הכללי מתוך סכימת ה-JSON כדי למנוע הבדלי אגורות מעוגלות
   const calculatedSumFromIms = jsonProductsList.reduce((acc, item) => {
     return acc + (item.product_price * item.product_quantity * 1.18);
   }, 0);
-  finalTranzilaSum = Math.round(calculatedSumFromIms);
+  const finalTranzilaSum = Math.round(calculatedSumFromIms);
 
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
@@ -352,7 +350,7 @@ const CheckoutPage = () => {
             {/* פרטי משלוח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות {shippingMethod === 'delivery' && 'ומשלוח'}
+                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
@@ -470,12 +468,7 @@ const CheckoutPage = () => {
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                <div className="flex justify-between"><span>שיטת קבלה:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>
-                  {shippingMethod === 'pickup' 
-                    ? `איסוף עצמי ${pickupLocation === 'kfar-saba' ? '(כ"ס)' : pickupLocation === 'tel-aviv' ? '(ת"א)' : ''}`
-                    : (isFreeShipping ? "משלוח חינם" : `₪${SHIPPING_COST}`)
-                  }
-                </span></div>
+                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount.toFixed(0)}</span></div>}
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span></div>
               </div>
