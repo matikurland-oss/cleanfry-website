@@ -36,8 +36,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
 
   // 2. הגדרות מחיר (המחיר האמיתי של מארז הוא 59 ש"ח)
-  const UNIT_PRICE = 59; 
-  const SHIPPING_COST = 35;
+  const UNIT_PRICE = 1; 
+  const SHIPPING_COST = 0;
   const FREE_SHIPPING_THRESHOLD = 249;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
@@ -47,11 +47,9 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חישוב מחיר סופי משוקלל ליחידה (כולל מע"מ) לאחר קיזוז ההנחה של הקופון
-  const finalPricePerUnitAfterDiscount = (subtotal - discount) / quantity;
-  
-  // חילוץ המע"מ (18%) עבור טרנזילה כדי שמחיר היחידה המעודכן יישלח לפני מע"מ
-  const priceBeforeVat = finalPricePerUnitAfterDiscount / 1.18;
+  // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי של טרנזילה
+  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
+  const totalDiscountBeforeVat = discount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -60,7 +58,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. מנגנון מעקב והאזנה לטרנזילה + שליחת המייל
+  // 5. מנגנון מעקב והאזנה לטרנזילה + שליחת המייל ל-Formspree
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -192,22 +190,37 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // הגדרת שם מוצר דינמי הכולל את קוד הקופון במידה והופעל
-  const productNameWithCoupon = isCouponApplied 
-    ? `מארז CleanFry (קופון: ${coupon.toUpperCase().trim()})` 
-    : "מארז CleanFry";
-
-  // בניית מערך הפריטים לחשבונית המפורטת עם מחיר סופי מעודכן ליחידה
-  const jsonObject = [
+  // ◄ בניית מערך הפריטים לחשבונית - מציג מוצרים פיזיים בלבד
+  const jsonProductsList = [
     {
-      product_name: productNameWithCoupon,
+      product_name: "מארז CleanFry",
       product_quantity: quantity,
-      product_price: Number(priceBeforeVat.toFixed(2))
+      product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
   ];
+
+  // הוספת דמי משלוח כפריט נפרד בטבלה רק אם יש עלות משלוח אמיתית
+  if (currentShipping > 0) {
+    jsonProductsList.push({
+      product_name: "דמי משלוח",
+      product_quantity: 1,
+      product_price: Number((currentShipping / 1.18).toFixed(2))
+    });
+  }
+
+  // ◄ בניית האובייקט המלא של טרנזילה המכיל את הפריטים ואת שדות ההנחה לבלוק הסיכום
+  const tranzilaPurchasePayload: any = {
+    products: jsonProductsList
+  };
+
+  // הטמעת ההנחה בשדות הסיכום המובנים של טרנזילה (יופיע לפני ה-סה"כ)
+  if (isCouponApplied && discount > 0) {
+    tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
+    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
+  }
   
-  // התיקון כאן: קידוד נקי של ה-JSON ללא פונקציות החלפה שעלולות לעוות מילים באנגלית
-  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(jsonObject));
+  // קידוד בטוח ומדויק של ה-JSON לטובת ה-POST Form
+  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -222,7 +235,7 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* עמודה ימנית */}
+          {/* עמודה ימנית: פרטי הלקוח והטופס */}
           <div className="lg:col-span-7 space-y-6 text-right">
             
             {/* בחירת שיטת קבלה */}
@@ -272,7 +285,7 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* פרטי משלוח */}
+            {/* פרטי התקשרות ומשלוח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
@@ -299,7 +312,7 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* תשלום */}
+            {/* בלוק תשלום מאובטח עם iFrame */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
@@ -352,7 +365,7 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* עמודה שמאלית */}
+          {/* עמודה שמאלית: סיכום הזמנה בעגלה */}
           <div className="lg:col-span-5 text-right">
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
