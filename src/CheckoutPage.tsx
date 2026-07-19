@@ -16,7 +16,7 @@ const CheckoutPage = () => {
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // 1. הגדרת ה-States המקוריים + תמיכה באיסוף עצמי
+  // 1. הגדרת ה-States הבסיסיים
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -43,10 +43,9 @@ const CheckoutPage = () => {
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
+  
+  // סכום סופי לתשלום (מוגדר כערך מספרי קבוע)
   const totalPrice = subtotal - discount + currentShipping;
-
-  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
-  const totalDiscountBeforeVat = discount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -55,7 +54,7 @@ const CheckoutPage = () => {
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
   }, [location]);
 
-  // 5. מנגנון האזנה לטרנזילה ו-Formspree המקורי
+  // 5. מנגנון האזנה לטרנזילה ו-Formspree
   useEffect(() => {
     const sendOrderNotificationEmail = async () => {
       if (!fullName.trim() || !phone.trim()) return;
@@ -116,7 +115,7 @@ const CheckoutPage = () => {
         } catch (e) {}
       }
 
-      const isSuccess = data && (data.Response === '000' || data.res === '000' || data === 'Response=000' || data === 'res=000');
+      const isSuccess = data && (data.Response === '000' || data.res === '000');
 
       if (isSuccess) {
         clearInterval(checkIframeRedirect);
@@ -136,7 +135,7 @@ const CheckoutPage = () => {
     };
   }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, coupon, isCouponApplied]);
 
-  // הפעלת הטופס
+  // הפעלת הטופס ברגע שהוא מופיע
   useEffect(() => {
     if (showPayment && formRef.current) {
       formRef.current.submit();
@@ -183,37 +182,9 @@ const CheckoutPage = () => {
     setShowPayment(true);
   };
 
-  // התאמת הכתובת הנשלחת לטרנזילה לפי סוג המשלוח
+  // התאמת הכתובת הכללית לפי סוג המשלוח
   const tranzilaCity = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city;
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
-
-  // אובייקט ה-JSON המקורי והפשוט
-  const jsonProductsList = [
-    {
-      product_name: "מארז CleanFry",
-      product_quantity: quantity,
-      product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
-    }
-  ];
-
-  if (currentShipping > 0) {
-    jsonProductsList.push({
-      product_name: "דמי משלוח",
-      product_quantity: 1,
-      product_price: Number((currentShipping / 1.18).toFixed(2))
-    });
-  }
-
-  const tranzilaPurchasePayload: any = {
-    products: jsonProductsList
-  };
-
-  if (isCouponApplied && discount > 0) {
-    tranzilaPurchasePayload.discount = Number(totalDiscountBeforeVat.toFixed(2));
-    tranzilaPurchasePayload.discount_desc = `קופון הנחה: ${coupon.toUpperCase().trim()}`;
-  }
-  
-  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(tranzilaPurchasePayload));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -350,6 +321,7 @@ const CheckoutPage = () => {
                 </div>
               ) : (
                 <div className="w-full mt-2">
+                  {/* ◄ שינוי קריטי: שליחת השדות במבנה שטוח ויציב ללא json_purchase_data בעייתי */}
                   <form 
                     ref={formRef}
                     action="https://direct.tranzila.com/cleanfry/iframe.php" 
@@ -362,14 +334,18 @@ const CheckoutPage = () => {
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
                     <input type="hidden" name="u71" value="1" />
-                    <input type="hidden" name="inv_items" value="1" />
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
                     <input type="hidden" name="city" value={tranzilaCity} />
                     <input type="hidden" name="address" value={tranzilaAddress} />
                     <input type="hidden" name="company" value={fullName} />
-                    <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
+                    
+                    {/* העברת פירוט הפריט במבנה השטוח הרשמי של טרנזילה */}
+                    <input type="hidden" name="pname" value="מארז CleanFry" />
+                    <input type="hidden" name="pquantity" value={quantity.toString()} />
+                    <input type="hidden" name="price" value={totalPrice.toFixed(2)} />
+
                     <input type="hidden" name="expari" value="0" />
                   </form>
 
