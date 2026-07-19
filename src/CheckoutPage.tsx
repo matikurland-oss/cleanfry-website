@@ -109,28 +109,31 @@ const CheckoutPage = () => {
       } catch (e) {}
     }, 1000);
 
+    // ◄ שינוי קריטי: סינון קשוח ומחמיר של ההודעות הנכנסות מה-iFrame למניעת הגשה כפולה
     const handleTranzilaMessage = async (event: MessageEvent) => {
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
+      
+      // אם מדובר במחרוזת טקסט פשוטה (כמו הודעות טעינה פנימיות של טרנזילה), נתעלם ממנה לחלוטין
       if (typeof data === 'string') {
+        if (!data.includes('Response=') && !data.includes('res=')) {
+          return; // מתעלם ומפסיק את הריצה כדי לא ליצור לולאה בשוגג
+        }
         try {
           const urlParams = new URLSearchParams(data);
-          if (urlParams.has('Response') || urlParams.has('res')) {
-            data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
-          }
-        } catch (e) {}
+          data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
+        } catch (e) {
+          return;
+        }
       }
 
-      const isSuccess = data && (
-        data.Response === '000' || 
-        data.res === '000' || 
-        data === 'Response=000' || 
-        data === 'res=000'
-      );
+      // ולידציה קשיחה על קוד תגובה של הצלחה בלבד
+      const isSuccess = data && (data.Response === '000' || data.res === '000');
 
       if (isSuccess) {
         clearInterval(checkIframeRedirect);
+        window.removeEventListener('message', handleTranzilaMessage); // מנתק מיד את המאזין
         sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
         await sendOrderNotificationEmail();
         
@@ -198,10 +201,8 @@ const CheckoutPage = () => {
     ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
     : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
-  // ◄ שחזור שם המוצר המקורי והחלק לחלוטין שעבד בעבר
   const productNameForInvoice = "מארז CleanFry";
 
-  // ◄ בניית מערך הפריטים המקורי ללא שום מניפולציות של שברים
   const jsonProductsList = [
     {
       product_name: productNameForInvoice,
@@ -218,7 +219,6 @@ const CheckoutPage = () => {
     });
   }
 
-  // שחזור האובייקט המקורי המדויק של הפיילוד
   const tranzilaPurchasePayload: any = {
     products: jsonProductsList
   };
@@ -380,7 +380,6 @@ const CheckoutPage = () => {
                     target="tranzila-target-frame"
                     className="hidden"
                   >
-                    {/* ◄ שחזור מוחלט של הפרמטרים המקוריים שעבדו ללא תקלות */}
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
@@ -392,7 +391,7 @@ const CheckoutPage = () => {
                     <input type="hidden" name="email" value={email} />
                     <input type="hidden" name="city" value={shippingMethod === 'pickup' ? 'Pickup' : city} />
                     <input type="hidden" name="address" value={fullAddressString} />
-                    <input type="hidden" name="company" value={fullName} /> {/* ◄ שחזור ל-fullName למניעת קריסת המערכת */}
+                    <input type="hidden" name="company" value={fullName} />
                     <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
                   </form>
