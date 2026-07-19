@@ -48,9 +48,10 @@ const CheckoutPage = () => {
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
   const totalPrice = subtotal - discount + currentShipping;
 
-  // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי של טרנזילה
-  const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
-  const totalDiscountBeforeVat = discount / 1.18;
+  // ◄ חישוב דינמי של מחיר היחידה הסופי המשוקלל (ברוטו ונטו) לאחר ניכוי ההנחה
+  // נוסחה: (סה"כ לתשלום פחות דמי המשלוח) חלקי הכמות = מחיר יחידה סופי כולל מע"מ
+  const finalPricePerUnitWithVat = (totalPrice - currentShipping) / quantity;
+  const finalPricePerUnitBeforeVat = finalPricePerUnitWithVat / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -210,23 +211,14 @@ const CheckoutPage = () => {
       : " (איסוף עצמי - תל אביב)";
   }
 
-  // יצירת מערך פריטים ל-JSON
+  // בניית מערך הפריטים - שולחים שורה אחת חיובית נקייה במחיר המשוקלל הסופי ללא מינוסים
   const jsonProductsList: any[] = [
     {
       product_name: productNameForInvoice, 
       product_quantity: quantity,
-      product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
+      product_price: Number(finalPricePerUnitBeforeVat.toFixed(4)) // שימוש ב-4 ספרות לדיוק מקסימלי לפני מע"מ
     }
   ];
-
-  // אם יש הנחה - נדחוף אותה כשורה נפרדת בתוך ה-JSON עם ערך מינוס (כך היא לא תלכלך את השורה הראשונה)
-  if (isCouponApplied && discount > 0) {
-    jsonProductsList.push({
-      product_name: `הנחת קופון: ${coupon.toUpperCase().trim()}`,
-      product_quantity: 1,
-      product_price: -Number(totalDiscountBeforeVat.toFixed(2))
-    });
-  }
 
   if (currentShipping > 0) {
     jsonProductsList.push({
