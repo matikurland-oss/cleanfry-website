@@ -139,22 +139,13 @@ const CheckoutPage = () => {
     }
   }, [showPayment]);
 
-  // 6. קופונים
+// 6. קופונים - פונקציה מנוטרלת
   const handleApplyCoupon = () => {
-    const code = coupon.toUpperCase().trim();
-    if (code === 'CLEAN20' || code === 'SAVE20') { 
-      setDiscount(Math.round(subtotal * 0.20));
-      setIsCouponApplied(true);
-    } else if (code === 'FIRST15' || code === 'ROTEM') {
-      setDiscount(Math.round(subtotal * 0.15));
-      setIsCouponApplied(true);
-    } else if (code === 'CLEAN10') {
-      setDiscount(Math.round(subtotal * 0.10));
-      setIsCouponApplied(true);
-    } else {
-      alert('קוד קופון לא תקין');
-      handleRemoveCoupon();
-    }
+    // הפונקציה מנוטרלת כפי שביקשת
+    alert('קוד הקופון שהוזן אינו תקף כרגע.');
+    setCoupon('');
+    setDiscount(0);
+    setIsCouponApplied(false);
   };
 
   const handleRemoveCoupon = () => {
