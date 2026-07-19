@@ -15,7 +15,6 @@ import {
 const CheckoutPage = () => {
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
-  const isSubmittedRef = useRef(false); // ◄ מונע הגשה כפולה של הטופס לטרנזילה
 
   // 1. הגדרת כל ה-States הבסיסיים
   const [quantity, setQuantity] = useState(1);
@@ -23,7 +22,7 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
-  const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
+  const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); // שדה למיקום האיסוף
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -114,21 +113,24 @@ const CheckoutPage = () => {
       if (!event.origin.includes('tranzila.com') && !event.origin.includes('tranzila.co.il')) return;
 
       let data = event.data;
-      
-      // סינון הודעות מערכת ריקות של טרנזילה שאינן הצלחה/כישלון
       if (typeof data === 'string') {
-        if (!data.includes('Response=') && !data.includes('res=')) return;
         try {
           const urlParams = new URLSearchParams(data);
-          data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
-        } catch (e) { return; }
+          if (urlParams.has('Response') || urlParams.has('res')) {
+            data = { Response: urlParams.get('Response'), res: urlParams.get('res') };
+          }
+        } catch (e) {}
       }
 
-      const isSuccess = data && (data.Response === '000' || data.res === '000');
+      const isSuccess = data && (
+        data.Response === '000' || 
+        data.res === '000' || 
+        data === 'Response=000' || 
+        data === 'res=000'
+      );
 
       if (isSuccess) {
         clearInterval(checkIframeRedirect);
-        window.removeEventListener('message', handleTranzilaMessage);
         sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
         await sendOrderNotificationEmail();
         
@@ -145,14 +147,10 @@ const CheckoutPage = () => {
     };
   }, [fullName, phone, email, shippingMethod, pickupLocation, city, address, apartment, quantity, totalPrice, invoiceName, companyId, coupon, isCouponApplied]);
 
-  // ◄ מנגנון הפעלה מוגן: הגשת הטופס הנסתר פעם אחת בלבד ללא כפילויות ברינדור
+  // הפעלת שליחת הטופס אוטומטית ברגע שה-iFrame נוצר ב-DOM
   useEffect(() => {
-    if (showPayment && formRef.current && !isSubmittedRef.current) {
-      isSubmittedRef.current = true;
+    if (showPayment && formRef.current) {
       formRef.current.submit();
-    }
-    if (!showPayment) {
-      isSubmittedRef.current = false;
     }
   }, [showPayment]);
 
@@ -204,12 +202,18 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // שם מוצר נקי לחלוטין כפי שהיה בקוד המקורי והעובד
-  const productNameForInvoice = "מארז CleanFry";
+  // ◄ עדכון שם המוצר לחשבונית על בסיס בחירת האיסוף העצמי
+  let productNameForInvoice = "מארז CleanFry";
+  if (shippingMethod === 'pickup') {
+    productNameForInvoice += pickupLocation === 'kfar-saba' 
+      ? " (איסוף עצמי - כפר סבא)" 
+      : " (איסוף עצמי - תל אביב)";
+  }
 
+  // בניית מערך הפריטים לחשבונית
   const jsonProductsList = [
     {
-      product_name: productNameForInvoice,
+      product_name: productNameForInvoice, // ישקף "איסוף עצמי" ושם העיר ישירות בחשבונית
       product_quantity: quantity,
       product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
@@ -335,7 +339,7 @@ const CheckoutPage = () => {
             {/* פרטי משלוח */}
             <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
               <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
+                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות {shippingMethod === 'delivery' && 'ומשלוח'}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
@@ -393,9 +397,10 @@ const CheckoutPage = () => {
                     <input type="hidden" name="contact" value={fullName} />
                     <input type="hidden" name="phone" value={phone} />
                     <input type="hidden" name="email" value={email} />
-                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? 'Pickup' : city} />
+                    <input type="hidden" name="city" value={shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city} />
                     <input type="hidden" name="address" value={fullAddressString} />
-                    <input type="hidden" name="company" value={companyWithIdString || fullName} />
+                    <input type="hidden" name="company" value={companyWithIdString} />
+                    <input type="hidden" name="company_id" value={companyId} />
                     <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                     <input type="hidden" name="expari" value="0" />
                   </form>
@@ -452,7 +457,12 @@ const CheckoutPage = () => {
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
+                <div className="flex justify-between"><span>שיטת קבלה:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>
+                  {shippingMethod === 'pickup' 
+                    ? `איסוף עצמי ${pickupLocation === 'kfar-saba' ? '(כ"ס)' : pickupLocation === 'tel-aviv' ? '(ת"א)' : ''}`
+                    : (isFreeShipping ? "משלוח חינם" : `₪${SHIPPING_COST}`)
+                  }
+                </span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount.toFixed(0)}</span></div>}
                 <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice.toFixed(0)}</span></div>
               </div>
