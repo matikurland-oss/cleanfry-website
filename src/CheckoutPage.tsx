@@ -22,7 +22,7 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
-  const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); // שדה למיקום האיסוף
+  const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -50,6 +50,7 @@ const CheckoutPage = () => {
 
   // חילוץ ערכים לפני מע"מ (18%) לטובת המבנה החשבונאי של טרנזילה
   const basePricePerUnitBeforeVat = UNIT_PRICE / 1.18;
+  const totalDiscountBeforeVat = discount / 1.18;
 
   // 4. זיהוי כמות מה-URL
   useEffect(() => {
@@ -201,7 +202,7 @@ const CheckoutPage = () => {
     ? `${invoiceName} - ח.פ/ת.ז ${companyId}`
     : (invoiceName.trim() || companyId.trim());
 
-  // ◄ עדכון שם המוצר לחשבונית על בסיס בחירת האיסוף העצמי (ללא ציון קופונים)
+  // בניית שם מוצר לחשבונית
   let productNameForInvoice = "מארז CleanFry";
   if (shippingMethod === 'pickup') {
     productNameForInvoice += pickupLocation === 'kfar-saba' 
@@ -209,14 +210,23 @@ const CheckoutPage = () => {
       : " (איסוף עצמי - תל אביב)";
   }
 
-  // בניית מערך פריטים נקי של מוצרים פיזיים בלבד במחיר המלא המקורי שלהם
-  const jsonProductsList = [
+  // יצירת מערך פריטים ל-JSON
+  const jsonProductsList: any[] = [
     {
       product_name: productNameForInvoice, 
       product_quantity: quantity,
       product_price: Number(basePricePerUnitBeforeVat.toFixed(2))
     }
   ];
+
+  // אם יש הנחה - נדחוף אותה כשורה נפרדת בתוך ה-JSON עם ערך מינוס (כך היא לא תלכלך את השורה הראשונה)
+  if (isCouponApplied && discount > 0) {
+    jsonProductsList.push({
+      product_name: `הנחת קופון: ${coupon.toUpperCase().trim()}`,
+      product_quantity: 1,
+      product_price: -Number(totalDiscountBeforeVat.toFixed(2))
+    });
+  }
 
   if (currentShipping > 0) {
     jsonProductsList.push({
@@ -383,12 +393,6 @@ const CheckoutPage = () => {
                     className="hidden"
                   >
                     <input type="hidden" name="sum" value={totalPrice.toFixed(0)} />
-                    
-                    {/* שליחת סכום ההנחה הראשי (כולל מע"מ) כפרמטר של הטופס לטובת בלוק הסיכומים */}
-                    {isCouponApplied && discount > 0 && (
-                      <input type="hidden" name="discount" value={discount.toFixed(2)} />
-                    )}
-
                     <input type="hidden" name="currency" value="1" />
                     <input type="hidden" name="lang" value="il" />
                     <input type="hidden" name="tranmode" value="A" />
