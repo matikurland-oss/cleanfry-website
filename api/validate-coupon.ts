@@ -1,6 +1,9 @@
 // פונקציית Serverless של Vercel: מאמתת קוד קופון בצד השרת בלבד.
-// רשימת הקודים ואחוזי ההנחה חיים כאן ולא בבנדל של הלקוח — כך שאי אפשר לגלות אותם
-// על ידי קריאת קוד ה-JS הציבורי של האתר, ואי אפשר "לשכנע" את הדפדפן שקוד לא תקין הוא תקין.
+// רשימת הקודים ואחוזי ההנחה חיים ב-Vercel Edge Config (מנוהל מהדשבורד של Vercel,
+// בלי לגעת בקוד) — כך שאי אפשר לגלות אותם על ידי קריאת קוד ה-JS הציבורי של האתר.
+// כל עוד לא הוגדר Edge Config לפרויקט, נופלים בחזרה לרשימת גיבוי קבועה למטה.
+import { get } from '@vercel/edge-config';
+
 interface VercelRequest {
   method?: string;
   body?: unknown;
@@ -10,7 +13,8 @@ interface VercelResponse {
   json(body: unknown): void;
 }
 
-const COUPONS: Record<string, number> = {
+// רשימת גיבוי — משמשת רק אם עדיין לא חובר Edge Config לפרויקט ב-Vercel
+const FALLBACK_COUPONS: Record<string, number> = {
   CLEAN20: 0.20,
   SAVE20: 0.20,
   FIRST15: 0.15,
@@ -18,7 +22,7 @@ const COUPONS: Record<string, number> = {
   CLEAN10: 0.10,
 };
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ valid: false, message: 'Method not allowed' });
     return;
@@ -32,7 +36,15 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const discountPercent = COUPONS[code];
+  let coupons: Record<string, number> = FALLBACK_COUPONS;
+  try {
+    const edgeCoupons = await get<Record<string, number>>('coupons');
+    if (edgeCoupons) coupons = edgeCoupons;
+  } catch (error) {
+    // Edge Config עדיין לא חובר לפרויקט — ממשיכים עם רשימת הגיבוי
+  }
+
+  const discountPercent = coupons[code];
   if (!discountPercent) {
     res.status(200).json({ valid: false, message: 'קוד קופון לא תקין' });
     return;
