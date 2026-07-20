@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ShoppingBag, MapPin, Truck, Instagram, Facebook } from 'lucide-react';
+
+const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
 const OrderSuccessPage = () => {
   // ננסה לבדוק אם שמרנו את שיטת המשלוח ב-sessionStorage כדי להציג מידע מותאם
   const savedMethod = sessionStorage.getItem('cleanfry_shipping_method') || 'delivery';
+
+  // שליחת מייל התראה על ההזמנה — פעם אחת בלבד, אחרי חזרה מתשלום מוצלח בטרנזילה.
+  // הפרטים נשמרו ב-sessionStorage בעמוד הצ'קאאוט לפני המעבר לתשלום, ונמחקים מיד כדי למנוע כפילות.
+  useEffect(() => {
+    const pendingOrder = sessionStorage.getItem('cleanfry_pending_order');
+    if (!pendingOrder) return;
+    sessionStorage.removeItem('cleanfry_pending_order');
+
+    try {
+      fetch(FORMSPREE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: pendingOrder
+      }).catch((error) => console.error("Failed to send notification email:", error));
+    } catch (error) {
+      console.error("Failed to send notification email:", error);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-12" dir="rtl">

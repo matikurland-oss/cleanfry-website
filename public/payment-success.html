@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>מעבד תשלום...</title>
+</head>
+<body>
+<script>
+  // דף גשר: טרנזילה מנווטת את ה-iframe לכתובת הזו אחרי תשלום מוצלח.
+  // כדי לצאת מה-iframe ולהמשיך בעמוד המלא (React Router), מנווטים את החלון העליון.
+  var target = window.location.origin + '/order-success';
+  if (window.top) {
+    window.top.location.href = target;
+  } else {
+    window.location.href = target;
+  }
+</script>
+</body>
+</html>
