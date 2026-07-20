@@ -104,10 +104,9 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
             <button onClick={onPurchaseClick} className="hidden sm:block bg-brand-blue/10 text-brand-blue px-4 py-2 rounded-xl font-bold hover:bg-brand-blue hover:text-white transition-all">
               הזמנה עכשיו
             </button>
-            <button className="p-2 text-slate-600 hover:text-brand-blue relative">
+            <Link to="/checkout" aria-label="מעבר לסל הקניות" className="p-2 text-slate-600 hover:text-brand-blue relative">
               <ShoppingCart className="w-6 h-6" />
-              <span className="absolute top-0 right-0 bg-brand-green text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-            </button>
+            </Link>
             <button className="md:hidden p-2 text-slate-600" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -284,30 +283,23 @@ const Footer = () => (
   </footer>
 );
 
-export default function App() {
+// --- דף הבית כקומפוננטה עצמאית (מחוץ ל-App כדי למנוע Remount מלא של הדף בכל שינוי State) ---
+const MAX_QUANTITY = 10;
+
+const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivElement> }) => {
   const [quantity, setQuantity] = useState(1);
-  const purchaseBoxRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
   const navigate = useNavigate();
-  
+
   const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;
   const isFreeShipping = totalPrice >= 249;
-
-  const scrollToPurchase = () => {
-    if (location.pathname === '/') {
-      purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      navigate('/#purchase');
-    }
-  };
 
   const getButtonText = () => {
     if (quantity === 1) return "הזמנת מארז אחד";
     return `הזמנת ${quantity} מארזים`;
   };
 
-  const HomePage = () => (
+  return (
     <>
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-4 pb-24 lg:pt-8 lg:pb-40 text-right">
@@ -374,9 +366,9 @@ export default function App() {
                   <span className="text-4xl font-black text-slate-900 min-w-[60px] text-center tabular-nums">
                     {quantity}
                   </span>
-                  <button 
-                    type="button" 
-                    onClick={(e) => { e.preventDefault(); setQuantity(quantity + 1); }} 
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setQuantity(Math.min(MAX_QUANTITY, quantity + 1)); }}
                     className="w-14 h-14 flex items-center justify-center bg-white rounded-xl shadow-sm text-3xl font-bold text-brand-blue hover:bg-blue-50 transition-all active:scale-90"
                   >
                     +
@@ -501,13 +493,27 @@ export default function App() {
       <section className="py-24 bg-brand-blue text-center">
         <div className="max-w-4xl mx-auto px-4 relative z-10">
           <h2 className="text-4xl lg:text-5xl font-black text-white mb-8">מוכנים לשדרג את המטבח?</h2>
-          <button onClick={scrollToPurchase} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
+          <button onClick={() => purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="bg-white text-brand-blue px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:scale-105 transition-transform">
             הזמנה עכשיו
           </button>
         </div>
       </section>
     </>
   );
+};
+
+export default function App() {
+  const purchaseBoxRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const scrollToPurchase = () => {
+    if (location.pathname === '/') {
+      purchaseBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      navigate('/#purchase');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
@@ -516,7 +522,7 @@ export default function App() {
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage purchaseBoxRef={purchaseBoxRef} />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:id" element={<BlogPostDetail />} />
