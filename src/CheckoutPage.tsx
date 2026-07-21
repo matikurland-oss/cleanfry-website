@@ -205,12 +205,15 @@ const CheckoutPage = () => {
   const discountAppliedToProduct = Math.min(discount, subtotal);
   const discountAppliedToShipping = Math.max(0, discount - subtotal);
   // בקופון בדיקות (מחיר קבוע) המחירים מקובעים ישירות במקום להיגזר מאחוז הנחה
-  const productLinePrice = testFixedPricing
-    ? roundToAgorot(testFixedPricing.product / quantity)
-    : roundToAgorot((subtotal - discountAppliedToProduct) / quantity);
-  const shippingLinePrice = testFixedPricing
+  const productLineTotal = testFixedPricing ? testFixedPricing.product : subtotal - discountAppliedToProduct;
+  const productLinePrice = roundToAgorot(productLineTotal / quantity);
+  // עיגול המחיר ליחידה יכול ליצור פער קטן (אגורות בודדות) מול הסכום המקורי כשההנחה לא מתחלקת
+  // בדיוק בכמות. טרנזילה דורשת שסכום השורות יהיה שווה בדיוק ל-sum, לכן הפער נספג בשורת המשלוח.
+  const productLineRemainder = roundToAgorot(productLineTotal - roundToAgorot(productLinePrice * quantity));
+  const shippingLineBase = testFixedPricing
     ? testFixedPricing.shipping
     : roundToAgorot(Math.max(0, currentShipping - discountAppliedToShipping));
+  const shippingLinePrice = roundToAgorot(shippingLineBase + productLineRemainder);
 
   const jsonProductsList = [
     {
