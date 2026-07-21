@@ -22,6 +22,11 @@ const FALLBACK_COUPONS: Record<string, number> = {
   CLEAN10: 0.10,
 };
 
+// קופון בדיקות זמני בלבד — מקבע את שורת המוצר ל-0.5 ש"ח ואת המשלוח ל-0.5 ש"ח (סה"כ 1 ש"ח),
+// ללא קשר לכמות או לשיטת המשלוח. להסיר לפני עלייה לפרודקשן!
+const TEST_FIXED_COUPON = 'TESTMIN1';
+const TEST_FIXED_PRICING = { product: 0.5, shipping: 0.5 };
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ valid: false, message: 'Method not allowed' });
@@ -33,6 +38,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!code) {
     res.status(400).json({ valid: false, message: 'קוד קופון לא תקין' });
+    return;
+  }
+
+  if (code === TEST_FIXED_COUPON) {
+    res.status(200).json({ valid: true, code, testFixed: TEST_FIXED_PRICING });
     return;
   }
 
