@@ -1,10 +1,19 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from './blogData';
+import { useSEO } from './useSEO';
 
 const BlogPostDetail = () => {
   const { id } = useParams();
   const post = blogPosts.find((p) => p.id === id);
+
+  // ה-hook נקרא תמיד (גם אם המאמר לא נמצא) כדי לא לשבור את סדר הקריאה ל-hooks בין רינדורים
+  useSEO({
+    title: post ? post.title : 'המאמר לא נמצא',
+    description: post ? post.excerpt : 'המאמר המבוקש אינו קיים באתר CleanFry.',
+    path: `/blog/${id ?? ''}`,
+    image: post?.image
+  });
 
   if (!post) {
     return (

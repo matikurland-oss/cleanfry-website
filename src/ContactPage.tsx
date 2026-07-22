@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from './useSEO';
 
 const ContactPage = () => {
   const [status, setStatus] = useState<"IDLE" | "SUBMITTING" | "ERROR">("IDLE");
   const navigate = useNavigate();
+
+  useSEO({
+    title: 'צור קשר - CleanFry',
+    description: 'יש לכם שאלה על CleanFry או על ההזמנה שלכם? צרו איתנו קשר ונחזור אליכם בהקדם.',
+    path: '/contact'
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
