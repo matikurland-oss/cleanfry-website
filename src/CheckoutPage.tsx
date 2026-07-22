@@ -38,6 +38,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
+  const [orderToken, setOrderToken] = useState('');
 
   // 2. הגדרות מחיר
   const UNIT_PRICE = 59;
@@ -158,7 +160,7 @@ const CheckoutPage = () => {
     setShowPayment(false);
   };
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = async () => {
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
       alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
@@ -172,23 +174,40 @@ const CheckoutPage = () => {
       return;
     }
 
-    // שמירת פרטי ההזמנה לפני המעבר לעמוד התשלום של טרנזילה —
-    // עמוד התודה (order-success) קורא אותם אחרי החזרה ושולח את מייל ההתראה
     const pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא (בן גוריון 7)' : 'איסוף עצמי - תל אביב (משה וילנסקי 11)';
-    sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
-    sessionStorage.setItem('cleanfry_pending_order', JSON.stringify({
-      "נושא": "הזמנה חדשה מאתר CleanFry",
-      "שם הלקוח": fullName,
-      "טלפון": phone,
-      "אימייל": email,
-      "כמות מארזים": quantity,
-      "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : pickupText,
-      "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}${apartment.trim() ? `, דירה ${apartment}` : ''}` : pickupText,
-      "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
-      "סה\"כ שולם": `₪${totalPrice}`
-    }));
+    const detailsText = shippingMethod === 'delivery'
+      ? `${city}, ${address}${apartment.trim() ? `, דירה ${apartment}` : ''} (כמות: ${quantity})`
+      : `${pickupText} (כמות: ${quantity})`;
 
-    setShowPayment(true);
+    sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
+
+    // חותמים (בשרת) את הסכום הצפוי ופרטי ההזמנה לפני המעבר לתשלום. הטוקן החתום נשלח לטרנזילה
+    // בשדה remarks וחוזר דרך notify_url_address — כך מייל אישור ההזמנה נשלח רק אחרי אימות אמיתי
+    // מול טרנזילה שהסכום שבאמת חויב תואם, ולא לפי מה שהדפדפן של הלקוח "טוען" שקרה.
+    setIsPreparingPayment(true);
+    try {
+      const response = await fetch('/api/sign-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total: totalPrice,
+          name: fullName,
+          phone,
+          email,
+          method: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף',
+          details: detailsText,
+          coupon: isCouponApplied ? coupon.toUpperCase().trim() : ''
+        })
+      });
+      const result = await response.json();
+      if (!result.token) throw new Error('missing token');
+      setOrderToken(result.token);
+      setShowPayment(true);
+    } catch (error) {
+      alert('אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
+    } finally {
+      setIsPreparingPayment(false);
+    }
   };
 
   // קביעת הכתובות הדינמיות שיוצגו בראש החשבונית
@@ -387,7 +406,9 @@ const CheckoutPage = () => {
               {!showPayment && (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
-                  <button onClick={handleProceedToPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all">המשך לתשלום מאובטח</button>
+                  <button onClick={handleProceedToPayment} disabled={isPreparingPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all disabled:opacity-50">
+                    {isPreparingPayment ? 'מכין הזמנה...' : 'המשך לתשלום מאובטח'}
+                  </button>
                 </div>
               )}
 
@@ -416,6 +437,8 @@ const CheckoutPage = () => {
                 <input type="hidden" name="u71" value="1" />
                 <input type="hidden" name="inv_items" value="1" />
                 <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
+                <input type="hidden" name="remarks" value={orderToken} />
+                <input type="hidden" name="notify_url_address" value={`${window.location.origin}/api/tranzila-notify`} />
                 <input type="hidden" name="success_url_address" value={`${window.location.origin}/payment-success.html`} />
                 <input type="hidden" name="fail_url_address" value={`${window.location.origin}/payment-fail.html`} />
               </form>
