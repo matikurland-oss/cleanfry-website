@@ -21,6 +21,8 @@ const CheckoutPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
+  // TEMP: מצב קופון בדיקות בלבד (מקבע את מחיר המוצר/משלוח) — להסיר לפני פרודקשן!
+  const [testFixedPricing, setTestFixedPricing] = useState<{ product: number; shipping: number } | null>(null);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
@@ -36,6 +38,8 @@ const CheckoutPage = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [isPreparingPayment, setIsPreparingPayment] = useState(false);
+  const [orderToken, setOrderToken] = useState('');
 
   // 2. הגדרות מחיר
   const UNIT_PRICE = 59;
@@ -50,8 +54,14 @@ const CheckoutPage = () => {
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  const discount = isCouponApplied ? Math.round(subtotal * discountPercent) : 0;
-  const totalPrice = Math.round(subtotal - discount + currentShipping);
+  // מצב קופון בדיקות: מקבע את הסה"כ למחיר מוצר+משלוח קבועים (איסוף עצמי נשאר חינם כרגיל)
+  const testFixedTotal = testFixedPricing
+    ? testFixedPricing.product + (shippingMethod === 'pickup' ? 0 : testFixedPricing.shipping)
+    : null;
+  const discount = isCouponApplied
+    ? (testFixedTotal !== null ? Math.round(subtotal + currentShipping - testFixedTotal) : Math.round(subtotal * discountPercent))
+    : 0;
+  const totalPrice = testFixedTotal !== null ? Math.round(testFixedTotal) : Math.round(subtotal - discount + currentShipping);
 
   // 4. זיהוי כמות מה-URL + חזרה מתשלום שנכשל
   useEffect(() => {
@@ -122,7 +132,13 @@ const CheckoutPage = () => {
       const result = await response.json();
 
       if (result.valid) {
-        setDiscountPercent(result.discountPercent);
+        if (result.testFixed) {
+          setTestFixedPricing(result.testFixed);
+          setDiscountPercent(0);
+        } else {
+          setTestFixedPricing(null);
+          setDiscountPercent(result.discountPercent);
+        }
         setIsCouponApplied(true);
         setShowPayment(false);
       } else {
@@ -138,12 +154,13 @@ const CheckoutPage = () => {
   const handleRemoveCoupon = () => {
     setCoupon('');
     setDiscountPercent(0);
+    setTestFixedPricing(null);
     setIsCouponApplied(false);
     setCouponError('');
     setShowPayment(false);
   };
 
-  const handleProceedToPayment = () => {
+  const handleProceedToPayment = async () => {
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
       alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
@@ -157,23 +174,40 @@ const CheckoutPage = () => {
       return;
     }
 
-    // שמירת פרטי ההזמנה לפני המעבר לעמוד התשלום של טרנזילה —
-    // עמוד התודה (order-success) קורא אותם אחרי החזרה ושולח את מייל ההתראה
     const pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא (בן גוריון 7)' : 'איסוף עצמי - תל אביב (משה וילנסקי 11)';
-    sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
-    sessionStorage.setItem('cleanfry_pending_order', JSON.stringify({
-      "נושא": "הזמנה חדשה מאתר CleanFry",
-      "שם הלקוח": fullName,
-      "טלפון": phone,
-      "אימייל": email,
-      "כמות מארזים": quantity,
-      "שיטת קבלה": shippingMethod === 'delivery' ? 'משלוח עד הבית' : pickupText,
-      "כתובת": shippingMethod === 'delivery' ? `${city}, ${address}${apartment.trim() ? `, דירה ${apartment}` : ''}` : pickupText,
-      "קוד קופון שהופעל": isCouponApplied ? coupon.toUpperCase().trim() : 'לא הוגדר קופון',
-      "סה\"כ שולם": `₪${totalPrice}`
-    }));
+    const detailsText = shippingMethod === 'delivery'
+      ? `${city}, ${address}${apartment.trim() ? `, דירה ${apartment}` : ''} (כמות: ${quantity})`
+      : `${pickupText} (כמות: ${quantity})`;
 
-    setShowPayment(true);
+    sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
+
+    // חותמים (בשרת) את הסכום הצפוי ופרטי ההזמנה לפני המעבר לתשלום. הטוקן החתום נשלח לטרנזילה
+    // בשדה remarks וחוזר דרך notify_url_address — כך מייל אישור ההזמנה נשלח רק אחרי אימות אמיתי
+    // מול טרנזילה שהסכום שבאמת חויב תואם, ולא לפי מה שהדפדפן של הלקוח "טוען" שקרה.
+    setIsPreparingPayment(true);
+    try {
+      const response = await fetch('/api/sign-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          total: totalPrice,
+          name: fullName,
+          phone,
+          email,
+          method: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף',
+          details: detailsText,
+          coupon: isCouponApplied ? coupon.toUpperCase().trim() : ''
+        })
+      });
+      const result = await response.json();
+      if (!result.token) throw new Error('missing token');
+      setOrderToken(result.token);
+      setShowPayment(true);
+    } catch (error) {
+      alert('אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
+    } finally {
+      setIsPreparingPayment(false);
+    }
   };
 
   // קביעת הכתובות הדינמיות שיוצגו בראש החשבונית
@@ -182,23 +216,27 @@ const CheckoutPage = () => {
 
   // בניית מערך הפריטים לחשבונית
   // טרנזילה מצפה למערך שטוח של פריטים (ללא עטיפת אובייקט), וסכום כל השורות חייב להיות שווה בדיוק לשדה sum.
-  // לפי התיעוד הרשמי אין שדה ייעודי להנחה/קופון ואין דוגמה למחיר שלילי — בבדיקה בפועל שורת "מוצר"
-  // במחיר שלילי גרמה לטרנזילה להתעלם מכל הפירוט ולהציג שורה גנרית אחת. לכן ההנחה "מוטמעת" במחיר
-  // המוצר עצמו (מוריד את המחיר ליחידה), כך שכל השורות נשארות בערך חיובי, והקופון מצוין בשם המוצר.
+  // אין שדה ייעודי להנחה/קופון בתיעוד, ומחיר שלילי בשורת "מוצר" גורם לטרנזילה להתעלם מכל הפירוט.
+  // לכן ההנחה "מוטמעת" במחיר המוצר עצמו (מוריד את המחיר ליחידה כדי לשמור על סכום מדויק),
+  // ובנוסף מוצגת שורה נפרדת במחיר 0 שמציגה בבירור כמה בסה"כ הקופון חסך — בלי לשבש את הסכום.
   // דמי המשלוח נשארים תמיד במחיר המלא ואינם מוזלים על ידי הקופון.
   const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
   const discountAppliedToProduct = Math.min(discount, subtotal);
   const discountAppliedToShipping = Math.max(0, discount - subtotal);
-  const productLinePrice = roundToAgorot((subtotal - discountAppliedToProduct) / quantity);
-  const shippingLinePrice = roundToAgorot(Math.max(0, currentShipping - discountAppliedToShipping));
-
-  const productName = isCouponApplied && discount > 0
-    ? `מארז CleanFry (קופון ${coupon.toUpperCase().trim()} — נחסכו ₪${discount})`
-    : 'מארז CleanFry';
+  // בקופון בדיקות (מחיר קבוע) המחירים מקובעים ישירות במקום להיגזר מאחוז הנחה
+  const productLineTotal = testFixedPricing ? testFixedPricing.product : subtotal - discountAppliedToProduct;
+  const productLinePrice = roundToAgorot(productLineTotal / quantity);
+  // עיגול המחיר ליחידה יכול ליצור פער קטן (אגורות בודדות) מול הסכום המקורי כשההנחה לא מתחלקת
+  // בדיוק בכמות. טרנזילה דורשת שסכום השורות יהיה שווה בדיוק ל-sum, לכן הפער נספג בשורת המשלוח.
+  const productLineRemainder = roundToAgorot(productLineTotal - roundToAgorot(productLinePrice * quantity));
+  const shippingLineBase = testFixedPricing
+    ? testFixedPricing.shipping
+    : roundToAgorot(Math.max(0, currentShipping - discountAppliedToShipping));
+  const shippingLinePrice = roundToAgorot(shippingLineBase + productLineRemainder);
 
   const jsonProductsList = [
     {
-      product_name: productName,
+      product_name: 'מארז CleanFry',
       product_quantity: quantity,
       product_price: productLinePrice
     }
@@ -216,6 +254,15 @@ const CheckoutPage = () => {
       product_name: "דמי משלוח עד הבית",
       product_quantity: 1,
       product_price: shippingLinePrice
+    });
+  }
+
+  // שורת מידע נפרדת (מחיר 0) שמציגה כמה הקופון חסך בסה"כ, בלי להשפיע על הסכום הכולל
+  if (isCouponApplied && discount > 0) {
+    jsonProductsList.push({
+      product_name: `קופון ${coupon.toUpperCase().trim()} — נחסך בסה"כ ₪${discount}`,
+      product_quantity: 1,
+      product_price: 0
     });
   }
 
@@ -359,14 +406,16 @@ const CheckoutPage = () => {
               {!showPayment && (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
-                  <button onClick={handleProceedToPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all">המשך לתשלום מאובטח</button>
+                  <button onClick={handleProceedToPayment} disabled={isPreparingPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all disabled:opacity-50">
+                    {isPreparingPayment ? 'מכין הזמנה...' : 'המשך לתשלום מאובטח'}
+                  </button>
                 </div>
               )}
 
-              {/* אינטגרציית iframe לפי התיעוד הרשמי של טרנזילה (iframenew.php) */}
+              {/* אינטגרציית iframe לפי התיעוד הרשמי והעדכני של טרנזילה (directng.tranzila.com) */}
               <form
                 ref={formRef}
-                action="https://direct.tranzila.com/cleanfry/iframenew.php"
+                action="https://directng.tranzila.com/cleanfry/iframenew.php"
                 method="POST"
                 target="tranzila-target-frame"
                 className="hidden"
@@ -376,15 +425,20 @@ const CheckoutPage = () => {
                 <input type="hidden" name="cred_type" value="1" />
                 <input type="hidden" name="tranmode" value="A" />
                 <input type="hidden" name="lang" value="il" />
+                <input type="hidden" name="Ilang" value="HEB" />
                 <input type="hidden" name="contact" value={fullName} />
                 <input type="hidden" name="phone" value={phone} />
                 <input type="hidden" name="email" value={email} />
                 <input type="hidden" name="city" value={tranzilaCity} />
                 <input type="hidden" name="address" value={tranzilaAddress} />
+                <input type="hidden" name="zip" value="" />
+                <input type="hidden" name="country" value="Israel" />
                 <input type="hidden" name="company" value={fullName} />
                 <input type="hidden" name="u71" value="1" />
                 <input type="hidden" name="inv_items" value="1" />
                 <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
+                <input type="hidden" name="remarks" value={orderToken} />
+                <input type="hidden" name="notify_url_address" value={`${window.location.origin}/api/tranzila-notify`} />
                 <input type="hidden" name="success_url_address" value={`${window.location.origin}/payment-success.html`} />
                 <input type="hidden" name="fail_url_address" value={`${window.location.origin}/payment-fail.html`} />
               </form>
