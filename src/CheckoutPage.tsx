@@ -32,7 +32,8 @@ const CheckoutPage = () => {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
-  const [apartment, setApartment] = useState(''); 
+  const [apartment, setApartment] = useState('');
+  const [zip, setZip] = useState('');
 
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -385,7 +386,8 @@ const CheckoutPage = () => {
                   <>
                     <input type="text" placeholder="עיר *" value={city} onChange={(e) => { setCity(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                     <input type="text" placeholder="כתובת ומספר בית *" value={address} onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                    <input type="text" placeholder="מספר דירה (אופציונלי)" value={apartment} onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                    <input type="text" placeholder="מספר דירה (אופציונלי)" value={apartment} onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                    <input type="text" placeholder="מיקוד (אופציונלי)" value={zip} onChange={(e) => { setZip(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                   </>
                 )}
               </div>
@@ -440,7 +442,7 @@ const CheckoutPage = () => {
                 <input type="hidden" name="email" value={email} />
                 <input type="hidden" name="city" value={tranzilaCity} />
                 <input type="hidden" name="address" value={tranzilaAddress} />
-                <input type="hidden" name="zip" value="" />
+                <input type="hidden" name="zip" value={zip.trim() || '0000000'} />
                 <input type="hidden" name="country" value="Israel" />
                 <input type="hidden" name="company" value={fullName} />
                 <input type="hidden" name="u71" value="1" />
