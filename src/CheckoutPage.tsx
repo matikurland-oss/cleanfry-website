@@ -196,54 +196,55 @@ const CheckoutPage = () => {
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
   // בניית מערך הפריטים לחשבונית
-  // טרנזילה מצפה למערך שטוח של פריטים (ללא עטיפת אובייקט), וסכום כל השורות חייב להיות שווה בדיוק לשדה sum.
-  // אין שדה ייעודי להנחה/קופון בתיעוד, ומחיר שלילי בשורת "מוצר" גורם לטרנזילה להתעלם מכל הפירוט.
-  // לכן ההנחה "מוטמעת" במחיר המוצר עצמו (מוריד את המחיר ליחידה כדי לשמור על סכום מדויק),
-  // ובנוסף מוצגת שורה נפרדת במחיר 0 שמציגה בבירור כמה בסה"כ הקופון חסך — בלי לשבש את הסכום.
-  // דמי המשלוח נשארים תמיד במחיר המלא ואינם מוזלים על ידי הקופון.
+  // טרנזילה מצפה למערך שטוח של פריטים (ללא עטיפת אובייקט). לפי תמיכת טרנזילה: הטרמינל מוגדר עם
+  // מע"מ ברירת מחדל של 18%, ולכן יש לשלוח בפירוט המוצרים מחיר לפני מע"מ, בעוד ש-sum נשאר כולל
+  // מע"מ (הסכום שהלקוח משלם בפועל). ההתאמה שטרנזילה מבצעת: Σ(price × quantity) × 1.18 ≈ sum.
+  // הקופון הוא שורה נפרדת עם מחיר שלילי אמיתי (לא טקסט עם מחיר 0) — כך גם הוא נכנס להתאמה.
   const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
-  const discountAppliedToProduct = Math.min(discount, subtotal);
-  const discountAppliedToShipping = Math.max(0, discount - subtotal);
-  // בקופון בדיקות (מחיר קבוע) המחירים מקובעים ישירות במקום להיגזר מאחוז הנחה
-  const productLineTotal = testFixedPricing ? testFixedPricing.product : subtotal - discountAppliedToProduct;
-  const productLinePrice = roundToAgorot(productLineTotal / quantity);
-  // עיגול המחיר ליחידה יכול ליצור פער קטן (אגורות בודדות) מול הסכום המקורי כשההנחה לא מתחלקת
-  // בדיוק בכמות. טרנזילה דורשת שסכום השורות יהיה שווה בדיוק ל-sum, לכן הפער נספג בשורת המשלוח.
-  const productLineRemainder = roundToAgorot(productLineTotal - roundToAgorot(productLinePrice * quantity));
-  const shippingLineBase = testFixedPricing
-    ? testFixedPricing.shipping
-    : roundToAgorot(Math.max(0, currentShipping - discountAppliedToShipping));
-  const shippingLinePrice = roundToAgorot(shippingLineBase + productLineRemainder);
+  const VAT_RATE = 0.18;
+  const toPreVat = (amountIncVat: number) => roundToAgorot(amountIncVat / (1 + VAT_RATE));
+
+  const productLineTotal = testFixedPricing ? testFixedPricing.product : subtotal;
+  const productLineTotalPreVat = toPreVat(productLineTotal);
+  const productUnitPreVat = roundToAgorot(productLineTotalPreVat / quantity);
+  // עיגול המחיר ליחידה לפני מע"מ עלול ליצור פער זעיר (אגורות בודדות) מול הסכום המקורי כשלא
+  // מתחלק בדיוק בכמות. הפער נספג בשורת המשלוח/איסוף כדי לשמור על התאמה מדויקת.
+  const productLineRemainder = roundToAgorot(productLineTotalPreVat - roundToAgorot(productUnitPreVat * quantity));
+
+  const shippingOrPickupTotal = testFixedPricing ? testFixedPricing.shipping : currentShipping;
+  const shippingOrPickupPreVat = roundToAgorot(toPreVat(shippingOrPickupTotal) + productLineRemainder);
+
+  const discountPreVat = isCouponApplied && discount > 0 ? toPreVat(discount) : 0;
 
   const jsonProductsList = [
     {
       product_name: 'מארז CleanFry',
       product_quantity: quantity,
-      product_price: productLinePrice
+      product_price: productUnitPreVat
     }
   ];
 
-  // איסוף עצמי מופיע בחשבונית כשורה בעלות 0, משלוח בתשלום מופיע עם עלותו (במחיר המלא, ללא הנחה)
+  // איסוף עצמי מופיע בחשבונית כשורה בעלות כמעט-0 (ייתכן פער עיגול זעיר), משלוח בתשלום מופיע עם עלותו לפני מע"מ
   if (shippingMethod === 'pickup') {
     jsonProductsList.push({
       product_name: pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב",
       product_quantity: 1,
-      product_price: 0
+      product_price: shippingOrPickupPreVat
     });
   } else {
     jsonProductsList.push({
       product_name: "דמי משלוח עד הבית",
       product_quantity: 1,
-      product_price: shippingLinePrice
+      product_price: shippingOrPickupPreVat
     });
   }
 
-  // שורת מידע נפרדת (מחיר 0) שמציגה כמה הקופון חסך בסה"כ, בלי להשפיע על הסכום הכולל
+  // שורת קופון אמיתית במחיר שלילי (לפני מע"מ), כדי שתשתתף בהתאמת הסכום ותוצג כהנחה אמיתית בחשבונית
   if (isCouponApplied && discount > 0) {
     jsonProductsList.push({
-      product_name: `קופון ${coupon.toUpperCase().trim()} — נחסך בסה"כ ₪${discount}`,
+      product_name: `קופון ${coupon.toUpperCase().trim()}`,
       product_quantity: 1,
-      product_price: 0
+      product_price: -discountPreVat
     });
   }
 
@@ -415,6 +416,7 @@ const CheckoutPage = () => {
                 <input type="hidden" name="company" value={fullName} />
                 <input type="hidden" name="u71" value="1" />
                 <input type="hidden" name="inv_items" value="1" />
+                <input type="hidden" name="IMaam" value="18" />
                 <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                 <input type="hidden" name="success_url_address" value={`${window.location.origin}/payment-success.html`} />
                 <input type="hidden" name="fail_url_address" value={`${window.location.origin}/payment-fail.html`} />
