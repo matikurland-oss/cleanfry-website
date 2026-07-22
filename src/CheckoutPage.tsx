@@ -234,9 +234,17 @@ const CheckoutPage = () => {
     : roundToAgorot(Math.max(0, currentShipping - discountAppliedToShipping));
   const shippingLinePrice = roundToAgorot(shippingLineBase + productLineRemainder);
 
+  // הרכבת שם המוצר עם כל הפרטים הרלוונטיים בתוך הטקסט עצמו — רשת ביטחון למקרה שהחשבונית
+  // מציגה רק את שם השורה הראשונה ומתעלמת משאר הפירוט (כמות/מחיר/שורות נוספות במערך).
+  const shippingSummary = shippingMethod === 'pickup'
+    ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא' : 'איסוף עצמי - תל אביב')
+    : 'משלוח עד הבית';
+  const couponSummary = isCouponApplied && discount > 0 ? ` | קופון ${coupon.toUpperCase().trim()} (נחסך ₪${discount})` : '';
+  const productDisplayName = `מארז CleanFry (כמות: ${quantity}) | ${shippingSummary}${couponSummary}`;
+
   const jsonProductsList = [
     {
-      product_name: 'מארז CleanFry',
+      product_name: productDisplayName,
       product_quantity: quantity,
       product_price: productLinePrice
     }
