@@ -38,25 +38,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let coupons: Record<string, number> | undefined;
-  let debugError: string | null = null;
   try {
     coupons = await get<Record<string, number>>('coupons');
   } catch (error) {
-    debugError = error instanceof Error ? error.message : String(error);
-  }
-
-  // TEMP DEBUG: אבחון זמני של חיבור Edge Config — להסיר אחרי הבדיקה!
-  if (code === 'DEBUG_INFO') {
-    res.status(200).json({
-      valid: false,
-      hasEdgeConfigEnv: Boolean(process.env.EDGE_CONFIG),
-      couponsResult: coupons ?? null,
-      error: debugError
-    });
-    return;
-  }
-
-  if (debugError) {
     res.status(200).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
     return;
   }
