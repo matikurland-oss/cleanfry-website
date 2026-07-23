@@ -1,7 +1,7 @@
 // פונקציית Serverless של Vercel: מאמתת קוד קופון בצד השרת בלבד.
-// רשימת הקודים ואחוזי ההנחה חיים ב-Vercel Edge Config (מנוהל מהדשבורד של Vercel,
+// רשימת הקודים ואחוזי ההנחה חיים אך ורק ב-Vercel Edge Config (מנוהל מהדשבורד של Vercel,
 // בלי לגעת בקוד) — כך שאי אפשר לגלות אותם על ידי קריאת קוד ה-JS הציבורי של האתר.
-// כל עוד לא הוגדר Edge Config לפרויקט, נופלים בחזרה לרשימת גיבוי קבועה למטה.
+// אין רשימת גיבוי בקוד בכוונה: ניהול הקופונים קורה אך ורק דרך Vercel.
 import { get } from '@vercel/edge-config';
 
 interface VercelRequest {
@@ -12,15 +12,6 @@ interface VercelResponse {
   status(code: number): VercelResponse;
   json(body: unknown): void;
 }
-
-// רשימת גיבוי — משמשת רק אם עדיין לא חובר Edge Config לפרויקט ב-Vercel
-const FALLBACK_COUPONS: Record<string, number> = {
-  CLEAN20: 0.20,
-  SAVE20: 0.20,
-  FIRST15: 0.15,
-  ROTEM: 0.15,
-  CLEAN10: 0.10,
-};
 
 // קופון בדיקות זמני בלבד — מקבע את שורת המוצר ל-0.5 ש"ח ואת המשלוח ל-0.5 ש"ח (סה"כ 1 ש"ח),
 // ללא קשר לכמות או לשיטת המשלוח. להסיר לפני עלייה לפרודקשן!
@@ -46,15 +37,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  let coupons: Record<string, number> = FALLBACK_COUPONS;
+  let coupons: Record<string, number> | undefined;
   try {
-    const edgeCoupons = await get<Record<string, number>>('coupons');
-    if (edgeCoupons) coupons = edgeCoupons;
+    coupons = await get<Record<string, number>>('coupons');
   } catch (error) {
-    // Edge Config עדיין לא חובר לפרויקט — ממשיכים עם רשימת הגיבוי
+    res.status(200).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
+    return;
   }
 
-  const discountPercent = coupons[code];
+  const discountPercent = coupons?.[code];
   if (!discountPercent) {
     res.status(200).json({ valid: false, message: 'קוד קופון לא תקין' });
     return;
