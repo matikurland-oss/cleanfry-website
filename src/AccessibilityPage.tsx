@@ -1,6 +1,13 @@
 import React from 'react';
+import { useSEO } from './useSEO';
 
 const AccessibilityPage = () => {
+  useSEO({
+    title: 'הצהרת נגישות - CleanFry',
+    description: 'הצהרת הנגישות של אתר CleanFry ואמצעי ההנגשה הזמינים בו.',
+    path: '/accessibility'
+  });
+
   return (
     <div className="bg-white min-h-screen py-20 px-4 font-sans text-right" dir="rtl">
       <div className="max-w-4xl mx-auto">

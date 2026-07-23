@@ -1,11 +1,18 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSEO } from './useSEO';
 
 const LegalPage = () => {
   const location = useLocation();
-  
+
   // זיהוי הכתובת הדינמית של הדף הנוכחי
   const currentPath = location.pathname;
+
+  useSEO(
+    currentPath === '/shipping-policy'
+      ? { title: 'מדיניות משלוחים ואספקה - CleanFry', description: 'זמני אספקה, אזורי שילוח ותיאום המשלוח מול השליח - כל מה שצריך לדעת על משלוחי CleanFry.', path: '/shipping-policy' }
+      : { title: 'תקנון, תנאי שימוש ומדיניות פרטיות - CleanFry', description: 'תנאי השימוש באתר CleanFry, מדיניות הפרטיות ואזהרת הבטיחות למוצר.', path: '/legal' }
+  );
 
   return (
     <div className="bg-white min-h-screen py-20 px-4 font-sans" dir="rtl">

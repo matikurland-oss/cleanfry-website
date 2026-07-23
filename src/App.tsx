@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSEO } from './useSEO';
 
 // ייבוא הדפים הנוספים
 import ContactPage from './ContactPage';
@@ -289,6 +290,12 @@ const MAX_QUANTITY = 10;
 const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivElement> }) => {
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
+
+  useSEO({
+    title: 'אבקה למיצוק שמן | ממצק שמן בישול מהיר - CleanFry',
+    description: 'CleanFry היא אבקה למיצוק שמן צמחית ומהפכנית. ממצק שמן בישול שהופך שמן טיגון לגוש מוצק ב-20 דקות. פתרון נקי וירוק לשמירה על המטבח והניקוז. הזמינו עכשיו!',
+    path: '/'
+  });
 
   const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;

@@ -6,6 +6,10 @@ Disallow: /node_modules/
 Disallow: /dist/
 Disallow: /build/
 Disallow: /src/
+Disallow: /checkout
+Disallow: /payment-success.html
+Disallow: /payment-fail.html
+Disallow: /api/
 
 # הפניה למפת האתר
 Sitemap: https://www.cleanfry.co.il/sitemap.xml

@@ -1,8 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from './blogData';
+import { useSEO } from './useSEO';
 
 const BlogPage = () => {
+  useSEO({
+    title: 'הבלוג של CleanFry — טיפים לניקיון וטיפול בשמן בישול',
+    description: 'מאמרים על טיפול נכון בשמן טיגון משומש, חיסכון בעלויות אינסטלציה וניקיון, וידידותיות לסביבה — הבלוג הרשמי של CleanFry.',
+    path: '/blog'
+  });
+
   return (
     <div className="bg-white min-h-screen py-12 px-4" dir="rtl">
       <div className="max-w-6xl mx-auto">

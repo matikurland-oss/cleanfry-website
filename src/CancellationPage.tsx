@@ -1,6 +1,13 @@
 import React from 'react';
+import { useSEO } from './useSEO';
 
 const CancellationPage = () => {
+  useSEO({
+    title: 'מדיניות ביטולים והחזרות - CleanFry',
+    description: 'מדיניות ביטולים והחזרות של CleanFry בהתאם לחוק הגנת הצרכן - מועדי ביטול, דמי ביטול ואופן ההחזר הכספי.',
+    path: '/cancellation-policy'
+  });
+
   return (
     <div className="bg-white min-h-screen py-20 px-4 font-sans" dir="rtl">
       <div className="max-w-4xl mx-auto text-right">
