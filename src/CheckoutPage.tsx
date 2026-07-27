@@ -216,19 +216,35 @@ const CheckoutPage = () => {
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
   // בניית פירוט החשבונית לפי המבנה שאישרה טרנזילה בפועל (לאחר הבהרה מפורשת מהתמיכה שלהם):
-  // אובייקט עם items (שורות מוצר, כל אחת עם price_type ו-vat_percent) ו-discounts נפרד לקופון,
-  // באותו פרמטר json_purchase_data שבו כבר השתמשנו. price_type: "G" אומר שהמחיר כולל מע"מ (18%),
-  // כך שנשלח את המחיר המלא הרגיל בלי המרה ידנית למחיר לפני מע"מ (זו ההמרה הידנית שגרמה לקריסת
-  // השרת בניסיון הקודם).
+  // אובייקט עם items (שורות מוצר, כל אחת עם price_type ו-vat_percent), באותו פרמטר json_purchase_data
+  // שבו כבר השתמשנו. price_type: "G" אומר שהמחיר כולל מע"מ (18%), כך שנשלח את המחיר המלא הרגיל
+  // בלי המרה ידנית למחיר לפני מע"מ (זו ההמרה הידנית שגרמה לקריסת השרת בניסיון הקודם).
+  //
+  // חשוב: טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(unit_price × units_number) של הפריטים. לכן מחירי
+  // הפריטים חייבים להיות כבר נטו אחרי הנחת קופון — אין הפרדה בין "פריט" ל"הנחה" שתתחשב בה טרנזילה
+  // בחישוב הסכום (זו הייתה הסיבה לשורה הגנרית בקבלה #40017: הפריטים נשלחו במחיר המלא בזמן שה-sum
+  // כבר כלל את ההנחה, כך שהסכומים לא התאימו).
   const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
   const VAT_PERCENT = 18;
 
-  // בקופון בדיקות (מחיר קבוע) המחיר ליחידה מקובע ישירות במקום המחיר המלא
-  const productUnitPrice = testFixedPricing ? roundToAgorot(testFixedPricing.product / quantity) : UNIT_PRICE;
-  const shippingUnitPrice = testFixedPricing ? testFixedPricing.shipping : currentShipping;
+  // בקופון בדיקות (מחיר קבוע) ובקופון הנחה רגיל (אחוזים) שורת המוצר נשלחת כיחידה בודדת (units_number: 1)
+  // במחיר הכולל המדויק, במקום מחיר-ליחידה × כמות. כך נמנעים מסטיית עיגול לאגורה: פיצול לסכום-ליחידה
+  // ואז הכפלה בכמות היה עלול להניב תוצאה שלא שווה בדיוק לסכום המקורי (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5),
+  // וטרנזילה דורשת התאמה מדויקת בין sum לסכום הפריטים.
+  const productLineTotal = testFixedPricing
+    ? testFixedPricing.product
+    : isCouponApplied && discount > 0
+      ? subtotal - discount
+      : null;
+  const productUnitPrice = productLineTotal !== null ? roundToAgorot(productLineTotal) : UNIT_PRICE;
+  const productUnitsNumber = productLineTotal !== null ? 1 : quantity;
+  const productName = productLineTotal !== null ? `מארז CleanFry (${quantity} יח')` : 'מארז CleanFry';
+  const shippingUnitPrice = testFixedPricing
+    ? (shippingMethod === 'pickup' ? 0 : testFixedPricing.shipping)
+    : currentShipping;
 
   const jsonItems = [
-    { name: 'מארז CleanFry', unit_price: productUnitPrice, units_number: quantity, price_type: 'G', vat_percent: VAT_PERCENT },
+    { name: productName, unit_price: productUnitPrice, units_number: productUnitsNumber, price_type: 'G', vat_percent: VAT_PERCENT },
     {
       name: shippingMethod === 'pickup'
         ? (pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב")
@@ -240,15 +256,10 @@ const CheckoutPage = () => {
     }
   ];
 
-  const purchaseDataPayload: { items: typeof jsonItems; zip: string; discounts?: { code: string; discount: number }[] } = {
+  const purchaseDataPayload: { items: typeof jsonItems; zip: string } = {
     items: jsonItems,
     zip: zip.trim() || '0000000'
   };
-
-  // הקופון נשלח כאובייקט נפרד ב-discounts (לא כשורת "מוצר"), עם ערך ההנחה בשקלים
-  if (isCouponApplied && discount > 0) {
-    purchaseDataPayload.discounts = [{ code: coupon.toUpperCase().trim(), discount }];
-  }
 
   // לפי תיעוד טרנזילה: JSON ללא רווחים/שברי שורה. שליחה דרך טופס HTML רגיל (לא AJAX),
   // כך שהדפדפן עצמו מבצע את קידוד ה-POST הנדרש — אין לקודד ידנית כדי למנוע קידוד כפול.
