@@ -215,22 +215,20 @@ const CheckoutPage = () => {
   const tranzilaCity = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city;
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
-  // בניית פירוט החשבונית לפי המבנה שאישרה טרנזילה בפועל (לאחר הבהרה מפורשת מהתמיכה שלהם):
-  // אובייקט עם items (שורות מוצר, כל אחת עם price_type ו-vat_percent), באותו פרמטר json_purchase_data
-  // שבו כבר השתמשנו. price_type: "G" אומר שהמחיר כולל מע"מ (18%), כך שנשלח את המחיר המלא הרגיל
-  // בלי המרה ידנית למחיר לפני מע"מ (זו ההמרה הידנית שגרמה לקריסת השרת בניסיון הקודם).
+  // בניית פירוט החשבונית לפי המבנה שאישרה טרנזילה בפועל בפעם האחרונה (תבנית שטוחה של
+  // product_name/product_quantity/product_price - בלי עטיפת items, בלי price_type/vat_percent
+  // לפריט, בלי zip). המע"מ מטופל גלובלית דרך IMaam בטופס, לא לכל שורה. גרסאות קודמות (items
+  // מקוננים עם price_type/vat_percent) קרסו/נפלו לשורה גנרית - זו התבנית שאושרה בפועל.
   //
-  // חשוב: טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(unit_price × units_number) של הפריטים. לכן מחירי
-  // הפריטים חייבים להיות כבר נטו אחרי הנחת קופון — אין הפרדה בין "פריט" ל"הנחה" שתתחשב בה טרנזילה
-  // בחישוב הסכום (זו הייתה הסיבה לשורה הגנרית בקבלה #40017: הפריטים נשלחו במחיר המלא בזמן שה-sum
-  // כבר כלל את ההנחה, כך שהסכומים לא התאימו).
+  // חשוב: טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(product_price × product_quantity) של הפריטים.
+  // לכן מחירי הפריטים חייבים להיות כבר נטו אחרי הנחת קופון (זו הייתה הסיבה לשורה הגנרית בקבלה
+  // #40017: הפריטים נשלחו במחיר המלא בזמן שה-sum כבר כלל את ההנחה).
   const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
-  const VAT_PERCENT = 18;
 
-  // בקופון בדיקות (מחיר קבוע) ובקופון הנחה רגיל (אחוזים) שורת המוצר נשלחת כיחידה בודדת (units_number: 1)
-  // במחיר הכולל המדויק, במקום מחיר-ליחידה × כמות. כך נמנעים מסטיית עיגול לאגורה: פיצול לסכום-ליחידה
-  // ואז הכפלה בכמות היה עלול להניב תוצאה שלא שווה בדיוק לסכום המקורי (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5),
-  // וטרנזילה דורשת התאמה מדויקת בין sum לסכום הפריטים.
+  // בקופון בדיקות (מחיר קבוע) ובקופון הנחה רגיל (אחוזים) שורת המוצר נשלחת כיחידה בודדת
+  // (product_quantity: 1) במחיר הכולל המדויק, במקום מחיר-ליחידה × כמות. כך נמנעים מסטיית עיגול
+  // לאגורה: פיצול לסכום-ליחידה ואז הכפלה בכמות היה עלול להניב תוצאה שלא שווה בדיוק לסכום המקורי
+  // (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5), וטרנזילה דורשת התאמה מדויקת בין sum לסכום הפריטים.
   const productLineTotal = testFixedPricing
     ? testFixedPricing.product
     : isCouponApplied && discount > 0
@@ -244,26 +242,19 @@ const CheckoutPage = () => {
     : currentShipping;
 
   const jsonItems = [
-    { name: productName, unit_price: productUnitPrice, units_number: productUnitsNumber, price_type: 'G', vat_percent: VAT_PERCENT },
+    { product_name: productName, product_quantity: productUnitsNumber, product_price: productUnitPrice },
     {
-      name: shippingMethod === 'pickup'
+      product_name: shippingMethod === 'pickup'
         ? (pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב")
         : "דמי משלוח עד הבית",
-      unit_price: shippingUnitPrice,
-      units_number: 1,
-      price_type: 'G',
-      vat_percent: VAT_PERCENT
+      product_quantity: 1,
+      product_price: shippingUnitPrice
     }
   ];
 
-  const purchaseDataPayload: { items: typeof jsonItems; zip: string } = {
-    items: jsonItems,
-    zip: zip.trim() || '0000000'
-  };
-
   // לפי תיעוד טרנזילה: JSON ללא רווחים/שברי שורה. שליחה דרך טופס HTML רגיל (לא AJAX),
   // כך שהדפדפן עצמו מבצע את קידוד ה-POST הנדרש — אין לקודד ידנית כדי למנוע קידוד כפול.
-  const encodedJsonPurchaseData = JSON.stringify(purchaseDataPayload);
+  const encodedJsonPurchaseData = JSON.stringify(jsonItems);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
