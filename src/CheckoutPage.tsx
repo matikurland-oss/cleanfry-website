@@ -252,9 +252,10 @@ const CheckoutPage = () => {
     }
   ];
 
-  // לפי תיעוד טרנזילה: JSON ללא רווחים/שברי שורה. שליחה דרך טופס HTML רגיל (לא AJAX),
-  // כך שהדפדפן עצמו מבצע את קידוד ה-POST הנדרש — אין לקודד ידנית כדי למנוע קידוד כפול.
-  const encodedJsonPurchaseData = JSON.stringify(jsonItems);
+  // לפי תמיכת טרנזילה במפורש (גם בהנחיה המילולית וגם בדוגמת ה-HTML שסיפקו, שם הערך כבר מקודד
+  // מראש): json_encode ואז rawurlencode/encodeURIComponent - קידוד ידני, לא הסתמכות על קידוד
+  // הדפדפן. זה הפוך מהנחה קודמת בקוד הזה שהניחה שקידוד ידני יגרום לקידוד כפול.
+  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(jsonItems));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
