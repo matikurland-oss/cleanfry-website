@@ -21,8 +21,6 @@ const CheckoutPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
-  // TEMP: מצב קופון בדיקות בלבד (מקבע את מחיר המוצר/משלוח) — להסיר לפני פרודקשן!
-  const [testFixedPricing, setTestFixedPricing] = useState<{ product: number; shipping: number } | null>(null);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
@@ -55,14 +53,8 @@ const CheckoutPage = () => {
   const subtotal = UNIT_PRICE * quantity;
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  // מצב קופון בדיקות: מקבע את הסה"כ למחיר מוצר+משלוח קבועים (איסוף עצמי נשאר חינם כרגיל)
-  const testFixedTotal = testFixedPricing
-    ? testFixedPricing.product + (shippingMethod === 'pickup' ? 0 : testFixedPricing.shipping)
-    : null;
-  const discount = isCouponApplied
-    ? (testFixedTotal !== null ? Math.round(subtotal + currentShipping - testFixedTotal) : Math.round(subtotal * discountPercent))
-    : 0;
-  const totalPrice = testFixedTotal !== null ? Math.round(testFixedTotal) : Math.round(subtotal - discount + currentShipping);
+  const discount = isCouponApplied ? Math.round(subtotal * discountPercent) : 0;
+  const totalPrice = Math.round(subtotal - discount + currentShipping);
 
   // 4. זיהוי כמות מה-URL + חזרה מתשלום שנכשל
   useEffect(() => {
@@ -133,13 +125,7 @@ const CheckoutPage = () => {
       const result = await response.json();
 
       if (result.valid) {
-        if (result.testFixed) {
-          setTestFixedPricing(result.testFixed);
-          setDiscountPercent(0);
-        } else {
-          setTestFixedPricing(null);
-          setDiscountPercent(result.discountPercent);
-        }
+        setDiscountPercent(result.discountPercent);
         setIsCouponApplied(true);
         setShowPayment(false);
       } else {
@@ -155,7 +141,6 @@ const CheckoutPage = () => {
   const handleRemoveCoupon = () => {
     setCoupon('');
     setDiscountPercent(0);
-    setTestFixedPricing(null);
     setIsCouponApplied(false);
     setCouponError('');
     setShowPayment(false);
@@ -229,11 +214,7 @@ const CheckoutPage = () => {
   // כמה יחידות באמת נקנו. מחיר היחידה מחושב מהסכום (המוזל, אם יש קופון) חלקי הכמות, מעוגל
   // לאגורה - וכל שארית עיגול (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5) נספגת לתוך שורת המשלוח,
   // כדי ש-Σ(product_price × product_quantity) הכולל עדיין יתאים בדיוק ל-sum שטרנזילה דורשת.
-  const productLineTotal = testFixedPricing
-    ? testFixedPricing.product
-    : isCouponApplied && discount > 0
-      ? subtotal - discount
-      : null;
+  const productLineTotal = isCouponApplied && discount > 0 ? subtotal - discount : null;
   const productUnitPriceRaw = productLineTotal !== null ? productLineTotal / quantity : UNIT_PRICE;
   const productUnitPrice = roundToAgorot(productUnitPriceRaw);
   const roundingRemainder = productLineTotal !== null ? roundToAgorot(productLineTotal - productUnitPrice * quantity) : 0;
@@ -241,9 +222,7 @@ const CheckoutPage = () => {
   // קוד הקופון מוצג בשם הפריט - אין שדה נפרד להנחה/קופון במבנה השטוח הזה של טרנזילה.
   const couponSuffix = isCouponApplied && coupon.trim() ? ` (קופון: ${coupon.toUpperCase().trim()})` : '';
   const productName = `מארז CleanFry${couponSuffix}`;
-  const shippingUnitPrice = (testFixedPricing
-    ? (shippingMethod === 'pickup' ? 0 : testFixedPricing.shipping)
-    : currentShipping) + roundingRemainder;
+  const shippingUnitPrice = currentShipping + roundingRemainder;
 
   const jsonItems = [
     { product_name: productName, product_quantity: quantity, product_price: productUnitPrice },
