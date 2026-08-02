@@ -407,6 +407,7 @@ const CheckoutPage = () => {
                 target="tranzila-target-frame"
                 className="hidden"
               >
+                <input type="hidden" name="supplier" value="cleanfry" />
                 <input type="hidden" name="sum" value={totalPrice} />
                 <input type="hidden" name="currency" value="1" />
                 <input type="hidden" name="cred_type" value="1" />
