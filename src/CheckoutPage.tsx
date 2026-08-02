@@ -225,24 +225,28 @@ const CheckoutPage = () => {
   // #40017: הפריטים נשלחו במחיר המלא בזמן שה-sum כבר כלל את ההנחה).
   const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
 
-  // בקופון בדיקות (מחיר קבוע) ובקופון הנחה רגיל (אחוזים) שורת המוצר נשלחת כיחידה בודדת
-  // (product_quantity: 1) במחיר הכולל המדויק, במקום מחיר-ליחידה × כמות. כך נמנעים מסטיית עיגול
-  // לאגורה: פיצול לסכום-ליחידה ואז הכפלה בכמות היה עלול להניב תוצאה שלא שווה בדיוק לסכום המקורי
-  // (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5), וטרנזילה דורשת התאמה מדויקת בין sum לסכום הפריטים.
+  // שורת המוצר תמיד נושאת את הכמות האמיתית (product_quantity: quantity), כדי שהחשבונית תשקף
+  // כמה יחידות באמת נקנו. מחיר היחידה מחושב מהסכום (המוזל, אם יש קופון) חלקי הכמות, מעוגל
+  // לאגורה - וכל שארית עיגול (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5) נספגת לתוך שורת המשלוח,
+  // כדי ש-Σ(product_price × product_quantity) הכולל עדיין יתאים בדיוק ל-sum שטרנזילה דורשת.
   const productLineTotal = testFixedPricing
     ? testFixedPricing.product
     : isCouponApplied && discount > 0
       ? subtotal - discount
       : null;
-  const productUnitPrice = productLineTotal !== null ? roundToAgorot(productLineTotal) : UNIT_PRICE;
-  const productUnitsNumber = productLineTotal !== null ? 1 : quantity;
-  const productName = productLineTotal !== null ? `מארז CleanFry (${quantity} יח')` : 'מארז CleanFry';
-  const shippingUnitPrice = testFixedPricing
+  const productUnitPriceRaw = productLineTotal !== null ? productLineTotal / quantity : UNIT_PRICE;
+  const productUnitPrice = roundToAgorot(productUnitPriceRaw);
+  const roundingRemainder = productLineTotal !== null ? roundToAgorot(productLineTotal - productUnitPrice * quantity) : 0;
+
+  // קוד הקופון מוצג בשם הפריט - אין שדה נפרד להנחה/קופון במבנה השטוח הזה של טרנזילה.
+  const couponSuffix = isCouponApplied && coupon.trim() ? ` (קופון: ${coupon.toUpperCase().trim()})` : '';
+  const productName = `מארז CleanFry${couponSuffix}`;
+  const shippingUnitPrice = (testFixedPricing
     ? (shippingMethod === 'pickup' ? 0 : testFixedPricing.shipping)
-    : currentShipping;
+    : currentShipping) + roundingRemainder;
 
   const jsonItems = [
-    { product_name: productName, product_quantity: productUnitsNumber, product_price: productUnitPrice },
+    { product_name: productName, product_quantity: quantity, product_price: productUnitPrice },
     {
       product_name: shippingMethod === 'pickup'
         ? (pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב")
