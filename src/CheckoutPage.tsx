@@ -217,8 +217,8 @@ const CheckoutPage = () => {
 
   // בניית פירוט החשבונית לפי המבנה שאישרה טרנזילה בפועל בפעם האחרונה (תבנית שטוחה של
   // product_name/product_quantity/product_price - בלי עטיפת items, בלי price_type/vat_percent
-  // לפריט, בלי zip). המע"מ מטופל גלובלית דרך IMaam בטופס, לא לכל שורה. גרסאות קודמות (items
-  // מקוננים עם price_type/vat_percent) קרסו/נפלו לשורה גנרית - זו התבנית שאושרה בפועל.
+  // לפריט, בלי zip). אין מע"מ בכלל: העסק עוסק פטור (ר' IMaam שהוסר בטופס למטה). גרסאות קודמות
+  // (items מקוננים עם price_type/vat_percent) קרסו/נפלו לשורה גנרית - זו התבנית שאושרה בפועל.
   //
   // חשוב: טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(product_price × product_quantity) של הפריטים.
   // לכן מחירי הפריטים חייבים להיות כבר נטו אחרי הנחת קופון (זו הייתה הסיבה לשורה הגנרית בקבלה
@@ -429,7 +429,7 @@ const CheckoutPage = () => {
                 <input type="hidden" name="company" value={fullName} />
                 <input type="hidden" name="u71" value="1" />
                 <input type="hidden" name="inv_items" value="1" />
-                <input type="hidden" name="IMaam" value="18" />
+                {/* אין IMaam בכוונה: העסק רשום כעוסק פטור, שלא גובה ולא מציג מע"מ בחשבונית */}
                 <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
                 <input type="hidden" name="remarks" value={orderToken} />
                 <input type="hidden" name="notify_url_address" value={`${window.location.origin}/api/tranzila-notify`} />
