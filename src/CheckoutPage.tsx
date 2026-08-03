@@ -356,7 +356,7 @@ const CheckoutPage = () => {
 
           {/* עמודה שמאלית */}
           <div className="lg:col-span-5 space-y-5 text-right">
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 lg:sticky lg:top-8">
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
               <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
 
               <div className="flex flex-wrap justify-between items-center gap-3 mb-8 bg-slate-50 p-4 rounded-2xl">
