@@ -259,7 +259,7 @@ const CheckoutPage = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* עמודה ימנית */}
           <div className="lg:col-span-7 space-y-6 text-right">
@@ -352,18 +352,73 @@ const CheckoutPage = () => {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* עמודה שמאלית */}
+          <div className="lg:col-span-5 space-y-5 text-right">
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 lg:sticky lg:top-8">
+              <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
+
+              <div className="flex flex-wrap justify-between items-center gap-3 mb-8 bg-slate-50 p-4 rounded-2xl">
+                <div className="text-right">
+                  <p className="font-bold text-lg text-slate-800">מארז CleanFry</p>
+                  <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
+                  <button onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
+                  <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
+                  <button onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
+                </div>
+              </div>
+
+              {shippingMethod === 'delivery' && !isFreeShipping && (
+                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
+                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
+                </div>
+              )}
+
+              <div className="mb-8">
+                <div className="flex gap-2">
+                  <input type="text" placeholder="קוד קופון" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(''); }} disabled={isCouponApplied || isValidatingCoupon} className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right" />
+                  {!isCouponApplied ? (
+                    <button onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition disabled:opacity-50">{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
+                  ) : (
+                    <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1"><X size={18} /> ביטול</button>
+                  )}
+                </div>
+                {couponError && (
+                  <p className="text-red-500 text-sm mt-2 font-medium">{couponError}</p>
+                )}
+                {isCouponApplied && (
+                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{discount}</span></div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
+                <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
+                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
+                {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
+                <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{totalPrice}</span></div>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
+                <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
+              </div>
+            </div>
 
             {/* תשלום */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
-              <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-slate-800">
+            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-md border border-slate-100 text-right">
+              <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
                 <CreditCard className="text-blue-500" /> תשלום מאובטח
               </h2>
-              
+
               <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
                 <span className="text-base mt-0.5">⚠️</span>
                 <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, <strong>למעט כרטיסי אמריקן אקספרס ודיינרס</strong>.</p>
               </div>
-              
+
               {paymentFailed && (
                 <div ref={paymentFailedRef} className="mb-5 p-5 bg-red-50 border-2 border-red-300 rounded-2xl text-red-900 shadow-md animate-fadeIn flex items-start gap-3">
                   <span className="text-2xl leading-none">❌</span>
@@ -377,7 +432,7 @@ const CheckoutPage = () => {
               {!showPayment && (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
-                  <button onClick={handleProceedToPayment} disabled={isPreparingPayment} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-md hover:bg-blue-700 transition-all disabled:opacity-50">
+                  <button onClick={handleProceedToPayment} disabled={isPreparingPayment} className="w-full gradient-brand text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:brightness-110 hover:shadow-xl active:scale-[0.99] transition-all disabled:opacity-50 disabled:hover:brightness-100">
                     {isPreparingPayment ? 'מכין הזמנה...' : 'המשך לתשלום מאובטח'}
                   </button>
                 </div>
@@ -424,61 +479,6 @@ const CheckoutPage = () => {
                   title="Tranzila Secure Payment"
                 />
               )}
-            </div>
-          </div>
-
-          {/* עמודה שמאלית */}
-          <div className="lg:col-span-5 text-right">
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 sticky top-8">
-              <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
-              
-              <div className="flex justify-between items-center mb-8 bg-slate-50 p-4 rounded-2xl">
-                <div className="text-right">
-                  <p className="font-bold text-lg text-slate-800">מארז CleanFry</p>
-                  <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
-                </div>
-                <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
-                  <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
-                </div>
-              </div>
-
-              {shippingMethod === 'delivery' && !isFreeShipping && (
-                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
-                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
-                </div>
-              )}
-
-              <div className="mb-8">
-                <div className="flex gap-2">
-                  <input type="text" placeholder="קוד קופון" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(''); }} disabled={isCouponApplied || isValidatingCoupon} className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right" />
-                  {!isCouponApplied ? (
-                    <button onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition disabled:opacity-50">{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
-                  ) : (
-                    <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1"><X size={18} /> ביטול</button>
-                  )}
-                </div>
-                {couponError && (
-                  <p className="text-red-500 text-sm mt-2 font-medium">{couponError}</p>
-                )}
-                {isCouponApplied && (
-                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{discount}</span></div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
-                <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
-                {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
-                <div className="flex justify-between items-end pt-6 border-t border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-4xl font-black text-blue-600 tabular-nums">₪{totalPrice}</span></div>
-              </div>
-
-              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
-                <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
-              </div>
             </div>
           </div>
 
