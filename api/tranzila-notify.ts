@@ -27,6 +27,7 @@ interface OrderPayload {
   name: string;
   phone: string;
   email: string;
+  businessId: string;
   method: string;
   details: string;
   coupon: string;
@@ -94,6 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         "שם הלקוח": payload.name,
         "טלפון": payload.phone,
         "אימייל": payload.email,
+        "ח.פ / עוסק מורשה": payload.businessId || 'לא הוזן',
         "שיטת קבלה": payload.method,
         "פרטים": payload.details,
         "קוד קופון שהופעל": payload.coupon || 'לא הוגדר קופון',

@@ -27,16 +27,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  let coupons: Record<string, number> | undefined;
+  // ערך קופון יכול להיות מספר פשוט (קודים ישנים, ללא תפוגה) או אובייקט עם תאריך תפוגה אופציונלי.
+  type CouponEntry = number | { discount: number; expiresAt?: string };
+  let coupons: Record<string, CouponEntry> | undefined;
   try {
-    coupons = await get<Record<string, number>>('coupons');
+    coupons = await get<Record<string, CouponEntry>>('coupons');
   } catch (error) {
     res.status(200).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
     return;
   }
 
-  const discountPercent = coupons?.[code];
-  if (!discountPercent) {
+  const raw = coupons?.[code];
+  const discountPercent = typeof raw === 'number' ? raw : raw?.discount;
+  const expiresAt = typeof raw === 'object' ? raw?.expiresAt : undefined;
+
+  if (!discountPercent || (expiresAt && new Date(expiresAt) < new Date())) {
     res.status(200).json({ valid: false, message: 'קוד קופון לא תקין' });
     return;
   }

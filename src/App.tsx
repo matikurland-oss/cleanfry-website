@@ -34,6 +34,8 @@ import BlogPostDetail from './BlogPostDetail';
 import SuccessPage from './SuccessPage';
 import AccessibilityPage from './AccessibilityPage';
 import OrderSuccessPage from './OrderSuccessPage'; // ◄ ייבוא דף התודה החדש של ההזמנות!
+import CookieConsent from './CookieConsent';
+import { getCookieConsent, setCookieConsent, subscribeCookieConsent } from './cookieConsentStore';
 
 // --- רכיב עזר לגלילה לראש הדף במעבר בין נתיבים ---
 const ScrollToTop = () => {
@@ -52,13 +54,18 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
   const location = useLocation();
 
   useEffect(() => {
-    if (document.getElementById('userway-widget')) return;
-    const script = document.createElement('script');
-    script.setAttribute('data-account', 'XQfDpHYmO1'); 
-    script.src = 'https://cdn.userway.org/widget.js';
-    script.async = true;
-    script.id = 'userway-widget';
-    document.body.appendChild(script);
+    const loadUserWay = (choice: ReturnType<typeof getCookieConsent>) => {
+      if (choice !== 'accepted') return;
+      if (document.getElementById('userway-widget')) return;
+      const script = document.createElement('script');
+      script.setAttribute('data-account', 'XQfDpHYmO1');
+      script.src = 'https://cdn.userway.org/widget.js';
+      script.async = true;
+      script.id = 'userway-widget';
+      document.body.appendChild(script);
+    };
+    loadUserWay(getCookieConsent());
+    return subscribeCookieConsent(loadUserWay);
   }, []);
 
   const navLinks = [
@@ -277,7 +284,10 @@ const Footer = () => (
         </div>
       </div>
       <div className="border-t border-slate-800 pt-10 text-center text-slate-500 text-sm">
-        <div className="mb-4"><Link to="/accessibility" className="hover:text-white underline underline-offset-4">הצהרת נגישות</Link></div>
+        <div className="mb-4 flex flex-wrap justify-center gap-x-4 gap-y-2">
+          <Link to="/accessibility" className="hover:text-white underline underline-offset-4">הצהרת נגישות</Link>
+          <button onClick={() => setCookieConsent(null)} className="hover:text-white underline underline-offset-4">ניהול העדפות עוגיות</button>
+        </div>
         <p>© {new Date().getFullYear()} CleanFry | מ.ק יזמות | כל הזכויות שמורות.</p>
       </div>
     </div>
@@ -299,7 +309,7 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
 
   const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;
-  const isFreeShipping = totalPrice >= 249;
+  const isFreeShipping = totalPrice >= 199;
 
   const getButtonText = () => {
     if (quantity === 1) return "הזמנת מארז אחד";
@@ -394,7 +404,7 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
                     </div>
                   ) : (
                     <>
-                      <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 249 ₪</p>
+                      <p className="text-slate-400 text-sm font-medium">משלוח חינם בקנייה מעל 199 ₪</p>
                       <p className="text-sm text-gray-600 font-medium">אפשרות לאיסוף עצמי ללא עלות</p>
                     </>
                   )}
@@ -525,7 +535,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       <ScrollToTop />
-      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 249 ש״ח!</div>
+      <CookieConsent />
+      <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 199 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
         <Routes>

@@ -40,6 +40,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     name: str(body.name, 60),
     phone: str(body.phone, 20),
     email: str(body.email, 80),
+    businessId: str(body.businessId, 15),
     method: str(body.method, 10),
     details: str(body.details, 200),
     coupon: str(body.coupon, 20),
