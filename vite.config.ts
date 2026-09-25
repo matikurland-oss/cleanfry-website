@@ -38,6 +38,11 @@ export default defineConfig(({mode}) => {
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
+      // מפנה /api ל-scripts/dev-api-server.mjs המקומי (npm run dev:api) - עוקף באג תאימות של
+      // `vercel dev` עם הפרויקט הזה. אין דבר ב-5210 -> קריאות /api פשוט נכשלות (dev פרונט-בלבד).
+      proxy: mode === 'development' ? {
+        '/api': { target: process.env.DEV_API_PROXY || 'http://localhost:5210', changeOrigin: true },
+      } : undefined,
     },
   };
 });

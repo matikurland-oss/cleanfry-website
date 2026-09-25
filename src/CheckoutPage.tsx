@@ -11,6 +11,7 @@ import {
   X,
   MapPin
 } from 'lucide-react';
+import { isValidIsraeliPhone } from './checkoutValidation';
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -28,6 +29,7 @@ const CheckoutPage = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [businessId, setBusinessId] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [apartment, setApartment] = useState('');
@@ -43,7 +45,7 @@ const CheckoutPage = () => {
   // 2. הגדרות מחיר
   const UNIT_PRICE = 59;
   const SHIPPING_COST = 35;
-  const FREE_SHIPPING_THRESHOLD = 249;
+  const FREE_SHIPPING_THRESHOLD = 199;
   const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
 
   // 3. חישובי סכומים
@@ -151,6 +153,10 @@ const CheckoutPage = () => {
       alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
+    if (!isValidIsraeliPhone(phone)) {
+      alert('מספר טלפון לא תקין — יש להזין מספר ישראלי תקין');
+      return;
+    }
     if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
       alert('נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
       return;
@@ -180,6 +186,7 @@ const CheckoutPage = () => {
           name: fullName,
           phone,
           email,
+          businessId: businessId.trim(),
           method: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף',
           details: detailsText,
           coupon: isCouponApplied ? coupon.toUpperCase().trim() : ''
@@ -342,6 +349,7 @@ const CheckoutPage = () => {
                 <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 <input type="tel" placeholder="טלפון *" value={phone} onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                <input type="text" placeholder="ח.פ / עוסק מורשה (אופציונלי)" value={businessId} onChange={(e) => { setBusinessId(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
                 {shippingMethod === 'delivery' && (
                   <>
                     <input type="text" placeholder="עיר *" value={city} onChange={(e) => { setCity(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
