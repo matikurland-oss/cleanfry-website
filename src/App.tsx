@@ -260,6 +260,16 @@ const Footer = () => (
               <MessageCircle className="w-5 h-5" />
             </a>
           </div>
+          <div className="flex justify-end">
+            <img
+              src="/shopping-il-badge.svg"
+              alt="Shopping IL by Google"
+              width={48}
+              height={48}
+              loading="lazy"
+              className="h-12 w-12 rounded-lg"
+            />
+          </div>
         </div>
         <div>
           <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>
