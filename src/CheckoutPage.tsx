@@ -416,8 +416,11 @@ const CheckoutPage = () => {
                 <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{totalPrice}</span></div>
               </div>
 
-              <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale text-[10px] font-bold">
-                <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
+              <div className="mt-8 flex items-center justify-center gap-3 text-[10px] font-bold">
+                <img src="/shopping-il-badge.svg" alt="Shopping IL by Google" width={36} height={36} loading="lazy" />
+                <div className="flex items-center gap-2 opacity-40 grayscale">
+                  <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
+                </div>
               </div>
             </div>
 

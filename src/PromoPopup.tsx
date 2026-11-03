@@ -68,6 +68,17 @@ const PromoPopup = () => {
         >
           לקטיפת המבצע
         </button>
+
+        <div className="mt-5 flex items-center justify-center">
+          <img
+            src="/shopping-il-badge.svg"
+            alt="Shopping IL by Google"
+            width={64}
+            height={64}
+            loading="lazy"
+            className="h-16 w-16 rounded-xl"
+          />
+        </div>
       </div>
     </div>
   );
