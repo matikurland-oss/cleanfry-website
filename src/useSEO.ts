@@ -8,6 +8,7 @@ interface SEOOptions {
   description: string;
   path: string;
   image?: string;
+  noindex?: boolean;
 }
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -32,13 +33,14 @@ function setCanonical(url: string) {
 
 // מעדכן את ה-title ותגי ה-meta של הדף בכל ניווט, כדי שכל עמוד (כולל פוסטים בבלוג) יקבל
 // כותרת ותיאור ייחודיים במקום לחלוק את אלה של דף הבית — חשוב הן לתצוגה בגוגל והן לשיתוף ברשתות.
-export function useSEO({ title, description, path, image = DEFAULT_IMAGE }: SEOOptions) {
+export function useSEO({ title, description, path, image = DEFAULT_IMAGE, noindex = false }: SEOOptions) {
   useEffect(() => {
     const fullTitle = title.includes('CleanFry') ? title : `${title} | CleanFry`;
     const url = `${SITE_URL}${path}`;
 
     document.title = fullTitle;
     setMeta('name', 'description', description);
+    setMeta('name', 'robots', noindex ? 'noindex, follow' : 'index, follow');
     setMeta('property', 'og:title', fullTitle);
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:url', url);
@@ -47,5 +49,5 @@ export function useSEO({ title, description, path, image = DEFAULT_IMAGE }: SEOO
     setMeta('name', 'twitter:description', description);
     setMeta('name', 'twitter:image', image);
     setCanonical(url);
-  }, [title, description, path, image]);
+  }, [title, description, path, image, noindex]);
 }

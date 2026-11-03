@@ -24,10 +24,13 @@ const BlogPage = () => {
                 
                 {/* תמונת המאמר */}
                 <div className="overflow-hidden rounded-xl mb-6 bg-slate-50 h-48 flex items-center justify-center">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
-                    className="max-h-full w-auto object-contain group-hover:scale-105 transition duration-500" 
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    width={post.imageWidth}
+                    height={post.imageHeight}
+                    loading="lazy"
+                    className="max-h-full w-auto object-contain group-hover:scale-105 transition duration-500"
                   />
                 </div>
 

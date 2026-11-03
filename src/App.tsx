@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import CheckoutPage from './CheckoutPage';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { 
   ShoppingCart, 
   Menu, 
@@ -25,15 +24,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSEO } from './useSEO';
 
-// ייבוא הדפים הנוספים
-import ContactPage from './ContactPage';
-import LegalPage from './LegalPage';
-import CancellationPage from './CancellationPage';
-import BlogPage from './BlogPage';
-import BlogPostDetail from './BlogPostDetail';
-import SuccessPage from './SuccessPage';
-import AccessibilityPage from './AccessibilityPage';
-import OrderSuccessPage from './OrderSuccessPage'; // ◄ ייבוא דף התודה החדש של ההזמנות!
+// ייבוא הדפים הנוספים - lazy, כדי שהקוד שלהם (כולל תשלום/חשבוניות) לא יישלח
+// למי שרק נכנס לדף הבית, שהוא הדף הכי מבוקר באתר
+const CheckoutPage = React.lazy(() => import('./CheckoutPage'));
+const ContactPage = React.lazy(() => import('./ContactPage'));
+const LegalPage = React.lazy(() => import('./LegalPage'));
+const CancellationPage = React.lazy(() => import('./CancellationPage'));
+const BlogPage = React.lazy(() => import('./BlogPage'));
+const BlogPostDetail = React.lazy(() => import('./BlogPostDetail'));
+const SuccessPage = React.lazy(() => import('./SuccessPage'));
+const AccessibilityPage = React.lazy(() => import('./AccessibilityPage'));
+const OrderSuccessPage = React.lazy(() => import('./OrderSuccessPage')); // ◄ דף התודה של ההזמנות
 import CookieConsent from './CookieConsent';
 import PromoPopup from './PromoPopup';
 import { getCookieConsent, setCookieConsent, subscribeCookieConsent } from './cookieConsentStore';
@@ -94,7 +95,7 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
         <div className="flex justify-between h-20 items-center">
           <div className="flex-shrink-0 flex items-center cursor-pointer">
             <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-              <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
+              <img src="/logo.png" alt="CleanFry Logo" width={2784} height={1536} className="h-12 w-auto object-contain" />
             </Link>
           </div>
           <div className="hidden md:flex gap-8">
@@ -229,7 +230,7 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 text-right">
         <div className="space-y-6">
           <div className="flex items-center">
-            <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
+            <img src="/logo.png" alt="CleanFry Logo" width={2784} height={1536} loading="lazy" className="h-12 w-auto object-contain" />
           </div>
           <p className="text-slate-400 leading-relaxed">
             הפתרון המושלם למיצוק והשלכת שמן בישול משומש. שומרים על המטבח נקי ועל הסביבה ירוקה.
@@ -276,6 +277,15 @@ const Footer = () => (
             <li><Link to="/shipping-policy" className="hover:text-white transition-colors">מדיניות משלוחים</Link></li>
             <li><Link to="/legal" className="hover:text-white transition-colors">תנאי שימוש ופרטיות</Link></li>
             <li><Link to="/cancellation-policy" className="hover:text-white transition-colors">מדיניות ביטולים והחזרות</Link></li>
+          </ul>
+          <h4 className="text-lg font-bold mt-8 mb-4">נקודות איסוף עצמי</h4>
+          <ul className="space-y-2 text-slate-400 text-sm">
+            <li>
+              <a href="https://maps.google.com/?q=בן+גוריון+7,+כפר+סבא" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">כפר סבא - בן גוריון 7</a>
+            </li>
+            <li>
+              <a href="https://maps.google.com/?q=משה+וילנסקי+11,+תל+אביב" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">תל אביב - משה וילנסקי 11</a>
+            </li>
           </ul>
         </div>
         <div>
@@ -336,7 +346,6 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
                     disablePictureInPicture
                   />
                 </div>
-                <h2 className="sr-only">CleanFry - אבקה למיצוק שמן בישול, הפתרון המושלם למיצוק שמן טיגון משומש</h2>
                 <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-tight mb-6">
                   <span className="text-brand-blue">טיגון מושלם.</span><br />
                   <span className="text-brand-green">ניקוי קל.</span>
@@ -356,13 +365,13 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
                 </div>
                 <div className="flex items-center gap-2 bg-blue-100 border-2 border-blue-400 px-3 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-md cursor-default hover:scale-105 transition-transform whitespace-nowrap">
                   <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
-                  <h2 className="text-blue-800 text-sm sm:text-base font-extrabold m-0">אבקה למיצוק שמן בישול</h2>
+                  <span className="text-blue-800 text-sm sm:text-base font-extrabold m-0">אבקה למיצוק שמן בישול</span>
                 </div>
               </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="mt-16 lg:mt-24 relative">
               <div className="absolute -inset-4 bg-brand-blue/5 rounded-full blur-3xl"></div>
-              <img src="/product.png" alt="מארז CleanFry - אבקה למיצוק שמן בישול ביתי" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" />
+              <img src="/product.png" alt="מארז CleanFry - אבקה למיצוק שמן בישול ביתי" width={2039} height={1721} fetchPriority="high" className="relative rounded-3xl shadow-2xl w-full max-w-lg mx-auto object-cover" />
             </motion.div>
           </div>
 
@@ -437,9 +446,12 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
               viewport={{ once: true }}
               className="max-w-4xl mx-auto mb-16"
             >
-              <img 
-                src="/how-to-use.jpg" 
-                alt="CleanFry - שלבי שימוש" 
+              <img
+                src="/how-to-use.jpg"
+                alt="CleanFry - שלבי שימוש"
+                width={2754}
+                height={1536}
+                loading="lazy"
                 className="rounded-3xl shadow-lg border-4 border-white w-full"
               />
             </motion.div>
@@ -541,19 +553,21 @@ export default function App() {
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 199 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<HomePage purchaseBoxRef={purchaseBoxRef} />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/blog" element={<BlogPage />} />
-          <Route path="/blog/:id" element={<BlogPostDetail />} />
-          <Route path="/thanks" element={<SuccessPage />} />
-          <Route path="/order-success" element={<OrderSuccessPage />} /> {/* ◄ הנתיב החדש והייעודי להזמנות מוצלחות! */}
-          <Route path="/legal" element={<LegalPage />} />
-          <Route path="/shipping-policy" element={<LegalPage />} /> 
-          <Route path="/accessibility" element={<AccessibilityPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/cancellation-policy" element={<CancellationPage />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<HomePage purchaseBoxRef={purchaseBoxRef} />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:id" element={<BlogPostDetail />} />
+            <Route path="/thanks" element={<SuccessPage />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} /> {/* ◄ הנתיב החדש והייעודי להזמנות מוצלחות! */}
+            <Route path="/legal" element={<LegalPage />} />
+            <Route path="/shipping-policy" element={<LegalPage />} />
+            <Route path="/accessibility" element={<AccessibilityPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/cancellation-policy" element={<CancellationPage />} />
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>

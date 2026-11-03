@@ -1,11 +1,20 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Instagram, Facebook } from 'lucide-react'; // ייבוא אייקונים מעוצבים
+import { useSEO } from './useSEO';
 
 const SuccessPage = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const isOrder = params.get('type') === 'order'; // בדיקה האם הגענו מרכישה או מצור קשר
+
+  // דף תודה טרנזקציוני - לא אמור להופיע בתוצאות חיפוש (אין בו תוכן ייחודי לאינדקס)
+  useSEO({
+    title: 'תודה',
+    description: 'תודה שפנית ל-CleanFry.',
+    path: '/thanks',
+    noindex: true
+  });
 
   return (
     <div className="bg-white min-h-screen py-16 px-4" dir="rtl">
@@ -14,10 +23,13 @@ const SuccessPage = () => {
         {/* לוגו בראש העמוד */}
         <div className="mb-12">
           <Link to="/">
-            <img 
-              src="/logo.png" 
-              alt="CleanFry Logo" 
-              className="h-24 w-auto object-contain cursor-pointer transition-opacity hover:opacity-80" 
+            <img
+              src="/logo.png"
+              alt="CleanFry Logo"
+              width={2784}
+              height={1536}
+              loading="lazy"
+              className="h-24 w-auto object-contain cursor-pointer transition-opacity hover:opacity-80"
             />
           </Link>
         </div>
