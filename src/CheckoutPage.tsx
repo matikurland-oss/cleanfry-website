@@ -12,8 +12,15 @@ import {
   MapPin
 } from 'lucide-react';
 import { isValidIsraeliPhone } from './checkoutValidation';
+import { useSEO } from './useSEO';
 
 const CheckoutPage = () => {
+  useSEO({
+    title: 'תשלום מאובטח',
+    description: 'השלמת הזמנה מאובטחת לאבקת CleanFry למיצוק שמן בישול.',
+    path: '/checkout'
+  });
+
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
   const paymentFailedRef = useRef<HTMLDivElement>(null);

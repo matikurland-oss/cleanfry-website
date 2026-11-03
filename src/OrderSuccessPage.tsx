@@ -1,8 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ShoppingBag, MapPin, Truck, Instagram, Facebook } from 'lucide-react';
+import { useSEO } from './useSEO';
 
 const OrderSuccessPage = () => {
+  // דף תודה טרנזקציוני - לא אמור להופיע בתוצאות חיפוש (אין בו תוכן ייחודי לאינדקס)
+  useSEO({
+    title: 'ההזמנה התקבלה',
+    description: 'ההזמנה שלך ב-CleanFry התקבלה בהצלחה.',
+    path: '/order-success',
+    noindex: true
+  });
+
   // ננסה לבדוק אם שמרנו את שיטת המשלוח ב-sessionStorage כדי להציג מידע מותאם
   const savedMethod = sessionStorage.getItem('cleanfry_shipping_method') || 'delivery';
 

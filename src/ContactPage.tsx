@@ -118,6 +118,19 @@ const ContactPage = () => {
                          <p className="font-medium text-lg">info@cleanfry.co.il</p>
                       </div>
                    </div>
+                   <div className="flex items-center gap-4 justify-center md:justify-start">
+                      <div className="bg-slate-800 p-3 rounded-lg text-blue-400">
+                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                         </svg>
+                      </div>
+                      <div>
+                         <p className="text-slate-400 text-sm">נקודות איסוף עצמי (בתיאום אישי מראש)</p>
+                         <p className="font-medium text-lg">כפר סבא - בן גוריון 7</p>
+                         <p className="font-medium text-lg">תל אביב - משה וילנסקי 11</p>
+                      </div>
+                   </div>
                 </div>
              </div>
           </div>
