@@ -64,6 +64,11 @@ const CheckoutPage = () => {
     const qParam = parseInt(params.get('q') || '1');
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
     if (params.get('payment') === 'failed') setPaymentFailed(true);
+    const couponParam = params.get('coupon');
+    if (couponParam) {
+      setCoupon(couponParam);
+      handleApplyCoupon(couponParam);
+    }
   }, [location]);
 
   // גלילה אוטומטית להודעת "התשלום נכשל" ברגע שהיא מופיעה, כדי שהלקוח לא יפספס אותה
@@ -112,8 +117,8 @@ const CheckoutPage = () => {
   }, [showPayment]);
 
   // 6. קופונים — האימות מתבצע בשרת (api/validate-coupon), לא ברשימה חשופה בקוד הלקוח
-  const handleApplyCoupon = async () => {
-    const code = coupon.toUpperCase().trim();
+  const handleApplyCoupon = async (codeOverride?: string) => {
+    const code = (codeOverride ?? coupon).toUpperCase().trim();
     if (!code) return;
 
     setCouponError('');
@@ -389,7 +394,7 @@ const CheckoutPage = () => {
                 <div className="flex gap-2">
                   <input type="text" placeholder="קוד קופון" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(''); }} disabled={isCouponApplied || isValidatingCoupon} className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right" />
                   {!isCouponApplied ? (
-                    <button onClick={handleApplyCoupon} disabled={isValidatingCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition disabled:opacity-50">{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
+                    <button onClick={() => handleApplyCoupon()} disabled={isValidatingCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition disabled:opacity-50">{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
                   ) : (
                     <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1"><X size={18} /> ביטול</button>
                   )}

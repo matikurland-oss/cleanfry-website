@@ -35,6 +35,7 @@ import SuccessPage from './SuccessPage';
 import AccessibilityPage from './AccessibilityPage';
 import OrderSuccessPage from './OrderSuccessPage'; // ◄ ייבוא דף התודה החדש של ההזמנות!
 import CookieConsent from './CookieConsent';
+import PromoPopup from './PromoPopup';
 import { getCookieConsent, setCookieConsent, subscribeCookieConsent } from './cookieConsentStore';
 
 // --- רכיב עזר לגלילה לראש הדף במעבר בין נתיבים ---
@@ -536,6 +537,7 @@ export default function App() {
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">
       <ScrollToTop />
       <CookieConsent />
+      <PromoPopup />
       <div className="bg-brand-yellow py-2 px-4 text-center sticky top-0 z-50 text-sm font-bold">משלוח חינם בקנייה מעל 199 ש״ח!</div>
       <Navbar onPurchaseClick={scrollToPurchase} />
       <main className="flex-grow">
