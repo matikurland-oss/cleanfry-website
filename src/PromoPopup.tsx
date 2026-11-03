@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { isPromoDismissed, dismissPromo, subscribePromoDismissed } from './promoPopupStore';
 
 // תאריך סיום המבצע - חייב להישאר מסונכרן עם expiresAt של קופון NOV26 ב-Vercel Edge Config,
 // כדי שהפופאפ לא יפרסם קוד שכבר לא בתוקף.
 const CAMPAIGN_END = new Date('2026-11-30T23:59:59+02:00');
 
+// בכוונה בלי שמירה ב-localStorage: הפופאפ צריך להופיע בכל כניסה/טעינה מחדש של האתר,
+// לא רק בפעם הראשונה. סגירה מונעת הישנות רק בתוך אותה טעינת עמוד (session-state בזיכרון).
 const PromoPopup = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(() => isPromoDismissed());
+  const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
-
-  useEffect(() => subscribePromoDismissed(setDismissed), []);
 
   useEffect(() => {
     if (dismissed || new Date() > CAMPAIGN_END) return;
@@ -23,12 +22,12 @@ const PromoPopup = () => {
 
   const handleClose = () => {
     setVisible(false);
-    dismissPromo();
+    setDismissed(true);
   };
 
   const handleClaim = () => {
     setVisible(false);
-    dismissPromo();
+    setDismissed(true);
     navigate('/checkout?q=1&coupon=NOV26');
   };
 
