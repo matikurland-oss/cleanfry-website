@@ -62,9 +62,9 @@ const PromoPopup = () => {
           />
         </div>
 
-        <p className="text-sm font-bold text-blue-600 mb-2">3 ימים בלבד • בשיתוף Shopping IL</p>
-        <h2 className="text-2xl font-black text-slate-800 mb-3">18% הנחה — בלי מע"מ — על כל ההזמנה!</h2>
-        <p className="text-sm text-slate-500 mb-5">לכבוד שיתוף הפעולה עם Shopping IL - הקוד כבר מופעל אוטומטית, רק ללחוץ וליהנות</p>
+        <p className="text-sm font-bold text-blue-600 mb-2">3 ימים בלבד בשיתוף Shopping IL</p>
+        <h2 className="text-2xl font-black text-slate-800 mb-3">18% הנחה בלי מע"מ על כל ההזמנה!</h2>
+        <p className="text-sm text-slate-500 mb-5">לכבוד השיתוף עם Shopping IL הקוד כבר מופעל אוטומטית, רק ללחוץ וליהנות</p>
 
         <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-3 mb-6">
           <span className="font-black text-xl tracking-widest text-slate-800">NOV26</span>
