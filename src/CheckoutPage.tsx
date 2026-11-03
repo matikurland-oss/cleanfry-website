@@ -12,6 +12,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { isValidIsraeliPhone } from './checkoutValidation';
+import { isShoppingIlPromoActive } from './shoppingIlPromo';
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -417,7 +418,9 @@ const CheckoutPage = () => {
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-3 text-[10px] font-bold">
-                <img src="/shopping-il-badge.svg" alt="Shopping IL by Google" width={36} height={36} loading="lazy" />
+                {isShoppingIlPromoActive() && (
+                  <img src="/shopping-il-badge.svg" alt="Shopping IL by Google" width={36} height={36} loading="lazy" />
+                )}
                 <div className="flex items-center gap-2 opacity-40 grayscale">
                   <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
                 </div>

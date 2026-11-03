@@ -4,6 +4,7 @@
  */
 
 import CheckoutPage from './CheckoutPage';
+import { isShoppingIlPromoActive } from './shoppingIlPromo';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingCart, 
@@ -92,10 +93,19 @@ const Navbar = ({ onPurchaseClick }: { onPurchaseClick: () => void }) => {
     <nav className="bg-white border-b border-slate-100 sticky top-8 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
-          <div className="flex-shrink-0 flex items-center cursor-pointer">
+          <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
             <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
               <img src="/logo.png" alt="CleanFry Logo" className="h-12 w-auto object-contain" />
             </Link>
+            {isShoppingIlPromoActive() && (
+              <img
+                src="/shopping-il-badge.svg"
+                alt="Shopping IL by Google"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-md"
+              />
+            )}
           </div>
           <div className="hidden md:flex gap-8">
             {navLinks.map((link) => (
@@ -260,16 +270,18 @@ const Footer = () => (
               <MessageCircle className="w-5 h-5" />
             </a>
           </div>
-          <div className="flex justify-end">
-            <img
-              src="/shopping-il-badge.svg"
-              alt="Shopping IL by Google"
-              width={48}
-              height={48}
-              loading="lazy"
-              className="h-12 w-12 rounded-lg"
-            />
-          </div>
+          {isShoppingIlPromoActive() && (
+            <div className="flex justify-end">
+              <img
+                src="/shopping-il-badge.svg"
+                alt="Shopping IL by Google"
+                width={48}
+                height={48}
+                loading="lazy"
+                className="h-12 w-12 rounded-lg"
+              />
+            </div>
+          )}
         </div>
         <div>
           <h4 className="text-lg font-bold mb-6">ניווט מהיר</h4>

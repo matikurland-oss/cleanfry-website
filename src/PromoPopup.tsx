@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { isPromoDismissed, dismissPromo, subscribePromoDismissed } from './promoPopupStore';
-
-// תאריך סיום המבצע - חייב להישאר מסונכרן עם expiresAt של קופון NOV26 ב-Vercel Edge Config,
-// כדי שהפופאפ לא יפרסם קוד שכבר לא בתוקף.
-const CAMPAIGN_END = new Date('2026-11-30T23:59:59+02:00');
+import { SHOPPING_IL_PROMO_END } from './shoppingIlPromo';
 
 const PromoPopup = () => {
   const location = useLocation();
@@ -16,7 +13,7 @@ const PromoPopup = () => {
   useEffect(() => subscribePromoDismissed(setDismissed), []);
 
   useEffect(() => {
-    if (dismissed || new Date() > CAMPAIGN_END) return;
+    if (dismissed || new Date() > SHOPPING_IL_PROMO_END) return;
     const timer = setTimeout(() => setVisible(true), 1500);
     return () => clearTimeout(timer);
   }, [dismissed]);
@@ -32,7 +29,7 @@ const PromoPopup = () => {
     navigate('/checkout?q=1&coupon=NOV26');
   };
 
-  if (dismissed || !visible || location.pathname.startsWith('/checkout') || new Date() > CAMPAIGN_END) {
+  if (dismissed || !visible || location.pathname.startsWith('/checkout') || new Date() > SHOPPING_IL_PROMO_END) {
     return null;
   }
 
@@ -54,9 +51,20 @@ const PromoPopup = () => {
           <X className="w-6 h-6" />
         </button>
 
-        <p className="text-sm font-bold text-blue-600 mb-2">מבצע חודש נובמבר</p>
-        <h2 className="text-2xl font-black text-slate-800 mb-3">15% הנחה על כל ההזמנה!</h2>
-        <p className="text-sm text-slate-500 mb-5">הקוד כבר מופעל אוטומטית - רק ללחוץ וליהנות מההנחה</p>
+        <div className="flex items-center justify-center mb-4">
+          <img
+            src="/shopping-il-badge.svg"
+            alt="Shopping IL by Google"
+            width={72}
+            height={72}
+            loading="lazy"
+            className="h-[72px] w-[72px] rounded-xl"
+          />
+        </div>
+
+        <p className="text-sm font-bold text-blue-600 mb-2">3 ימים בלבד • בשיתוף Shopping IL</p>
+        <h2 className="text-2xl font-black text-slate-800 mb-3">18% הנחה — בלי מע"מ — על כל ההזמנה!</h2>
+        <p className="text-sm text-slate-500 mb-5">לכבוד שיתוף הפעולה עם Shopping IL - הקוד כבר מופעל אוטומטית, רק ללחוץ וליהנות</p>
 
         <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-3 mb-6">
           <span className="font-black text-xl tracking-widest text-slate-800">NOV26</span>
@@ -68,17 +76,6 @@ const PromoPopup = () => {
         >
           לקטיפת המבצע
         </button>
-
-        <div className="mt-5 flex items-center justify-center">
-          <img
-            src="/shopping-il-badge.svg"
-            alt="Shopping IL by Google"
-            width={64}
-            height={64}
-            loading="lazy"
-            className="h-16 w-16 rounded-xl"
-          />
-        </div>
       </div>
     </div>
   );
