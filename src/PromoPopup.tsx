@@ -73,10 +73,10 @@ const PromoPopup = () => {
           <img
             src="/shopping-il-badge.svg"
             alt="Shopping IL by Google"
-            width={32}
-            height={32}
+            width={64}
+            height={64}
             loading="lazy"
-            className="h-8 w-8 rounded-md"
+            className="h-16 w-16 rounded-xl"
           />
         </div>
       </div>
