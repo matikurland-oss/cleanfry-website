@@ -1,6 +1,6 @@
-// ניהול מצב "נסגר" של פופאפ מבצע NOV26: שמירה ב-localStorage (מפתח ייחודי למבצע הזה, כדי
+// ניהול מצב "נסגר" של פופאפ המבצע: שמירה ב-localStorage (מפתח ייחודי למבצע הזה, כדי
 // שמבצע עתידי אחר לא יידחק בטעות ע"י סגירת המבצע הנוכחי), בדיוק כמו cookieConsentStore.ts.
-const STORAGE_KEY = 'cleanfry_promo_NOV26_dismissed';
+const STORAGE_KEY = 'cleanfry_promo_shoppingil18_dismissed';
 type Listener = (dismissed: boolean) => void;
 const listeners = new Set<Listener>();
 
