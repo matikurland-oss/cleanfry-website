@@ -55,7 +55,7 @@ const PromoPopup = () => {
         </button>
 
         <p className="text-sm font-bold text-blue-600 mb-2">מבצע חודש נובמבר</p>
-        <h2 className="text-2xl font-black text-slate-800 mb-3">20% הנחה על כל ההזמנה!</h2>
+        <h2 className="text-2xl font-black text-slate-800 mb-3">15% הנחה על כל ההזמנה!</h2>
         <p className="text-sm text-slate-500 mb-5">הקוד כבר מופעל אוטומטית - רק ללחוץ וליהנות מההנחה</p>
 
         <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-3 mb-6">
