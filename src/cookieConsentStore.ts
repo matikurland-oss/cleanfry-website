@@ -65,7 +65,7 @@ export function loadMailerLiteTracking(): void {
   window.ml('account', '2287697');
 }
 
-const GA_MEASUREMENT_ID = 'G-HPD688JDGV';
+const GA_MEASUREMENT_ID = 'G-6X5ZNCQQJ2';
 let googleAnalyticsLoaded = false;
 
 export function loadGoogleAnalytics(): void {
