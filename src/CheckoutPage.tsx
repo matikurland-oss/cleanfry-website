@@ -415,8 +415,8 @@ const CheckoutPage = () => {
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
                 <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
                 {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
+                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
                 <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{totalPrice}</span></div>
               </div>
 
