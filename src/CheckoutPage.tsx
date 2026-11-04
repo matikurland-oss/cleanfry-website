@@ -53,14 +53,13 @@ const CheckoutPage = () => {
   // ההנחה נגזרת מאחוז הקופון בכל רינדור, כך שהיא תמיד מעודכנת גם אם הלקוח שינה כמות אחרי הפעלת הקופון.
   // אחוז ההנחה מגיע מאימות בצד השרת (api/validate-coupon) ולא מרשימה בקוד הלקוח.
   // ההנחה מחושבת על מחיר המוצרים בלבד (subtotal) — המשלוח מתווסף במלואו אחרי ההנחה.
-  // סף המשלוח החינם נבדק מול הסכום בפועל אחרי הנחה (לא מול ה-subtotal המקורי) - אחרת קופון
-  // יכול "לדלג" מעל הסף גם כשהסכום ששולם בפועל נמוך ממנו.
+  // סף המשלוח החינם נבדק מול ה-subtotal (מחיר המוצרים הרגיל, לפני קופון) - קופון הנחה לא אמור
+  // "לשלול" משלוח חינם מהזמנה שכבר עוברת את הסף במחיר הרגיל שלה.
   const subtotal = UNIT_PRICE * quantity;
-  const discount = isCouponApplied ? Math.round(subtotal * discountPercent) : 0;
-  const amountAfterDiscount = subtotal - discount;
-  const isFreeShipping = amountAfterDiscount >= FREE_SHIPPING_THRESHOLD;
+  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  const totalPrice = Math.round(amountAfterDiscount + currentShipping);
+  const discount = isCouponApplied ? Math.round(subtotal * discountPercent) : 0;
+  const totalPrice = Math.round(subtotal - discount + currentShipping);
 
   // 4. זיהוי כמות מה-URL + חזרה מתשלום שנכשל
   useEffect(() => {
@@ -390,7 +389,7 @@ const CheckoutPage = () => {
 
               {shippingMethod === 'delivery' && !isFreeShipping && (
                 <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
-                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - amountAfterDiscount} למשלוח חינם!</p>
+                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - subtotal} למשלוח חינם!</p>
                 </div>
               )}
 
