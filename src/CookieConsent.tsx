@@ -5,7 +5,6 @@ import {
   setCookieConsent,
   subscribeCookieConsent,
   loadMailerLiteTracking,
-  loadGoogleAnalytics,
   type CookieConsentChoice,
 } from './cookieConsentStore';
 
@@ -15,10 +14,7 @@ const CookieConsent = () => {
   useEffect(() => subscribeCookieConsent(setChoice), []);
 
   useEffect(() => {
-    if (choice === 'accepted') {
-      loadMailerLiteTracking();
-      loadGoogleAnalytics();
-    }
+    if (choice === 'accepted') loadMailerLiteTracking();
   }, [choice]);
 
   if (choice !== null) return null;

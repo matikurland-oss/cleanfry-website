@@ -34,12 +34,9 @@ export function subscribeCookieConsent(listener: Listener): () => void {
 }
 
 type MlFn = { (...args: unknown[]): void; q?: unknown[][] };
-type GtagFn = (...args: unknown[]) => void;
 declare global {
   interface Window {
     ml?: MlFn;
-    dataLayer?: unknown[];
-    gtag?: GtagFn;
   }
 }
 
@@ -63,24 +60,4 @@ export function loadMailerLiteTracking(): void {
   const firstScript = document.getElementsByTagName('script')[0];
   firstScript?.parentNode?.insertBefore(script, firstScript);
   window.ml('account', '2287697');
-}
-
-const GA_MEASUREMENT_ID = 'G-6X5ZNCQQJ2';
-let googleAnalyticsLoaded = false;
-
-export function loadGoogleAnalytics(): void {
-  if (googleAnalyticsLoaded || document.getElementById('ga4-tracking')) return;
-  googleAnalyticsLoaded = true;
-
-  window.dataLayer = window.dataLayer || [];
-  const gtag: GtagFn = (...args: unknown[]) => { window.dataLayer!.push(args); };
-  window.gtag = gtag;
-  gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID);
-
-  const script = document.createElement('script');
-  script.id = 'ga4-tracking';
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
 }
