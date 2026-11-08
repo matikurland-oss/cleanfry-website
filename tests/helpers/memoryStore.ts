@@ -84,7 +84,8 @@ export class MemoryStore implements Store {
       duplicate_payment: false,
       confirmation_email_sent_at: null,
       confirmation_email_attempts: 0,
-      confirmation_email_last_error: null
+      confirmation_email_last_error: null,
+      unverified_notice_sent_at: null
     };
     this.orders.push(row);
     return { ...row };
@@ -129,6 +130,13 @@ export class MemoryStore implements Store {
     order.confirmation_email_attempts++;
     order.confirmation_email_last_error = error;
     if (!error) order.confirmation_email_sent_at = this.now().toISOString();
+  }
+
+  async claimUnverifiedNotice(orderId: string) {
+    const order = this.orders.find((o) => o.id === orderId)!;
+    if (order.unverified_notice_sent_at) return false;
+    order.unverified_notice_sent_at = this.now().toISOString();
+    return true;
   }
 
   async listOrdersNeedingEmail(maxAttempts: number) {

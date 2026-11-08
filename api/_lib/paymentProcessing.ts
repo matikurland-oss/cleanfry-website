@@ -4,7 +4,7 @@
 // מזהה את ההזמנה בלבד; היא לא הוכחה לתשלום. הרישום עצמו אטומי ומונע כפילויות (record_payment).
 import { deps } from './deps.js';
 import { parseOrderReference } from './orderReference.js';
-import type { EventOutcome, OrderRow, PaymentEventInput } from './store.js';
+import type { EventOutcome, PaymentEventInput } from './store.js';
 
 // רק השדות האלה נשמרים מתוך ה-notify. פרטי כרטיס, ת"ז וכדומה לא נשמרים ולא נרשמים ביומנים.
 const SAFE_FIELDS = ['index', 'Response', 'sum', 'currency', 'ConfirmationCode', 'remarks', 'tranmode', 'cred_type', 'Tempref'];
@@ -47,16 +47,6 @@ export interface ProcessResult {
 export async function processPaymentEvent(eventId: string, event: PaymentEventInput): Promise<ProcessResult> {
   const { store, verifier, sendEmail } = deps();
 
-  // כשל בשליחת המייל לא מבטל את הרכישה; cron/reconcile ינסה שוב בלי ליצור רכישה נוספת
-  const sendEmailSafely = async (orderId: string, order: OrderRow, unverified: boolean) => {
-    try {
-      await sendEmail(order, { unverified });
-      await store.recordEmailAttempt(orderId, null);
-    } catch (error) {
-      await store.recordEmailAttempt(orderId, error instanceof Error ? error.message.slice(0, 200) : 'email failed');
-    }
-  };
-
   const finish = async (outcome: EventOutcome, orderId: string | null, error: string | null = null) => {
     await store.finishPaymentEvent(eventId, outcome, error, orderId);
     return { outcome, orderId };
@@ -73,11 +63,16 @@ export async function processPaymentEvent(eventId: string, event: PaymentEventIn
   const verification = await verifier.verify(event.provider_txn_index);
   if (verification.kind === 'unverifiable' || verification.kind === 'error') {
     await store.markAwaitingVerification(orderId);
-    // הרכישה לא נספרת בלי אימות, אבל בעל האתר עדיין צריך לדעת על ההזמנה כדי לטפל בה (כמו לפני
-    // המערכת הזו). נשלח פעם אחת לכל הזמנה, מסומן בבירור כ"לא אומת", ורק אם הסכום בהודעה תואם.
+    // רק כשאין בכלל מפתחות API (לא כשהאימות נכשל): הרכישה לא נספרת, אבל בעל האתר צריך לדעת על
+    // ההזמנה כדי לטפל בה, כמו לפני המערכת הזו. ה-notify לא מאומת, ולכן ההודעה מסומנת בבירור
+    // "לא אומת — בדקו בטרנזילה", נשלחת פעם אחת לכל הזמנה, ורק כשהסכום בהודעה תואם.
     const notifiedAgorot = Math.round(Number(event.sum_raw) * 100);
-    if (!order.confirmation_email_sent_at && notifiedAgorot === order.total_agorot) {
-      await sendEmailSafely(orderId, order, true);
+    if (verification.kind === 'unverifiable' && notifiedAgorot === order.total_agorot && (await store.claimUnverifiedNotice(orderId))) {
+      try {
+        await sendEmail(order, { unverified: true });
+      } catch {
+        // ההזמנה מופיעה בכל מקרה בדשבורד תחת "דורש תשומת לב"
+      }
     }
     return finish(verification.kind === 'unverifiable' ? 'unverified' : 'verification_failed', orderId, verification.reason);
   }
@@ -91,9 +86,15 @@ export async function processPaymentEvent(eventId: string, event: PaymentEventIn
 
   const result = await store.recordPayment(orderId, event.provider_txn_index, verification.amountAgorot, verification.currency);
 
-  // אם כבר נשלח מייל "ממתין לאימות" על ההזמנה, לא שולחים שוב
-  if (result.order_newly_paid && !order.confirmation_email_sent_at) {
-    await sendEmailSafely(orderId, (await store.getOrder(orderId)) ?? order, false);
+  if (result.order_newly_paid) {
+    // כשל בשליחת המייל לא מבטל את הרכישה; cron/reconcile ינסה שוב בלי ליצור רכישה נוספת
+    const paidOrder = (await store.getOrder(orderId)) ?? order;
+    try {
+      await sendEmail(paidOrder);
+      await store.recordEmailAttempt(orderId, null);
+    } catch (error) {
+      await store.recordEmailAttempt(orderId, error instanceof Error ? error.message.slice(0, 200) : 'email failed');
+    }
   }
 
   if (!result.payment_recorded) return finish('duplicate', orderId);

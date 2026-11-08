@@ -42,6 +42,7 @@ export interface OrderRow extends NewOrder {
   confirmation_email_sent_at: string | null;
   confirmation_email_attempts: number;
   confirmation_email_last_error: string | null;
+  unverified_notice_sent_at: string | null;
 }
 
 export interface PaymentEventInput {
@@ -121,6 +122,8 @@ export interface Store {
   markAwaitingVerification(orderId: string): Promise<void>;
   recordPayment(orderId: string, txnIndex: string, amountAgorot: number, currency: string): Promise<RecordPaymentResult>;
   recordEmailAttempt(orderId: string, error: string | null): Promise<void>;
+  /** מסמן שנשלחה לבעל האתר הודעת "ממתין לאימות". מחזיר false אם כבר נשלחה (נבדק אטומית) */
+  claimUnverifiedNotice(orderId: string): Promise<boolean>;
   listOrdersNeedingEmail(maxAttempts: number): Promise<OrderRow[]>;
   listAttentionOrders(): Promise<OrderRow[]>;
 
@@ -223,6 +226,11 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
         confirmation_email_last_error: error,
         ...(error ? {} : { confirmation_email_sent_at: new Date().toISOString() })
       }).eq('id', orderId));
+    },
+    async claimUnverifiedNotice(orderId) {
+      const rows = check(await db().from('orders').update({ unverified_notice_sent_at: new Date().toISOString() })
+        .eq('id', orderId).is('unverified_notice_sent_at', null).select('id'));
+      return (rows as unknown[]).length > 0;
     },
     async listOrdersNeedingEmail(maxAttempts) {
       const rows = check(await db().from('orders').select('*')
