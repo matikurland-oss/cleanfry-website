@@ -13,6 +13,12 @@ import {
 } from 'lucide-react';
 import { isValidIsraeliPhone } from './checkoutValidation';
 import { isShoppingIlPromoActive } from './shoppingIlPromo';
+import {
+  FREE_SHIPPING_THRESHOLD_AGOROT,
+  SHIPPING_AGOROT,
+  UNIT_PRICE_AGOROT,
+  priceOrder
+} from '../shared/pricing';
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -41,26 +47,25 @@ const CheckoutPage = () => {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
-  const [orderToken, setOrderToken] = useState('');
+  const [priceNotice, setPriceNotice] = useState('');
+  const [orderExpired, setOrderExpired] = useState(false);
+  // שדות הטופס לטרנזילה — מגיעים מהשרת (api/create-order), שקבע את הסכום המחייב בעצמו
+  const [payment, setPayment] = useState<{ sum: number; jsonPurchaseData: string; remarks: string; expiresAt: string } | null>(null);
 
   // 2. הגדרות מחיר
-  const UNIT_PRICE = 59;
-  const SHIPPING_COST = 35;
-  const FREE_SHIPPING_THRESHOLD = 199;
-  const FORMSPREE_URL = "https://formspree.io/f/xvzwnrla";
+  const UNIT_PRICE = UNIT_PRICE_AGOROT / 100;
+  const SHIPPING_COST = SHIPPING_AGOROT / 100;
+  const FREE_SHIPPING_THRESHOLD = FREE_SHIPPING_THRESHOLD_AGOROT / 100;
 
-  // 3. חישובי סכומים
-  // ההנחה נגזרת מאחוז הקופון בכל רינדור, כך שהיא תמיד מעודכנת גם אם הלקוח שינה כמות אחרי הפעלת הקופון.
-  // אחוז ההנחה מגיע מאימות בצד השרת (api/validate-coupon) ולא מרשימה בקוד הלקוח.
-  // ההנחה מחושבת על מחיר המוצרים בלבד (subtotal) — המשלוח מתווסף במלואו אחרי ההנחה.
-  // סף המשלוח החינם נבדק מול הסכום הכולל בפועל אחרי הנחה (לא מול ה-subtotal לפני קופון) - זה
-  // הסכום שהלקוח למעשה משלם עבור המוצרים, וזה מה שצריך לעבור את ה-199 כדי לזכות במשלוח חינם.
-  const subtotal = UNIT_PRICE * quantity;
-  const discount = isCouponApplied ? Math.round(subtotal * discountPercent) : 0;
-  const amountAfterDiscount = subtotal - discount;
-  const isFreeShipping = amountAfterDiscount >= FREE_SHIPPING_THRESHOLD;
-  const currentShipping = shippingMethod === 'pickup' ? 0 : (isFreeShipping ? 0 : SHIPPING_COST);
-  const totalPrice = Math.round(amountAfterDiscount + currentShipping);
+  // 3. חישובי סכומים — לתצוגה בלבד. אותה פונקציה (shared/pricing) רצה בשרת וקובעת את הסכום המחייב;
+  // השרת לא מקבל מהדפדפן סכום, אחוז הנחה או עלות משלוח. אחוז ההנחה כאן (18 = 18%) מגיע מ-validate-coupon.
+  const price = priceOrder({ quantity, deliveryMethod: shippingMethod, discountPercent: isCouponApplied ? discountPercent : 0 });
+  const subtotal = price.subtotalAgorot / 100;
+  const discount = price.discountAgorot / 100;
+  const amountAfterDiscount = price.productsAfterDiscountAgorot / 100;
+  const isFreeShipping = price.isFreeShipping;
+  const currentShipping = price.shippingAgorot / 100;
+  const totalPrice = price.totalAgorot / 100;
 
   // 4. זיהוי כמות מה-URL + חזרה מתשלום שנכשל
   useEffect(() => {
@@ -84,10 +89,26 @@ const CheckoutPage = () => {
 
   // 5. שליחת הטופס ל-iframe של טרנזילה ברגע פתיחת אזור התשלום
   useEffect(() => {
-    if (showPayment && formRef.current) {
+    if (showPayment && payment && formRef.current) {
       formRef.current.submit();
     }
   }, [showPayment]);
+
+  // כל שינוי שסוגר את אזור התשלום מבטל את ההזמנה שהוכנה; הלחיצה הבאה יוצרת הזמנה חדשה במחיר עדכני
+  useEffect(() => {
+    if (!showPayment) setPayment(null);
+  }, [showPayment]);
+
+  // המחיר נעול בשרת ל-15 דקות. אחרי זה מסתירים את טופס התשלום ומבקשים ליצור הזמנה חדשה, כדי
+  // שהקופון והמחיר ייבדקו שוב. (זו נוחות בלבד — השרת מסמן תשלום שהגיע באיחור לבדיקה ידנית.)
+  useEffect(() => {
+    if (!payment) return;
+    const timeout = setTimeout(() => {
+      setShowPayment(false);
+      setOrderExpired(true);
+    }, Math.max(0, new Date(payment.expiresAt).getTime() - Date.now()));
+    return () => clearTimeout(timeout);
+  }, [payment]);
 
   // 5ב. זיהוי תוצאת התשלום מתוך ה-iframe.
   // הערה: success_url_address/fail_url_address שאנחנו שולחים לא תמיד גוברים על כתובת ברירת המחדל
@@ -136,8 +157,10 @@ const CheckoutPage = () => {
       const result = await response.json();
 
       if (result.valid) {
+        setCoupon(result.code);
         setDiscountPercent(result.discountPercent);
         setIsCouponApplied(true);
+        setPriceNotice('');
         setShowPayment(false);
       } else {
         setCouponError(result.message || 'קוד קופון לא תקין');
@@ -175,35 +198,53 @@ const CheckoutPage = () => {
       return;
     }
 
-    const pickupText = pickupLocation === 'kfar-saba' ? 'איסוף עצמי - כפר סבא (בן גוריון 7)' : 'איסוף עצמי - תל אביב (משה וילנסקי 11)';
-    const detailsText = shippingMethod === 'delivery'
-      ? `${city}, ${address}${apartment.trim() ? `, דירה ${apartment}` : ''} (כמות: ${quantity})`
-      : `${pickupText} (כמות: ${quantity})`;
-
     sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
 
-    // חותמים (בשרת) את הסכום הצפוי ופרטי ההזמנה לפני המעבר לתשלום. הטוקן החתום נשלח לטרנזילה
-    // בשדה remarks וחוזר דרך notify_url_address — כך מייל אישור ההזמנה נשלח רק אחרי אימות אמיתי
-    // מול טרנזילה שהסכום שבאמת חויב תואם, ולא לפי מה שהדפדפן של הלקוח "טוען" שקרה.
+    // יוצרים הזמנה ממתינה בשרת. השרת מחשב בעצמו את המחיר ובודק שוב את הקופון; הסכום שמוצג כאן
+    // נשלח רק כדי לזהות שינוי. אם המחיר השתנה (למשל הקופון הושהה) — מציגים את הסכום החדש ולא
+    // ממשיכים לתשלום עד לחיצה נוספת.
     setIsPreparingPayment(true);
+    setPriceNotice('');
+    setOrderExpired(false);
     try {
-      const response = await fetch('/api/sign-order', {
+      const response = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          total: totalPrice,
+          quantity,
+          deliveryMethod: shippingMethod,
+          pickupLocation: shippingMethod === 'pickup' ? pickupLocation : '',
+          couponCode: isCouponApplied ? coupon.toUpperCase().trim() : '',
+          displayedTotal: totalPrice,
           name: fullName,
           phone,
           email,
           businessId: businessId.trim(),
-          method: shippingMethod === 'delivery' ? 'משלוח' : 'איסוף',
-          details: detailsText,
-          coupon: isCouponApplied ? coupon.toUpperCase().trim() : ''
+          city,
+          address,
+          apartment,
+          zip
         })
       });
       const result = await response.json();
-      if (!result.token) throw new Error('missing token');
-      setOrderToken(result.token);
+
+      if (response.status === 409) {
+        if (!result.pricing?.coupon) {
+          setCoupon('');
+          setDiscountPercent(0);
+          setIsCouponApplied(false);
+        } else {
+          setDiscountPercent(result.pricing.coupon.discountPercent);
+        }
+        setPriceNotice(result.message);
+        return;
+      }
+      if (!response.ok || !result.payment) {
+        alert(result.message || 'אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
+        return;
+      }
+
+      setPayment({ ...result.payment, expiresAt: result.expiresAt });
       setShowPayment(true);
     } catch (error) {
       alert('אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
@@ -216,45 +257,8 @@ const CheckoutPage = () => {
   const tranzilaCity = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'כפר סבא' : 'תל אביב') : city;
   const tranzilaAddress = shippingMethod === 'pickup' ? (pickupLocation === 'kfar-saba' ? 'בן גוריון 7' : 'משה וילנסקי 11') : (apartment.trim() ? `${address}, דירה ${apartment}` : address);
 
-  // בניית פירוט החשבונית לפי המבנה שאישרה טרנזילה בפועל בפעם האחרונה (תבנית שטוחה של
-  // product_name/product_quantity/product_price - בלי עטיפת items, בלי price_type/vat_percent
-  // לפריט, בלי zip). אין מע"מ בכלל: העסק עוסק פטור (ר' IMaam שהוסר בטופס למטה). גרסאות קודמות
-  // (items מקוננים עם price_type/vat_percent) קרסו/נפלו לשורה גנרית - זו התבנית שאושרה בפועל.
-  //
-  // חשוב: טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(product_price × product_quantity) של הפריטים.
-  // לכן מחירי הפריטים חייבים להיות כבר נטו אחרי הנחת קופון (זו הייתה הסיבה לשורה הגנרית בקבלה
-  // #40017: הפריטים נשלחו במחיר המלא בזמן שה-sum כבר כלל את ההנחה).
-  const roundToAgorot = (value: number) => Math.round(value * 100) / 100;
-
-  // שורת המוצר תמיד נושאת את הכמות האמיתית (product_quantity: quantity), כדי שהחשבונית תשקף
-  // כמה יחידות באמת נקנו. מחיר היחידה מחושב מהסכום (המוזל, אם יש קופון) חלקי הכמות, מעוגל
-  // לאגורה - וכל שארית עיגול (למשל 0.5/3 → 0.17 × 3 = 0.51 ≠ 0.5) נספגת לתוך שורת המשלוח,
-  // כדי ש-Σ(product_price × product_quantity) הכולל עדיין יתאים בדיוק ל-sum שטרנזילה דורשת.
-  const productLineTotal = isCouponApplied && discount > 0 ? subtotal - discount : null;
-  const productUnitPriceRaw = productLineTotal !== null ? productLineTotal / quantity : UNIT_PRICE;
-  const productUnitPrice = roundToAgorot(productUnitPriceRaw);
-  const roundingRemainder = productLineTotal !== null ? roundToAgorot(productLineTotal - productUnitPrice * quantity) : 0;
-
-  // קוד הקופון מוצג בשם הפריט - אין שדה נפרד להנחה/קופון במבנה השטוח הזה של טרנזילה.
-  const couponSuffix = isCouponApplied && coupon.trim() ? ` (קופון: ${coupon.toUpperCase().trim()})` : '';
-  const productName = `מארז CleanFry${couponSuffix}`;
-  const shippingUnitPrice = currentShipping + roundingRemainder;
-
-  const jsonItems = [
-    { product_name: productName, product_quantity: quantity, product_price: productUnitPrice },
-    {
-      product_name: shippingMethod === 'pickup'
-        ? (pickupLocation === 'kfar-saba' ? "איסוף עצמי - סניף כפר סבא" : "איסוף עצמי - סניף תל אביב")
-        : "דמי משלוח עד הבית",
-      product_quantity: 1,
-      product_price: shippingUnitPrice
-    }
-  ];
-
-  // לפי תמיכת טרנזילה במפורש (גם בהנחיה המילולית וגם בדוגמת ה-HTML שסיפקו, שם הערך כבר מקודד
-  // מראש): json_encode ואז rawurlencode/encodeURIComponent - קידוד ידני, לא הסתמכות על קידוד
-  // הדפדפן. זה הפוך מהנחה קודמת בקוד הזה שהניחה שקידוד ידני יגרום לקידוד כפול.
-  const encodedJsonPurchaseData = encodeURIComponent(JSON.stringify(jsonItems));
+  // פירוט החשבונית (json_purchase_data) נבנה בשרת — ראו buildInvoiceLines ב-shared/pricing.ts.
+  // כבר מקודד ב-encodeURIComponent לפי ההנחיה של טרנזילה.
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
@@ -451,6 +455,20 @@ const CheckoutPage = () => {
                 </div>
               )}
 
+              {priceNotice && !showPayment && (
+                <div role="alert" className="mb-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-amber-900 text-sm font-bold flex items-start gap-2 animate-fadeIn">
+                  <span className="text-base mt-0.5">⚠️</span>
+                  <p>{priceNotice}</p>
+                </div>
+              )}
+
+              {orderExpired && !showPayment && (
+                <div role="alert" className="mb-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-amber-900 text-sm font-bold flex items-start gap-2 animate-fadeIn">
+                  <span className="text-base mt-0.5">⏱️</span>
+                  <p>תוקף ההזמנה פג (15 דקות). לחצו שוב על "המשך לתשלום" כדי לרענן את המחיר.</p>
+                </div>
+              )}
+
               {!showPayment && (
                 <div>
                   <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
@@ -469,7 +487,7 @@ const CheckoutPage = () => {
                 className="hidden"
               >
                 <input type="hidden" name="supplier" value="cleanfry" />
-                <input type="hidden" name="sum" value={totalPrice} />
+                <input type="hidden" name="sum" value={payment?.sum ?? ''} />
                 <input type="hidden" name="currency" value="1" />
                 <input type="hidden" name="cred_type" value="1" />
                 <input type="hidden" name="tranmode" value="A" />
@@ -486,8 +504,8 @@ const CheckoutPage = () => {
                 <input type="hidden" name="u71" value="1" />
                 <input type="hidden" name="inv_items" value="1" />
                 {/* אין IMaam בכוונה: העסק רשום כעוסק פטור, שלא גובה ולא מציג מע"מ בחשבונית */}
-                <input type="hidden" name="json_purchase_data" value={encodedJsonPurchaseData} />
-                <input type="hidden" name="remarks" value={orderToken} />
+                <input type="hidden" name="json_purchase_data" value={payment?.jsonPurchaseData ?? ''} />
+                <input type="hidden" name="remarks" value={payment?.remarks ?? ''} />
                 <input type="hidden" name="notify_url_address" value={`${window.location.origin}/api/tranzila-notify`} />
                 <input type="hidden" name="success_url_address" value={`${window.location.origin}/payment-success.html`} />
                 <input type="hidden" name="fail_url_address" value={`${window.location.origin}/payment-fail.html`} />

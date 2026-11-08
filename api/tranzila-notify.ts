@@ -1,110 +1,50 @@
-// פונקציית Serverless: זהו ה-notify_url_address שטרנזילה קוראת לו ישירות משרת לשרת (לא דרך
-// הדפדפן של הלקוח) מיד אחרי כל ניסיון עסקה. זהו קו ההגנה האמיתי מול תרמית "שינוי סכום ב-DevTools":
-// הלקוח יכול לשקר לדפדפן שלו, אבל לא לתקשורת הישירה בין השרתים של טרנזילה ושלנו.
+// פונקציית Serverless: ה-notify_url_address שטרנזילה קוראת לו משרת לשרת אחרי כל ניסיון עסקה.
 //
-// זרימה: לפני התשלום, sign-order.ts חותם (HMAC) את הסכום הצפוי ופרטי ההזמנה לתוך טוקן שנשלח
-// לטרנזילה בשדה remarks. טרנזילה מחזירה את remarks כמות שהוא בקריאת ה-notify. כאן מאמתים:
-// 1. החתימה תקפה (מוכיח שהטוקן לא זויף)
-// 2. הסכום שטרנזילה מדווחת שבאמת חויב תואם לסכום החתום בטוקן
-// 3. העסקה אכן אושרה (Response=000)
-// רק אם כל שלושת התנאים מתקיימים — נשלח מייל אישור הזמנה אמיתי ללקוח ולבעל האתר.
-import crypto from 'node:crypto';
+// זרימה:
+// 1. שומרים את האירוע (בלי פרטי כרטיס) במסד הנתונים. אם השמירה נכשלה — מחזירים 500 ולא "הצלחה",
+//    כדי שהאירוע לא ייבלע. מדיניות הניסיונות החוזרים של טרנזילה אינה מתועדת, ולכן אין להסתמך עליה.
+// 2. מאתרים את ההזמנה לפי ההפניה החתומה ב-remarks, ומאמתים את העסקה מול ה-API של טרנזילה
+//    (ה-notify עצמו לא חתום ע"י טרנזילה, ולכן לבדו אינו הוכחה).
+// 3. רושמים את התשלום באופן אטומי (record_payment) — notify כפול או מקביל נספר פעם אחת.
+// 4. שולחים את מייל האישור. כשל במייל לא מבטל את הרכישה.
+// אירוע שעיבודו נכשל באמצע נשאר במסד הנתונים ומעובד שוב ע"י api/cron/reconcile.
+import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http.js';
+import { deps } from './_lib/deps.js';
+import { processPaymentEvent, sanitizeNotify } from './_lib/paymentProcessing.js';
 
-interface VercelRequest {
-  method?: string;
-  body?: unknown;
-}
-interface VercelResponse {
-  status(code: number): VercelResponse;
-  json(body: unknown): void;
-}
-
-const SECRET = process.env.ORDER_SIGNING_SECRET || '';
-const FORMSPREE_URL = 'https://formspree.io/f/xvzwnrla';
-
-interface OrderPayload {
-  total: number;
-  name: string;
-  phone: string;
-  email: string;
-  businessId: string;
-  method: string;
-  details: string;
-  coupon: string;
-  ts: number;
-}
-
-function verifyToken(token: string): OrderPayload | null {
-  const [payloadB64, signature] = token.split('.');
-  if (!payloadB64 || !signature) return null;
-
-  const expectedSignature = crypto.createHmac('sha256', SECRET).update(payloadB64).digest('base64url');
-  const sigBuf = Buffer.from(signature);
-  const expectedBuf = Buffer.from(expectedSignature);
-  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8')) as OrderPayload;
-  } catch {
-    return null;
-  }
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // תמיד עונים 200 לטרנזילה (גם בכשלון אימות) כדי שלא ינסו לשלוח את ה-notify שוב ושוב
+export default async function handler(req: ApiRequest, res: ApiResponse) {
+  noStore(res);
   if (req.method !== 'POST') {
-    res.status(200).json({ ok: false, reason: 'method' });
-    return;
-  }
-  if (!SECRET) {
-    res.status(200).json({ ok: false, reason: 'server misconfigured' });
+    res.status(405).json({ ok: false });
     return;
   }
 
-  const body = (req.body ?? {}) as Record<string, unknown>;
+  const event = sanitizeNotify(bodyObject(req));
+  const { store } = deps();
 
-  const remarksRaw = body.remarks ?? body.Remarks;
-  const token = typeof remarksRaw === 'string' ? remarksRaw : '';
-  const payload = token ? verifyToken(token) : null;
-
-  if (!payload) {
-    res.status(200).json({ ok: false, reason: 'invalid or missing signature' });
-    return;
-  }
-
-  const responseCode = String(body.Response ?? body.response ?? body.processor_response_code ?? '');
-  const isApproved = responseCode === '000';
-
-  const chargedAmountRaw = body.sum ?? body.amount ?? body.Sum;
-  const chargedAmount = Number(chargedAmountRaw);
-  const amountsMatch = Number.isFinite(chargedAmount) && Math.abs(chargedAmount - payload.total) < 0.02;
-
-  if (!isApproved || !amountsMatch) {
-    res.status(200).json({ ok: false, reason: !isApproved ? 'not approved' : 'amount mismatch', expected: payload.total, charged: chargedAmountRaw });
+  let eventId: string;
+  try {
+    // הגבלה נדיבה (נפח אמיתי מטרנזילה = מספר ההזמנות שלנו), נגד הצפת טבלת האירועים
+    if (!(await store.hitRateLimit(rateLimitKey('notify', req), 60, 60))) {
+      res.status(429).json({ ok: false, reason: 'rate limited' });
+      return;
+    }
+    eventId = await store.insertPaymentEvent(event);
+  } catch {
+    res.status(500).json({ ok: false, reason: 'storage unavailable' });
     return;
   }
 
   try {
-    await fetch(FORMSPREE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        "נושא": "הזמנה חדשה מאתר CleanFry (מאומתת בשרת)",
-        "שם הלקוח": payload.name,
-        "טלפון": payload.phone,
-        "אימייל": payload.email,
-        "ח.פ / עוסק מורשה": payload.businessId || 'לא הוזן',
-        "שיטת קבלה": payload.method,
-        "פרטים": payload.details,
-        "קוד קופון שהופעל": payload.coupon || 'לא הוגדר קופון',
-        "סה\"כ שולם (מאומת מול טרנזילה)": `₪${payload.total}`
-      })
-    });
+    const result = await processPaymentEvent(eventId, event);
+    res.status(200).json({ ok: true, outcome: result.outcome });
   } catch (error) {
-    // גם אם שליחת המייל נכשלה, העסקה עצמה תקינה ומאומתת — לא מחזירים שגיאה לטרנזילה
+    // האירוע כבר נשמר; הניסיון החוזר יתבצע ב-cron/reconcile
+    try {
+      await store.failPaymentEvent(eventId, error instanceof Error ? error.message.slice(0, 200) : 'processing failed');
+    } catch {
+      // גם הרישום של הכשל נכשל — האירוע עדיין מסומן כלא-מעובד ויטופל בהמשך
+    }
+    res.status(200).json({ ok: true, outcome: 'queued_for_retry' });
   }
-
-  res.status(200).json({ ok: true });
 }

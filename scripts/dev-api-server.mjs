@@ -4,18 +4,19 @@
 // מקומיים מלאים, בלי לגעת ב-`vercel dev`.
 import http from 'node:http';
 
-const { default: validateCoupon } = await import('../api/validate-coupon.ts');
-const { default: signOrder } = await import('../api/sign-order.ts');
-const { default: tranzilaNotify } = await import('../api/tranzila-notify.ts');
-
 const routes = {
-  '/api/validate-coupon': validateCoupon,
-  '/api/sign-order': signOrder,
-  '/api/tranzila-notify': tranzilaNotify,
+  '/api/validate-coupon': (await import('../api/validate-coupon.ts')).default,
+  '/api/create-order': (await import('../api/create-order.ts')).default,
+  '/api/tranzila-notify': (await import('../api/tranzila-notify.ts')).default,
+  '/api/cron/reconcile': (await import('../api/cron/reconcile.ts')).default,
+  '/api/admin/coupons': (await import('../api/admin/coupons.ts')).default,
+  '/api/admin/report': (await import('../api/admin/report.ts')).default,
+  '/api/admin/payments': (await import('../api/admin/payments.ts')).default,
 };
 
 const server = http.createServer(async (req, res) => {
-  const handler = routes[req.url];
+  const url = new URL(req.url, 'http://localhost');
+  const handler = routes[url.pathname];
   if (!handler) {
     res.statusCode = 404;
     res.end('not found');
@@ -25,16 +26,22 @@ const server = http.createServer(async (req, res) => {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   const rawBody = Buffer.concat(chunks).toString('utf8');
-  let body;
-  try {
-    body = rawBody ? JSON.parse(rawBody) : {};
-  } catch {
-    body = {};
+  // כמו ב-Vercel: JSON או form-urlencoded (טרנזילה שולחת notify כטופס)
+  let body = {};
+  if ((req.headers['content-type'] || '').includes('application/x-www-form-urlencoded')) {
+    body = Object.fromEntries(new URLSearchParams(rawBody));
+  } else {
+    try {
+      body = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      body = {};
+    }
   }
 
   const vercelRes = {
     _status: 200,
     status(code) { this._status = code; return this; },
+    setHeader(name, value) { res.setHeader(name, value); },
     json(payload) {
       res.statusCode = this._status;
       res.setHeader('Content-Type', 'application/json');
@@ -42,7 +49,8 @@ const server = http.createServer(async (req, res) => {
     },
   };
 
-  await handler({ method: req.method, body }, vercelRes);
+  const headers = { ...req.headers, 'x-forwarded-for': req.headers['x-forwarded-for'] || req.socket.remoteAddress };
+  await handler({ method: req.method, body, query: Object.fromEntries(url.searchParams), headers }, vercelRes);
 });
 
 const PORT = 5210;
