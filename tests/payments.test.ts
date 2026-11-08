@@ -215,6 +215,22 @@ describe('tranzila-notify', () => {
     expect((await store.getOrder(real.order.id))!.payment_status).toBe('paid');
   });
 
+  it('a real second charge on an already-paid order is still recorded on retry and flagged', async () => {
+    const { order, remarks } = await placeOrder();
+    tranzilaTransactions.set('4001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
+    tranzilaTransactions.set('4002', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
+    await notify({ Response: '000', index: '4001', remarks });
+
+    store.failNext.recordPayment = 1;
+    await notify({ Response: '000', index: '4002', remarks });
+    expect(store.payments).toHaveLength(1);
+
+    await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
+    expect(store.payments).toHaveLength(2);
+    expect((await store.getOrder(order.id))!.duplicate_payment).toBe(true);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+  });
+
   it('rate limits the notify endpoint per IP', async () => {
     let last;
     for (let i = 0; i < 61; i++) last = await notify({ Response: '004', index: String(i), remarks: 'x' });
