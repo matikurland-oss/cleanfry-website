@@ -15,7 +15,9 @@ export async function requireAdmin(req: ApiRequest, res: ApiResponse): Promise<A
   try {
     user = await deps().getUserFromToken(match[1]);
   } catch {
-    user = null;
+    // תקלה בצד השרת (למשל הגדרות חסרות) — לא "לא מחובר", כדי שהממשק לא ינתק את המנהל
+    res.status(503).json({ error: 'השרת לא מוגדר או לא זמין כרגע. נסו שוב מאוחר יותר.' });
+    return null;
   }
   if (!user) {
     res.status(401).json({ error: 'נדרשת התחברות' });

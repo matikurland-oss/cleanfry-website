@@ -156,26 +156,28 @@ const toOrder = (row: OrderRow): OrderRow => ({
   discount_percent_snapshot: row.discount_percent_snapshot === null ? null : Number(row.discount_percent_snapshot)
 });
 
-export function createSupabaseStore(db: SupabaseClient = getServiceClient()): Store {
+// הלקוח נוצר רק בשימוש הראשון, כך שחוסר בהגדרות מתגלה בתוך ה-try של הפונקציה (503) ולא מפיל אותה
+export function createSupabaseStore(client?: SupabaseClient): Store {
+  const db = () => client ?? getServiceClient();
   return {
     async hitRateLimit(key, max, windowSeconds) {
-      return check(await db.rpc('hit_rate_limit', { p_key: key, p_max: max, p_window_seconds: windowSeconds })) as boolean;
+      return check(await db().rpc('hit_rate_limit', { p_key: key, p_max: max, p_window_seconds: windowSeconds })) as boolean;
     },
 
     async getCouponByCode(code) {
-      const row = check(await db.from('coupons').select('*').eq('code', code).maybeSingle());
+      const row = check(await db().from('coupons').select('*').eq('code', code).maybeSingle());
       return row ? toCoupon(row as CouponRow) : null;
     },
     async getCoupon(id) {
-      const row = check(await db.from('coupons').select('*').eq('id', id).maybeSingle());
+      const row = check(await db().from('coupons').select('*').eq('id', id).maybeSingle());
       return row ? toCoupon(row as CouponRow) : null;
     },
     async listCoupons() {
-      const rows = check(await db.from('coupons').select('*').order('created_at', { ascending: false }));
+      const rows = check(await db().from('coupons').select('*').order('created_at', { ascending: false }));
       return (rows as CouponRow[]).map(toCoupon);
     },
     async createCoupon(input, actor, action = 'create') {
-      const rows = check(await db.rpc('admin_create_coupon', {
+      const rows = check(await db().rpc('admin_create_coupon', {
         p_code: input.code,
         p_label: input.label,
         p_discount_percent: input.discount_percent,
@@ -189,47 +191,47 @@ export function createSupabaseStore(db: SupabaseClient = getServiceClient()): St
       return toCoupon((rows as CouponRow[])[0]);
     },
     async updateCoupon(id, patch, actor) {
-      const rows = check(await db.rpc('admin_update_coupon', {
+      const rows = check(await db().rpc('admin_update_coupon', {
         p_id: id, p_patch: patch, p_actor_id: actor.id, p_actor_email: actor.email
       }));
       return toCoupon((rows as CouponRow[])[0]);
     },
 
     async createOrder(order) {
-      return toOrder(check(await db.from('orders').insert(order).select('*').single()) as OrderRow);
+      return toOrder(check(await db().from('orders').insert(order).select('*').single()) as OrderRow);
     },
     async getOrder(id) {
-      const row = check(await db.from('orders').select('*').eq('id', id).maybeSingle());
+      const row = check(await db().from('orders').select('*').eq('id', id).maybeSingle());
       return row ? toOrder(row as OrderRow) : null;
     },
     async markAwaitingVerification(orderId) {
-      check(await db.from('orders').update({ payment_status: 'awaiting_verification' })
+      check(await db().from('orders').update({ payment_status: 'awaiting_verification' })
         .eq('id', orderId).eq('payment_status', 'pending'));
     },
     async recordPayment(orderId, txnIndex, amountAgorot, currency) {
-      const rows = check(await db.rpc('record_payment', {
+      const rows = check(await db().rpc('record_payment', {
         p_order_id: orderId, p_provider: 'tranzila', p_txn_index: txnIndex,
         p_amount_agorot: amountAgorot, p_currency: currency
       }));
       return (rows as RecordPaymentResult[])[0];
     },
     async recordEmailAttempt(orderId, error) {
-      const order = check(await db.from('orders').select('confirmation_email_attempts').eq('id', orderId).single()) as
+      const order = check(await db().from('orders').select('confirmation_email_attempts').eq('id', orderId).single()) as
         { confirmation_email_attempts: number };
-      check(await db.from('orders').update({
+      check(await db().from('orders').update({
         confirmation_email_attempts: order.confirmation_email_attempts + 1,
         confirmation_email_last_error: error,
         ...(error ? {} : { confirmation_email_sent_at: new Date().toISOString() })
       }).eq('id', orderId));
     },
     async listOrdersNeedingEmail(maxAttempts) {
-      const rows = check(await db.from('orders').select('*')
+      const rows = check(await db().from('orders').select('*')
         .eq('payment_status', 'paid').is('confirmation_email_sent_at', null)
         .lt('confirmation_email_attempts', maxAttempts).limit(50));
       return (rows as OrderRow[]).map(toOrder);
     },
     async listAttentionOrders() {
-      const rows = check(await db.from('orders').select('*')
+      const rows = check(await db().from('orders').select('*')
         .or([
           'payment_status.eq.awaiting_verification',
           'payment_status.eq.amount_mismatch',
@@ -242,22 +244,22 @@ export function createSupabaseStore(db: SupabaseClient = getServiceClient()): St
     },
 
     async insertPaymentEvent(event) {
-      const row = check(await db.from('payment_events').insert(event).select('id').single()) as { id: string };
+      const row = check(await db().from('payment_events').insert(event).select('id').single()) as { id: string };
       return row.id;
     },
     async finishPaymentEvent(id, outcome, error, orderId) {
-      const current = check(await db.from('payment_events').select('attempts').eq('id', id).single()) as { attempts: number };
-      check(await db.from('payment_events').update({
+      const current = check(await db().from('payment_events').select('attempts').eq('id', id).single()) as { attempts: number };
+      check(await db().from('payment_events').update({
         outcome, processing_error: error, order_id: orderId,
         processed_at: new Date().toISOString(), attempts: current.attempts + 1
       }).eq('id', id));
     },
     async failPaymentEvent(id, error) {
-      const current = check(await db.from('payment_events').select('attempts').eq('id', id).single()) as { attempts: number };
-      check(await db.from('payment_events').update({ processing_error: error, attempts: current.attempts + 1 }).eq('id', id));
+      const current = check(await db().from('payment_events').select('attempts').eq('id', id).single()) as { attempts: number };
+      check(await db().from('payment_events').update({ processing_error: error, attempts: current.attempts + 1 }).eq('id', id));
     },
     async listEventsToReprocess(limit, maxAttempts) {
-      const rows = check(await db.from('payment_events').select('*')
+      const rows = check(await db().from('payment_events').select('*')
         .or('processed_at.is.null,outcome.eq.unverified,outcome.eq.verification_failed')
         .lt('attempts', maxAttempts)
         .order('received_at', { ascending: true }).limit(limit));
@@ -265,7 +267,7 @@ export function createSupabaseStore(db: SupabaseClient = getServiceClient()): St
     },
 
     async couponReport(from, to) {
-      const rows = check(await db.rpc('coupon_report', { p_from: from, p_to: to })) as CouponReportRow[];
+      const rows = check(await db().rpc('coupon_report', { p_from: from, p_to: to })) as CouponReportRow[];
       return rows.map((r) => ({
         ...r,
         paid_orders: Number(r.paid_orders),
@@ -277,7 +279,7 @@ export function createSupabaseStore(db: SupabaseClient = getServiceClient()): St
       }));
     },
     async isAdmin(userId) {
-      const row = check(await db.from('admin_users').select('user_id').eq('user_id', userId).maybeSingle());
+      const row = check(await db().from('admin_users').select('user_id').eq('user_id', userId).maybeSingle());
       return Boolean(row);
     }
   };
