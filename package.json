@@ -10,9 +10,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "import-coupons": "node --env-file=.env.local --import tsx/esm scripts/import-coupons.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vercel/edge-config": "^1.4.3",
     "@vercel/functions": "^3.7.5",
@@ -31,6 +34,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite-plugin-sitemap": "^0.7.1"
+    "vite-plugin-sitemap": "^0.7.1",
+    "vitest": "^5.1.0"
   }
 }

@@ -18,3 +18,8 @@ View your app in AI Studio: https://ai.studio/apps/4c883def-78e4-4f2a-9a8e-e9ded
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Coupons, orders and admin
+
+Coupon management (`/admin`), server-side pricing and verified sales tracking: see [docs/coupons-admin.md](docs/coupons-admin.md).
+Required environment variables are listed in [.env.example](.env.example). Run tests with `npm test`.

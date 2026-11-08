@@ -5,7 +5,7 @@
 
 import CheckoutPage from './CheckoutPage';
 import { isShoppingIlPromoActive } from './shoppingIlPromo';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { 
   ShoppingCart, 
   Menu, 
@@ -25,6 +25,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSEO } from './useSEO';
+
+const AdminApp = lazy(() => import('./admin/AdminApp'));
 
 // ייבוא הדפים הנוספים
 import ContactPage from './ContactPage';
@@ -554,6 +556,15 @@ export default function App() {
       navigate('/#purchase');
     }
   };
+
+  // אזור הניהול מוצג בלי מעטפת האתר (תפריט, פופאפ, באנר עוגיות)
+  if (location.pathname === '/admin' || location.pathname.startsWith('/admin/')) {
+    return (
+      <Suspense fallback={<p className="text-center mt-16 text-slate-500" dir="rtl">טוען...</p>}>
+        <AdminApp />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col" dir="rtl">

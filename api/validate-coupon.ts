@@ -1,50 +1,39 @@
-// פונקציית Serverless של Vercel: מאמתת קוד קופון בצד השרת בלבד.
-// רשימת הקודים ואחוזי ההנחה חיים אך ורק ב-Vercel Edge Config (מנוהל מהדשבורד של Vercel,
-// בלי לגעת בקוד) — כך שאי אפשר לגלות אותם על ידי קריאת קוד ה-JS הציבורי של האתר.
-// אין רשימת גיבוי בקוד בכוונה: ניהול הקופונים קורה אך ורק דרך Vercel.
-import { get } from '@vercel/edge-config';
+// פונקציית Serverless: בדיקת קוד קופון בזמן ההזנה בעמוד התשלום.
+// הקופונים נשמרים במסד הנתונים (Supabase) ומנוהלים מ-/admin. התשובה כוללת רק את הקופון שנבדק —
+// אף פעם לא רשימה. זו בדיקה לתצוגה בלבד: create-order בודק את הקופון שוב לפני קביעת הסכום המחייב.
+import { couponState, INVALID_COUPON_MESSAGE, normalizeCode } from './_lib/coupons';
+import { deps } from './_lib/deps';
+import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http';
 
-interface VercelRequest {
-  method?: string;
-  body?: unknown;
-}
-interface VercelResponse {
-  status(code: number): VercelResponse;
-  json(body: unknown): void;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: ApiRequest, res: ApiResponse) {
+  noStore(res);
   if (req.method !== 'POST') {
     res.status(405).json({ valid: false, message: 'Method not allowed' });
     return;
   }
 
-  const body = (req.body ?? {}) as { code?: unknown };
-  const code = typeof body.code === 'string' ? body.code.toUpperCase().trim() : '';
-
-  if (!code) {
-    res.status(400).json({ valid: false, message: 'קוד קופון לא תקין' });
+  const code = normalizeCode(bodyObject(req).code);
+  if (!code || code.length > 30) {
+    res.status(400).json({ valid: false, message: INVALID_COUPON_MESSAGE });
     return;
   }
 
-  // ערך קופון יכול להיות מספר פשוט (קודים ישנים, ללא תפוגה) או אובייקט עם תאריך תפוגה אופציונלי.
-  type CouponEntry = number | { discount: number; expiresAt?: string };
-  let coupons: Record<string, CouponEntry> | undefined;
+  const { store, now } = deps();
   try {
-    coupons = await get<Record<string, CouponEntry>>('coupons');
-  } catch (error) {
-    res.status(200).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
-    return;
+    if (!(await store.hitRateLimit(rateLimitKey('coupon', req), 20, 60))) {
+      res.status(429).json({ valid: false, message: 'יותר מדי ניסיונות, נסו שוב בעוד דקה' });
+      return;
+    }
+
+    const coupon = await store.getCouponByCode(code);
+    if (!coupon || couponState(coupon, now()) !== 'active') {
+      res.status(200).json({ valid: false, message: INVALID_COUPON_MESSAGE });
+      return;
+    }
+
+    // discountPercent באחוזים (18 = 18%)
+    res.status(200).json({ valid: true, code: coupon.code, discountPercent: coupon.discount_percent });
+  } catch {
+    res.status(503).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
   }
-
-  const raw = coupons?.[code];
-  const discountPercent = typeof raw === 'number' ? raw : raw?.discount;
-  const expiresAt = typeof raw === 'object' ? raw?.expiresAt : undefined;
-
-  if (!discountPercent || (expiresAt && new Date(expiresAt) < new Date())) {
-    res.status(200).json({ valid: false, message: 'קוד קופון לא תקין' });
-    return;
-  }
-
-  res.status(200).json({ valid: true, code, discountPercent });
 }
