@@ -2,10 +2,10 @@
 //   GET                          הזמנות שממתינות לאימות, עם אי-התאמת סכום, תשלום כפול, תשלום אחרי
 //                                פקיעת המחיר, או שמייל האישור שלהן לא נשלח.
 //   POST { orderId, action: 'resend_email' }  שליחה חוזרת של מייל האישור (לא יוצרת רכישה נוספת).
-import { requireAdmin } from '../_lib/adminAuth';
-import { deps } from '../_lib/deps';
-import { bodyObject, type ApiRequest, type ApiResponse } from '../_lib/http';
-import { describeDelivery } from '../_lib/confirmationEmail';
+import { requireAdmin } from '../_lib/adminAuth.js';
+import { deps } from '../_lib/deps.js';
+import { bodyObject, type ApiRequest, type ApiResponse } from '../_lib/http.js';
+import { describeDelivery } from '../_lib/confirmationEmail.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const admin = await requireAdmin(req, res);

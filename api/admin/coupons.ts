@@ -2,11 +2,11 @@
 //   GET   ?from=YYYY-MM-DD&to=YYYY-MM-DD   רשימת קופונים + מצב + ביצועים בתקופה
 //   POST  { code, label, discount_percent, is_active, starts_at, expires_at }
 //   PATCH ?id=<uuid>  { label?, discount_percent?, is_active?, starts_at?, expires_at? }
-import { requireAdmin } from '../_lib/adminAuth';
-import { validateCouponCreate, validateCouponPatch, validatePeriod } from '../_lib/adminValidation';
-import { couponState } from '../_lib/coupons';
-import { deps } from '../_lib/deps';
-import { bodyObject, queryParam, type ApiRequest, type ApiResponse } from '../_lib/http';
+import { requireAdmin } from '../_lib/adminAuth.js';
+import { validateCouponCreate, validateCouponPatch, validatePeriod } from '../_lib/adminValidation.js';
+import { couponState } from '../_lib/coupons.js';
+import { deps } from '../_lib/deps.js';
+import { bodyObject, queryParam, type ApiRequest, type ApiResponse } from '../_lib/http.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 

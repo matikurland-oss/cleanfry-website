@@ -1,7 +1,7 @@
 // תלויות חיצוניות של פונקציות ה-API, במקום אחד כדי שהבדיקות יוכלו להחליף אותן.
-import { createSupabaseStore, getServiceClient, type OrderRow, type Store } from './store';
-import { verifierFromEnv, type TranzilaVerifier } from './tranzila';
-import { sendConfirmationEmail } from './confirmationEmail';
+import { createSupabaseStore, getServiceClient, type OrderRow, type Store } from './store.js';
+import { verifierFromEnv, type TranzilaVerifier } from './tranzila.js';
+import { sendConfirmationEmail } from './confirmationEmail.js';
 
 export interface AuthUser {
   id: string;

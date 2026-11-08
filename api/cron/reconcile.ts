@@ -1,8 +1,8 @@
-// Vercel Cron (כל 10 דקות, ראו vercel.json): ניסיונות חוזרים לאירועי תשלום שלא עובדו עד הסוף,
+// Vercel Cron (פעם ביום; בתוכנית Pro מומלץ כל 10 דקות — ראו vercel.json): ניסיונות חוזרים לאירועי תשלום שלא עובדו עד הסוף,
 // ולמיילי אישור שלא נשלחו. מוגן ב-CRON_SECRET (Vercel שולח אותו בכותרת Authorization).
-import { deps } from '../_lib/deps';
-import { header, noStore, type ApiRequest, type ApiResponse } from '../_lib/http';
-import { processPaymentEvent } from '../_lib/paymentProcessing';
+import { deps } from '../_lib/deps.js';
+import { header, noStore, type ApiRequest, type ApiResponse } from '../_lib/http.js';
+import { processPaymentEvent } from '../_lib/paymentProcessing.js';
 
 const MAX_EVENT_ATTEMPTS = 20;
 const MAX_EMAIL_ATTEMPTS = 5;

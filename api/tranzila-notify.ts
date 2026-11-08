@@ -8,9 +8,9 @@
 // 3. רושמים את התשלום באופן אטומי (record_payment) — notify כפול או מקביל נספר פעם אחת.
 // 4. שולחים את מייל האישור. כשל במייל לא מבטל את הרכישה.
 // אירוע שעיבודו נכשל באמצע נשאר במסד הנתונים ומעובד שוב ע"י api/cron/reconcile.
-import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http';
-import { deps } from './_lib/deps';
-import { processPaymentEvent, sanitizeNotify } from './_lib/paymentProcessing';
+import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http.js';
+import { deps } from './_lib/deps.js';
+import { processPaymentEvent, sanitizeNotify } from './_lib/paymentProcessing.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   noStore(res);

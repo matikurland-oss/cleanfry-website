@@ -6,8 +6,8 @@
 // דורש ב-.env.local: EDGE_CONFIG, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 // הפעלה חוזרת בטוחה: קוד שכבר קיים במסד הנתונים מדולג (לא נדרס ולא משוכפל).
 import { createClient } from '@vercel/edge-config';
-import { createSupabaseStore } from '../api/_lib/store';
-import { planImport } from './couponImport';
+import { createSupabaseStore } from '../api/_lib/store.js';
+import { planImport } from './couponImport.js';
 
 const dryRun = process.argv.includes('--dry-run');
 

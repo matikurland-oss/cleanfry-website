@@ -1,6 +1,6 @@
 // אימות קלט לפעולות ניהול הקופונים ולבחירת תקופה בדוחות.
-import { COUPON_CODE_PATTERN, normalizeCode } from './coupons';
-import type { CouponInput, CouponPatch } from './store';
+import { COUPON_CODE_PATTERN, normalizeCode } from './coupons.js';
+import type { CouponInput, CouponPatch } from './store.js';
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 

@@ -1,7 +1,7 @@
 // הרשאת מנהל — נבדקת בכל בקשה ל-API הניהול. הדפדפן שולח את ה-JWT של Supabase Auth בכותרת
 // Authorization (לא ב-cookie), ולכן אין חשיפה ל-CSRF: אתר זר לא יכול לצרף את הכותרת הזו.
-import { deps, type AuthUser } from './deps';
-import { header, noStore, type ApiRequest, type ApiResponse } from './http';
+import { deps, type AuthUser } from './deps.js';
+import { header, noStore, type ApiRequest, type ApiResponse } from './http.js';
 
 export async function requireAdmin(req: ApiRequest, res: ApiResponse): Promise<AuthUser | null> {
   noStore(res);

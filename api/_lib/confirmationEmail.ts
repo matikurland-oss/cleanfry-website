@@ -1,5 +1,5 @@
 // מייל אישור ההזמנה (דרך Formspree, כמו קודם) — נשלח רק אחרי שהתשלום אומת ונרשם.
-import type { OrderRow } from './store';
+import type { OrderRow } from './store.js';
 
 const FORMSPREE_URL = 'https://formspree.io/f/xvzwnrla';
 

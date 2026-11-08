@@ -6,11 +6,11 @@
 // כך שהלקוח לעולם לא מועבר לתשלום בסכום שלא הוצג לו.
 //
 // ההזמנה נשמרת במסד הנתונים עם מחיר נעול ל-15 דקות. לטרנזילה נשלחת רק הפניה אטומה וחתומה להזמנה.
-import { isValidIsraeliPhone } from '../src/checkoutValidation';
-import { couponState, INVALID_COUPON_MESSAGE, normalizeCode, type CouponRow } from './_lib/coupons';
-import { deps } from './_lib/deps';
-import { bodyObject, noStore, rateLimitKey, str, type ApiRequest, type ApiResponse } from './_lib/http';
-import { createOrderReference } from './_lib/orderReference';
+import { isValidIsraeliPhone } from '../src/checkoutValidation.js';
+import { couponState, INVALID_COUPON_MESSAGE, normalizeCode, type CouponRow } from './_lib/coupons.js';
+import { deps } from './_lib/deps.js';
+import { bodyObject, noStore, rateLimitKey, str, type ApiRequest, type ApiResponse } from './_lib/http.js';
+import { createOrderReference } from './_lib/orderReference.js';
 import {
   buildInvoiceLines,
   CURRENCY,
@@ -19,7 +19,7 @@ import {
   type DeliveryMethod,
   type PickupLocation,
   type PriceBreakdown
-} from '../shared/pricing';
+} from '../shared/pricing.js';
 
 export const PRICE_LOCK_MINUTES = 15;
 

@@ -1,8 +1,8 @@
 // לוגיקת הייבוא מ-Edge Config (טהורה, נבדקת ב-tests/couponImport.test.ts).
 // הפורמט הישן: { CODE: 0.18 } או { CODE: { discount: 0.18, expiresAt: "2026-11-06T23:59:59+02:00" } },
 // כשההנחה היא שבר (0.18 = 18%). במסד הנתונים האחוז נשמר כאחוז רגיל (18).
-import { COUPON_CODE_PATTERN, normalizeCode } from '../api/_lib/coupons';
-import type { CouponInput } from '../api/_lib/store';
+import { COUPON_CODE_PATTERN, normalizeCode } from '../api/_lib/coupons.js';
+import type { CouponInput } from '../api/_lib/store.js';
 
 export interface ImportPlan {
   valid: CouponInput[];

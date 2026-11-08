@@ -1,7 +1,7 @@
 // שכבת הנתונים: ממשק אחד + מימוש מול Supabase. הבדיקות מחליפות אותו במימוש בזיכרון (tests/memoryStore.ts).
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { CouponRow } from './coupons';
-import type { InvoiceLine } from '../../shared/pricing';
+import type { CouponRow } from './coupons.js';
+import type { InvoiceLine } from '../../shared/pricing.js';
 
 export interface NewOrder {
   quantity: number;

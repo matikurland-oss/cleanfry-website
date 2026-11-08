@@ -2,9 +2,9 @@
 //
 // רכישה נרשמת רק אחרי שהשרת שלנו אימת את העסקה מול ה-API של טרנזילה. הפניה החתומה ב-remarks
 // מזהה את ההזמנה בלבד; היא לא הוכחה לתשלום. הרישום עצמו אטומי ומונע כפילויות (record_payment).
-import { deps } from './deps';
-import { parseOrderReference } from './orderReference';
-import type { EventOutcome, PaymentEventInput } from './store';
+import { deps } from './deps.js';
+import { parseOrderReference } from './orderReference.js';
+import type { EventOutcome, PaymentEventInput } from './store.js';
 
 // רק השדות האלה נשמרים מתוך ה-notify. פרטי כרטיס, ת"ז וכדומה לא נשמרים ולא נרשמים ביומנים.
 const SAFE_FIELDS = ['index', 'Response', 'sum', 'currency', 'ConfirmationCode', 'remarks', 'tranmode', 'cred_type', 'Tempref'];

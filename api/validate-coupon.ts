@@ -1,9 +1,9 @@
 // פונקציית Serverless: בדיקת קוד קופון בזמן ההזנה בעמוד התשלום.
 // הקופונים נשמרים במסד הנתונים (Supabase) ומנוהלים מ-/admin. התשובה כוללת רק את הקופון שנבדק —
 // אף פעם לא רשימה. זו בדיקה לתצוגה בלבד: create-order בודק את הקופון שוב לפני קביעת הסכום המחייב.
-import { couponState, INVALID_COUPON_MESSAGE, normalizeCode } from './_lib/coupons';
-import { deps } from './_lib/deps';
-import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http';
+import { couponState, INVALID_COUPON_MESSAGE, normalizeCode } from './_lib/coupons.js';
+import { deps } from './_lib/deps.js';
+import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   noStore(res);
