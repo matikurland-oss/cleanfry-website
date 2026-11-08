@@ -13,7 +13,7 @@
 import crypto from 'node:crypto';
 
 export type VerifyResult =
-  | { kind: 'verified'; amountAgorot: number; currency: string }
+  | { kind: 'verified'; amountAgorot: number; currency: string; remarks: string }
   | { kind: 'declined'; reason: string }
   | { kind: 'unverifiable'; reason: string }
   | { kind: 'error'; reason: string };
@@ -69,7 +69,12 @@ export function parseTransactionSearch(body: unknown, txnIndex: string): VerifyR
   const currency = CURRENCY_CODES[String(pick(txn, ['currency_code', 'currency']) ?? '')];
   if (!Number.isFinite(amount) || amount <= 0 || !currency) return { kind: 'error', reason: 'missing amount or currency' };
 
-  return { kind: 'verified', amountAgorot: Math.round(amount * 100), currency };
+  // ההפניה להזמנה כפי שנשמרה אצל טרנזילה בעסקה עצמה. בלעדיה אי אפשר לקשור את העסקה להזמנה
+  // (מספרי עסקאות רצים וניתנים לניחוש), ולכן חסרה = כשל סגור.
+  const remarks = String(pick(txn, ['remarks', 'Remarks', 'transaction_remarks']) ?? '').trim();
+  if (!remarks) return { kind: 'error', reason: 'transaction has no order reference' };
+
+  return { kind: 'verified', amountAgorot: Math.round(amount * 100), currency, remarks };
 }
 
 export function createApiVerifier(options: {

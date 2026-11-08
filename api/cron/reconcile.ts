@@ -18,11 +18,28 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const { store, verifier, sendEmail } = deps();
   const summary = { events: 0, skippedUnverifiable: 0, emailsSent: 0, emailsFailed: 0, errors: 0 };
 
-  const events = await store.listEventsToReprocess(50, MAX_EVENT_ATTEMPTS);
+  // אירוע אחד לכל הזמנה בכל ריצה, ודילוג על הזמנות ששולמו: כך הצפה של notify מזויפים עבור הזמנה
+  // אחת לא יכולה לדחוק החוצה אירועים אמיתיים של הזמנות אחרות.
+  const candidates = await store.listEventsToReprocess(500, MAX_EVENT_ATTEMPTS);
+  const seenOrders = new Set<string>();
+  const events = [];
+  for (const event of candidates) {
+    const key = event.order_id ?? `event:${event.id}`;
+    if (seenOrders.has(key)) continue;
+    seenOrders.add(key);
+    events.push(event);
+    if (events.length >= 50) break;
+  }
+
   for (const event of events) {
     // בלי מפתחות API אין טעם לנסות שוב אירועים שממתינים לאימות
     if (event.outcome === 'unverified' && !verifier.configured) {
       summary.skippedUnverifiable++;
+      continue;
+    }
+    const order = event.order_id ? await store.getOrder(event.order_id) : null;
+    if (order?.payment_status === 'paid') {
+      await store.finishPaymentEvent(event.id, 'duplicate', 'order already paid', event.order_id);
       continue;
     }
     try {

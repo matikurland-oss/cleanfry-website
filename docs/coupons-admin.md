@@ -69,7 +69,7 @@ npm run dev                   # האתר על 3000, /api מופנה לשרת ה�
 
 להשגת המפתחות:
 1. בקשו מטרנזילה (ממשק הניהול או התמיכה) **Application key + Secret** ל-API, עבור הטרמינל `cleanfry`.
-2. בקשו מהם לאשר את **כתובת החיפוש של עסקאות (search transactions)** ואת **שמות השדות בתשובה**. ברירת המחדל בקוד: `https://api.tranzila.com/v1/transactions`, עם השדות `index`, `processor_response_code`, `amount`, `currency_code`. אם הכתובת שונה, הגדירו `TRANZILA_TRANSACTIONS_SEARCH_URL`. אם שמות השדות שונים, עדכנו את `parseTransactionSearch` ב-`api/_lib/tranzila.ts`.
+2. בקשו מהם לאשר את **כתובת החיפוש של עסקאות (search transactions)** ואת **שמות השדות בתשובה**. ברירת המחדל בקוד: `https://api.tranzila.com/v1/transactions`, עם השדות `index`, `processor_response_code`, `amount`, `currency_code`, `remarks`. **חובה שהתשובה תכלול את `remarks` של העסקה**: כך השרת מוודא שהעסקה שייכת להזמנה הזו ולא לקוח אחר באותו סכום (מספרי עסקאות רצים וניתנים לניחוש). בלי השדה הזה שום תשלום לא יאומת. אם הכתובת שונה, הגדירו `TRANZILA_TRANSACTIONS_SEARCH_URL`. אם שמות השדות שונים, עדכנו את `parseTransactionSearch` ב-`api/_lib/tranzila.ts`.
 3. בדקו בסביבת Preview עם עסקה אמיתית קטנה, ובטלו אותה מיד אחר כך. וודאו שהיא מופיעה כמאומתת בדוח.
 
 הקוד נכשל "סגור": אם התשובה לא במבנה הצפוי, ההזמנה נשארת "ממתינה לאימות" ולא מסומנת כשולמה.

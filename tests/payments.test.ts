@@ -53,7 +53,7 @@ describe('tranzila-notify', () => {
   it('records a verified payment and attributes it to the right coupon', async () => {
     const coupon = store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     const { order, remarks } = await placeOrder('NOV26');
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 22900, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 22900, currency: 'ILS', remarks });
 
     const res = await notify({ Response: '000', index: '1001', sum: '229', currency: '1', remarks, ccno: '4580000000000000', myid: '123456789' });
     expect(res.body.outcome).toBe('recorded');
@@ -79,7 +79,7 @@ describe('tranzila-notify', () => {
   it('rejects a notify with a forged order reference', async () => {
     const { order } = await placeOrder();
     const forged = `${order.id}.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`;
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks: forged });
     const res = await notify({ Response: '000', index: '1001', remarks: forged });
     expect(res.body.outcome).toBe('invalid_reference');
     expect((await store.getOrder(order.id))!.payment_status).toBe('pending');
@@ -103,7 +103,7 @@ describe('tranzila-notify', () => {
 
   it('counts a duplicate or concurrent notify for the same transaction once', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
     const body = { Response: '000', index: '1001', sum: '236', remarks };
     const results = await Promise.all([notify(body), notify(body), notify(body)]);
 
@@ -116,7 +116,7 @@ describe('tranzila-notify', () => {
 
   it('flags an amount mismatch instead of counting it as paid', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 100, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 100, currency: 'ILS', remarks });
     const res = await notify({ Response: '000', index: '1001', sum: '1', remarks });
     expect(res.body.outcome).toBe('amount_mismatch');
     expect((await store.getOrder(order.id))!.payment_status).toBe('amount_mismatch');
@@ -126,7 +126,7 @@ describe('tranzila-notify', () => {
   it('records a payment that arrives after the 15 minute lock, flagged for review', async () => {
     const { order, remarks } = await placeOrder();
     now = new Date(now.getTime() + 20 * 60_000);
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
     await notify({ Response: '000', index: '1001', remarks });
     expect(await store.getOrder(order.id)).toMatchObject({ payment_status: 'paid', paid_after_expiry: true });
   });
@@ -140,7 +140,7 @@ describe('tranzila-notify', () => {
 
   it('recovers from a temporary storage failure through reconcile, without duplicates', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
     store.failNext.recordPayment = 1;
 
     const first = await notify({ Response: '000', index: '1001', remarks });
@@ -160,7 +160,7 @@ describe('tranzila-notify', () => {
 
   it('keeps the purchase when the confirmation email fails, and retries it without a new purchase', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
     sendEmail.mockRejectedValueOnce(new Error('formspree down'));
 
     await notify({ Response: '000', index: '1001', remarks });
@@ -180,9 +180,45 @@ describe('tranzila-notify', () => {
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
 
     useDeps(fakeVerifier);
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS' });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
     await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
     expect((await store.getOrder(order.id))!.payment_status).toBe('paid');
+  });
+
+  it("does not let someone claim another customer's real transaction for their own order", async () => {
+    const victim = await placeOrder();
+    const attacker = await placeOrder();
+    // עסקה אמיתית של הקורבן, באותו סכום, שמשויכת אצל טרנזילה להפניה של הקורבן
+    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks: victim.remarks });
+
+    const res = await notify({ Response: '000', index: '2001', remarks: attacker.remarks });
+    expect(res.body.outcome).toBe('invalid_reference');
+    expect((await store.getOrder(attacker.order.id))!.payment_status).toBe('pending');
+    expect(store.payments).toHaveLength(0);
+
+    // ה-notify האמיתי של הקורבן עדיין נרשם כרגיל
+    expect((await notify({ Response: '000', index: '2001', remarks: victim.remarks })).body.outcome).toBe('recorded');
+  });
+
+  it('a flood of forged notifies for one order cannot starve retries of other orders', async () => {
+    const flooded = await placeOrder();
+    const real = await placeOrder();
+    for (let i = 0; i < 70; i++) {
+      await call(tranzilaNotify, { method: 'POST', body: { Response: '000', index: `9${i}`, remarks: flooded.remarks }, headers: { 'x-forwarded-for': `10.0.0.${i}` } });
+    }
+    // האירוע האמיתי נכשל זמנית ונכנס לתור
+    tranzilaTransactions.set('3001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks: real.remarks });
+    store.failNext.recordPayment = 1;
+    await notify({ Response: '000', index: '3001', remarks: real.remarks });
+
+    await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
+    expect((await store.getOrder(real.order.id))!.payment_status).toBe('paid');
+  });
+
+  it('rate limits the notify endpoint per IP', async () => {
+    let last;
+    for (let i = 0; i < 61; i++) last = await notify({ Response: '004', index: String(i), remarks: 'x' });
+    expect(last!.status).toBe(429);
   });
 
   it('rejects reconcile calls without the cron secret', async () => {
@@ -193,8 +229,13 @@ describe('tranzila-notify', () => {
 
 describe('parseTransactionSearch', () => {
   it('reads an approved transaction', () => {
+    const body = { transactions: [{ index: 1001, processor_response_code: '000', amount: '229.00', currency_code: '1', remarks: 'ref.sig' }] };
+    expect(parseTransactionSearch(body, '1001')).toEqual({ kind: 'verified', amountAgorot: 22900, currency: 'ILS', remarks: 'ref.sig' });
+  });
+
+  it('fails closed when the transaction carries no order reference', () => {
     const body = { transactions: [{ index: 1001, processor_response_code: '000', amount: '229.00', currency_code: '1' }] };
-    expect(parseTransactionSearch(body, '1001')).toEqual({ kind: 'verified', amountAgorot: 22900, currency: 'ILS' });
+    expect(parseTransactionSearch(body, '1001').kind).toBe('error');
   });
 
   it('fails closed on an unknown shape or a missing transaction', () => {

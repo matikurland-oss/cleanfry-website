@@ -67,6 +67,12 @@ export async function processPaymentEvent(eventId: string, event: PaymentEventIn
   }
   if (verification.kind === 'declined') return finish('declined', orderId, verification.reason);
 
+  // העסקה המאומתת חייבת לשאת אצל טרנזילה את ההפניה של ההזמנה הזו בדיוק. אחרת ניתן היה לשלוח
+  // notify עם הפניה להזמנה שלך ומספר עסקה (רץ, ניתן לניחוש) של לקוח אחר באותו סכום.
+  if (verification.remarks !== remarks.trim()) {
+    return finish('invalid_reference', orderId, 'transaction belongs to a different order');
+  }
+
   const result = await store.recordPayment(orderId, event.provider_txn_index, verification.amountAgorot, verification.currency);
 
   if (result.order_newly_paid) {

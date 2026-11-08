@@ -8,7 +8,7 @@
 // 3. רושמים את התשלום באופן אטומי (record_payment) — notify כפול או מקביל נספר פעם אחת.
 // 4. שולחים את מייל האישור. כשל במייל לא מבטל את הרכישה.
 // אירוע שעיבודו נכשל באמצע נשאר במסד הנתונים ומעובד שוב ע"י api/cron/reconcile.
-import { bodyObject, noStore, type ApiRequest, type ApiResponse } from './_lib/http';
+import { bodyObject, noStore, rateLimitKey, type ApiRequest, type ApiResponse } from './_lib/http';
 import { deps } from './_lib/deps';
 import { processPaymentEvent, sanitizeNotify } from './_lib/paymentProcessing';
 
@@ -24,6 +24,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   let eventId: string;
   try {
+    // הגבלה נדיבה (נפח אמיתי מטרנזילה = מספר ההזמנות שלנו), נגד הצפת טבלת האירועים
+    if (!(await store.hitRateLimit(rateLimitKey('notify', req), 60, 60))) {
+      res.status(429).json({ ok: false, reason: 'rate limited' });
+      return;
+    }
     eventId = await store.insertPaymentEvent(event);
   } catch {
     res.status(500).json({ ok: false, reason: 'storage unavailable' });
