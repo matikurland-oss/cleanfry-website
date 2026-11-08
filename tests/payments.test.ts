@@ -13,7 +13,7 @@ process.env.CRON_SECRET = 'cron-secret';
 
 let now = new Date('2026-11-08T10:00:00Z');
 let store: MemoryStore;
-let sendEmail: ReturnType<typeof vi.fn<(order: unknown) => Promise<void>>>;
+let sendEmail: ReturnType<typeof vi.fn<(order: unknown, options?: unknown) => Promise<void>>>;
 let tranzilaTransactions: Map<string, VerifyResult>;
 
 // מדמה את ה-API של טרנזילה: רק עסקאות שקיימות "אצלם" מאומתות
@@ -31,7 +31,7 @@ function useDeps(verifier: TranzilaVerifier = fakeVerifier) {
 beforeEach(() => {
   now = new Date('2026-11-08T10:00:00Z');
   store = new MemoryStore(() => now);
-  sendEmail = vi.fn<(order: unknown) => Promise<void>>(async () => {});
+  sendEmail = vi.fn<(order: unknown, options?: unknown) => Promise<void>>(async () => {});
   tranzilaTransactions = new Map();
   useDeps();
 });
@@ -73,7 +73,9 @@ describe('tranzila-notify', () => {
     expect(res.body.outcome).toBe('verification_failed');
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
     expect(store.payments).toHaveLength(0);
-    expect(sendEmail).not.toHaveBeenCalled();
+    // בעל האתר מקבל הודעה, אבל מסומנת בבירור כלא מאומתת
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(sendEmail.mock.calls[0][1]).toEqual({ unverified: true });
   });
 
   it('rejects a notify with a forged order reference', async () => {
@@ -92,6 +94,28 @@ describe('tranzila-notify', () => {
     expect(res.body.outcome).toBe('unverified');
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
     expect(await store.couponReport()).toHaveLength(0);
+  });
+
+  it('without API keys still notifies the owner once, flagged unverified, and not again once verified', async () => {
+    useDeps(noopVerifier);
+    const { order, remarks } = await placeOrder();
+    await notify({ Response: '000', index: '1001', sum: '236', remarks });
+    await notify({ Response: '000', index: '1001', sum: '236', remarks });
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(sendEmail.mock.calls[0][1]).toEqual({ unverified: true });
+
+    useDeps(fakeVerifier);
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
+    await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
+    expect((await store.getOrder(order.id))!.payment_status).toBe('paid');
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send the unverified notice when the notified sum differs from the order', async () => {
+    useDeps(noopVerifier);
+    const { remarks } = await placeOrder();
+    await notify({ Response: '000', index: '1001', sum: '1', remarks });
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it('records declined attempts without marking the order', async () => {

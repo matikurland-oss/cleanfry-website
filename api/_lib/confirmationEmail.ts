@@ -14,12 +14,22 @@ export function describeDelivery(order: Pick<OrderRow, 'delivery_method' | 'pick
   return `${order.shipping_city}, ${order.shipping_address}${apartment} (כמות: ${order.quantity})`;
 }
 
-export async function sendConfirmationEmail(order: OrderRow): Promise<void> {
+export interface EmailOptions {
+  /** התשלום עוד לא אומת מול ה-API של טרנזילה (אין מפתחות או שהאימות נכשל זמנית) */
+  unverified?: boolean;
+}
+
+export async function sendConfirmationEmail(order: OrderRow, options: EmailOptions = {}): Promise<void> {
+  const totalLabel = options.unverified
+    ? "סה\"כ לפי הודעת טרנזילה (לא אומת — בדקו בממשק טרנזילה לפני משלוח)"
+    : "סה\"כ שולם (מאומת מול טרנזילה)";
   const response = await fetch(FORMSPREE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
-      "נושא": `הזמנה חדשה מאתר CleanFry (מאומתת בשרת) — ${order.public_ref}`,
+      "נושא": options.unverified
+        ? `הזמנה חדשה מאתר CleanFry — ממתינה לאימות תשלום — ${order.public_ref}`
+        : `הזמנה חדשה מאתר CleanFry (מאומתת בשרת) — ${order.public_ref}`,
       "מספר הזמנה": order.public_ref,
       "שם הלקוח": order.customer_name,
       "טלפון": order.customer_phone,
@@ -28,7 +38,7 @@ export async function sendConfirmationEmail(order: OrderRow): Promise<void> {
       "שיטת קבלה": order.delivery_method === 'delivery' ? 'משלוח' : 'איסוף',
       "פרטים": describeDelivery(order),
       "קוד קופון שהופעל": order.coupon_code_snapshot || 'לא הוגדר קופון',
-      "סה\"כ שולם (מאומת מול טרנזילה)": shekels(order.total_agorot)
+      [totalLabel]: shekels(order.total_agorot)
     }),
     signal: AbortSignal.timeout(8000)
   });

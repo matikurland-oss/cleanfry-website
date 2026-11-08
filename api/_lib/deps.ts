@@ -1,7 +1,7 @@
 // תלויות חיצוניות של פונקציות ה-API, במקום אחד כדי שהבדיקות יוכלו להחליף אותן.
 import { createSupabaseStore, getServiceClient, type OrderRow, type Store } from './store.js';
 import { verifierFromEnv, type TranzilaVerifier } from './tranzila.js';
-import { sendConfirmationEmail } from './confirmationEmail.js';
+import { sendConfirmationEmail, type EmailOptions } from './confirmationEmail.js';
 
 export interface AuthUser {
   id: string;
@@ -11,7 +11,7 @@ export interface AuthUser {
 export interface Deps {
   store: Store;
   verifier: TranzilaVerifier;
-  sendEmail: (order: OrderRow) => Promise<void>;
+  sendEmail: (order: OrderRow, options?: EmailOptions) => Promise<void>;
   /** מחזיר את המשתמש לפי JWT של Supabase Auth, או null אם הטוקן לא תקף */
   getUserFromToken: (token: string) => Promise<AuthUser | null>;
   now: () => Date;
