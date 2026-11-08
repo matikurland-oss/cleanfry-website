@@ -24,6 +24,8 @@ function useNoIndex() {
   }, []);
 }
 
+const ADMIN_USERNAME_DOMAIN = 'cleanfry.co.il';
+
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,8 +36,11 @@ function LoginForm() {
     e.preventDefault();
     setBusy(true);
     setError('');
-    const { error: authError } = await supabase!.auth.signInWithPassword({ email, password });
-    if (authError) setError('אימייל או סיסמה שגויים');
+    // אפשר להתחבר גם עם שם משתמש: "clean" → clean@cleanfry.co.il
+    const login = email.trim();
+    const loginEmail = login.includes('@') ? login : `${login.toLowerCase()}@${ADMIN_USERNAME_DOMAIN}`;
+    const { error: authError } = await supabase!.auth.signInWithPassword({ email: loginEmail, password });
+    if (authError) setError('שם משתמש או סיסמה שגויים');
     setBusy(false);
   };
 
@@ -43,7 +48,7 @@ function LoginForm() {
   return (
     <form onSubmit={submit} className="bg-white max-w-sm w-full mx-auto mt-16 p-6 rounded-3xl shadow-xl border border-slate-100 space-y-4">
       <h1 className="text-2xl font-black text-slate-800">כניסת מנהל</h1>
-      <input type="email" required autoComplete="username" placeholder="אימייל" value={email} onChange={(e) => setEmail(e.target.value)} className={input} dir="ltr" />
+      <input type="text" required autoComplete="username" placeholder="שם משתמש או אימייל" value={email} onChange={(e) => setEmail(e.target.value)} className={input} dir="ltr" />
       <input type="password" required autoComplete="current-password" placeholder="סיסמה" value={password} onChange={(e) => setPassword(e.target.value)} className={input} dir="ltr" />
       {error && <p role="alert" className="text-red-600 text-sm font-bold">{error}</p>}
       <button type="submit" disabled={busy} className="w-full gradient-brand text-white py-3 rounded-xl font-black disabled:opacity-50">
