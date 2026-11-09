@@ -16,6 +16,9 @@ export type CouponState = 'active' | 'paused' | 'not_started' | 'expired';
 
 export const COUPON_CODE_PATTERN = /^[A-Z0-9_-]{2,30}$/;
 
+// תקרת הנחה לקופון (כולל). נאכפת גם במסד הנתונים (coupons_discount_percent_check).
+export const MAX_COUPON_DISCOUNT_PERCENT = 25;
+
 export function normalizeCode(raw: unknown): string {
   return typeof raw === 'string' ? raw.trim().toUpperCase() : '';
 }
