@@ -65,6 +65,20 @@ describe('admin coupons', () => {
     expect(store.audit[0]).toMatchObject({ action: 'create', actor: { id: ADMIN.id } });
   });
 
+  it('accepts exactly the 25% cap', async () => {
+    const res = await call(adminCoupons, { method: 'POST', headers: as('admin-token'), body: { code: 'MAX25', discount_percent: 25 } });
+    expect(res.status).toBe(201);
+    expect(res.body.coupon.discount_percent).toBe(25);
+  });
+
+  it('rejects editing a coupon above 25%', async () => {
+    const coupon = store.addCoupon({ code: 'NOV26', discount_percent: 18 });
+    const res = await call(adminCoupons, { method: 'PATCH', headers: as('admin-token'), query: { id: coupon.id }, body: { discount_percent: 30 } });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('25');
+    expect(store.coupons[0].discount_percent).toBe(18);
+  });
+
   it('rejects duplicate codes', async () => {
     store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     const res = await call(adminCoupons, { method: 'POST', headers: as('admin-token'), body: { code: 'nov26', discount_percent: 10 } });
@@ -76,6 +90,8 @@ describe('admin coupons', () => {
     [{ code: 'שלום', discount_percent: 10 }],
     [{ code: 'OK10', discount_percent: 0 }],
     [{ code: 'OK10', discount_percent: 100 }],
+    [{ code: 'OK10', discount_percent: 25.01 }],
+    [{ code: 'OK10', discount_percent: 30 }],
     [{ code: 'OK10', discount_percent: 10.555 }],
     [{ code: 'OK10', discount_percent: 10, starts_at: '2026-12-01', expires_at: '2026-11-01' }]
   ])('rejects invalid input %j', async (body) => {

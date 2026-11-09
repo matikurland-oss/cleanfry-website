@@ -1,7 +1,7 @@
 // לוגיקת הייבוא מ-Edge Config (טהורה, נבדקת ב-tests/couponImport.test.ts).
 // הפורמט הישן: { CODE: 0.18 } או { CODE: { discount: 0.18, expiresAt: "2026-11-06T23:59:59+02:00" } },
 // כשההנחה היא שבר (0.18 = 18%). במסד הנתונים האחוז נשמר כאחוז רגיל (18).
-import { COUPON_CODE_PATTERN, normalizeCode } from '../api/_lib/coupons.js';
+import { COUPON_CODE_PATTERN, MAX_COUPON_DISCOUNT_PERCENT, normalizeCode } from '../api/_lib/coupons.js';
 import type { CouponInput } from '../api/_lib/store.js';
 
 export interface ImportPlan {
@@ -36,6 +36,10 @@ export function planImport(raw: unknown): ImportPlan {
       continue;
     }
     const percent = Math.round(fraction * 10000) / 100;
+    if (percent > MAX_COUPON_DISCOUNT_PERCENT) {
+      plan.invalid.push({ code, reason: `הנחה של ${percent}% — מעל ${MAX_COUPON_DISCOUNT_PERCENT}%` });
+      continue;
+    }
 
     let expiresAt: string | null = null;
     const rawExpiry = entry && typeof entry === 'object' ? (entry as { expiresAt?: unknown }).expiresAt : undefined;

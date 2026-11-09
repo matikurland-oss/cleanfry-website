@@ -12,6 +12,11 @@ select * from admin_update_coupon((select id from coupons where code='NOV26'), '
 insert into results select 'audit pause', exists(select 1 from coupon_audit where action='pause'), null;
 select * from admin_update_coupon((select id from coupons where code='NOV26'), '{"is_active": true}', null, 'test');
 
+do $$ begin
+  insert into coupons (code, discount_percent) values ('OVER25', 30);
+  insert into results values ('cap 25%', false, 'insert succeeded');
+exception when check_violation then insert into results values ('cap 25%', true, sqlerrm); end $$;
+
 -- שעון חורף (UTC+2): 21:30Z = 23:30 ב-8.11 בישראל ; 22:30Z = 00:30 ב-9.11 בישראל
 insert into orders (id, quantity, delivery_method, unit_price_agorot, subtotal_agorot, discount_agorot, shipping_agorot, total_agorot,
   coupon_id, coupon_code_snapshot, discount_percent_snapshot, customer_name, customer_phone, customer_email, invoice_lines, price_locked_until)

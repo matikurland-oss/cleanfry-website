@@ -71,9 +71,10 @@ export default function CouponForm({ coupon, onClose, onSaved }: {
         <label className="block">
           <span className="text-sm font-bold text-slate-600">אחוז הנחה</span>
           <div className="relative mt-1">
-            <input required type="number" min="0.01" max="99.99" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} className={`${input} pl-10`} />
+            <input required type="number" min="0.01" max="25" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} className={`${input} pl-10`} />
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
           </div>
+          <span className="block text-xs text-slate-500">עד 25%.</span>
           {coupon && <span className="text-xs text-slate-500">שינוי האחוז חל רק על הזמנות חדשות. הזמנות ודוחות קיימים לא משתנים.</span>}
         </label>
 

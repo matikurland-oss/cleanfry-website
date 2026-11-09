@@ -1,12 +1,14 @@
 // אימות קלט לפעולות ניהול הקופונים ולבחירת תקופה בדוחות.
-import { COUPON_CODE_PATTERN, normalizeCode } from './coupons.js';
+import { COUPON_CODE_PATTERN, MAX_COUPON_DISCOUNT_PERCENT, normalizeCode } from './coupons.js';
 import type { CouponInput, CouponPatch } from './store.js';
+
+const DISCOUNT_ERROR = `אחוז הנחה חייב להיות בין 0.01 ל-${MAX_COUPON_DISCOUNT_PERCENT}`;
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 function parseDiscount(value: unknown): number | null {
   const n = typeof value === 'string' ? Number(value) : value;
-  if (typeof n !== 'number' || !Number.isFinite(n) || n <= 0 || n >= 100) return null;
+  if (typeof n !== 'number' || !Number.isFinite(n) || n <= 0 || n > MAX_COUPON_DISCOUNT_PERCENT) return null;
   if (Math.round(n * 100) !== n * 100) return null; // עד שתי ספרות אחרי הנקודה
   return n;
 }
@@ -28,7 +30,7 @@ export function validateCouponCreate(body: Record<string, unknown>): Result<Coup
   const label = typeof body.label === 'string' ? body.label.trim() : '';
   if (label.length > 100) return { ok: false, error: 'שם פנימי ארוך מדי' };
   const discount = parseDiscount(body.discount_percent);
-  if (discount === null) return { ok: false, error: 'אחוז הנחה חייב להיות בין 0 ל-100 (לא כולל)' };
+  if (discount === null) return { ok: false, error: DISCOUNT_ERROR };
   const startsAt = parseDate(body.starts_at);
   const expiresAt = parseDate(body.expires_at);
   if (!startsAt.ok || !expiresAt.ok) return { ok: false, error: 'תאריך לא תקין' };
@@ -58,7 +60,7 @@ export function validateCouponPatch(
   }
   if ('discount_percent' in body) {
     const discount = parseDiscount(body.discount_percent);
-    if (discount === null) return { ok: false, error: 'אחוז הנחה חייב להיות בין 0 ל-100 (לא כולל)' };
+    if (discount === null) return { ok: false, error: DISCOUNT_ERROR };
     patch.discount_percent = discount;
   }
   if ('is_active' in body) {
