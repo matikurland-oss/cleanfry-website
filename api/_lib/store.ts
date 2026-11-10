@@ -43,6 +43,8 @@ export interface OrderRow extends NewOrder {
   confirmation_email_attempts: number;
   confirmation_email_last_error: string | null;
   unverified_notice_sent_at: string | null;
+  manually_confirmed_at: string | null;
+  manually_confirmed_by: string | null;
 }
 
 export interface PaymentEventInput {
@@ -126,6 +128,10 @@ export interface Store {
   claimUnverifiedNotice(orderId: string): Promise<boolean>;
   listOrdersNeedingEmail(maxAttempts: number): Promise<OrderRow[]>;
   listAttentionOrders(): Promise<OrderRow[]>;
+  /** אישור ידני של הזמנה שממתינה לאימות. זורק order_not_confirmable אם היא במצב אחר */
+  confirmOrderManually(orderId: string, actorEmail: string): Promise<OrderRow>;
+  /** הזמנות ששולמו בתקופה + הזמנות שממתינות לאישור שנוצרו בתקופה (ימים בשעון ישראל) */
+  listOrders(from: string, to: string): Promise<OrderRow[]>;
 
   insertPaymentEvent(event: PaymentEventInput): Promise<string>;
   finishPaymentEvent(id: string, outcome: EventOutcome, error: string | null, orderId: string | null): Promise<void>;
@@ -235,6 +241,8 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
     async listOrdersNeedingEmail(maxAttempts) {
       const rows = check(await db().from('orders').select('*')
         .eq('payment_status', 'paid').is('confirmation_email_sent_at', null)
+        // באישור ידני לא שולחים מייל ללקוח
+        .is('manually_confirmed_at', null)
         .lt('confirmation_email_attempts', maxAttempts).limit(50));
       return (rows as OrderRow[]).map(toOrder);
     },
@@ -245,9 +253,17 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
           'payment_status.eq.amount_mismatch',
           'paid_after_expiry.eq.true',
           'duplicate_payment.eq.true',
-          'and(payment_status.eq.paid,confirmation_email_sent_at.is.null)'
+          'and(payment_status.eq.paid,confirmation_email_sent_at.is.null,manually_confirmed_at.is.null)'
         ].join(','))
         .order('created_at', { ascending: false }).limit(200));
+      return (rows as OrderRow[]).map(toOrder);
+    },
+    async confirmOrderManually(orderId, actorEmail) {
+      const rows = check(await db().rpc('admin_confirm_order', { p_order_id: orderId, p_actor_email: actorEmail }));
+      return toOrder((rows as OrderRow[])[0]);
+    },
+    async listOrders(from, to) {
+      const rows = check(await db().rpc('admin_orders', { p_from: from, p_to: to }));
       return (rows as OrderRow[]).map(toOrder);
     },
 

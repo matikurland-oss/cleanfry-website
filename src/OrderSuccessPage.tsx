@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ShoppingBag, MapPin, Truck, Instagram, Facebook } from 'lucide-react';
+import { trackPendingPurchase } from './analytics';
 
 const OrderSuccessPage = () => {
   // ננסה לבדוק אם שמרנו את שיטת המשלוח ב-sessionStorage כדי להציג מידע מותאם
   const savedMethod = sessionStorage.getItem('cleanfry_shipping_method') || 'delivery';
+
+  // purchase ל-GA4 — פעם אחת לכל הזמנה (הפרטים נשמרו ב-CheckoutPage כשההזמנה נוצרה)
+  useEffect(() => trackPendingPurchase(), []);
 
   // הערה: מייל אישור ההזמנה כבר לא נשלח מכאן (מהדפדפן של הלקוח) — הוא נשלח משרת לשרת
   // רק אחרי שטרנזילה מאמתת בפועל שהתשלום אושר ושהסכום תואם (ראו api/tranzila-notify.ts).

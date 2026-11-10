@@ -25,7 +25,7 @@ export default function ReportPanel({ report, loading }: { report: ReportRespons
     <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 sm:p-6">
       <h2 className="text-xl font-black text-slate-800 mb-2">ביצועי קופונים</h2>
       <ul className="text-xs text-slate-500 mb-4 space-y-1 bg-slate-50 p-3 rounded-xl list-disc pr-5">
-        <li>נספרות רק הזמנות שהתשלום שלהן אומת מול טרנזילה. הזמנות ממתינות ותשלומים שנכשלו לא נספרים.</li>
+        <li>נספרות רק הזמנות שהתשלום שלהן אומת מול טרנזילה או שאישרת ידנית. הזמנות ממתינות ותשלומים שנכשלו לא נספרים.</li>
         <li>רכישה משויכת לתקופה לפי מועד התשלום, לפי ימים בשעון ישראל.</li>
         <li>החזרים מוצגים עבור הרכישות שבתקופה, גם אם ההחזר בוצע מאוחר יותר.</li>
         {report && !report.refundsAvailable && (

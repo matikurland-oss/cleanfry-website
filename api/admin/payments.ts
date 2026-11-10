@@ -2,6 +2,8 @@
 //   GET                          הזמנות שממתינות לאימות, עם אי-התאמת סכום, תשלום כפול, תשלום אחרי
 //                                פקיעת המחיר, או שמייל האישור שלהן לא נשלח.
 //   POST { orderId, action: 'resend_email' }  שליחה חוזרת של מייל האישור (לא יוצרת רכישה נוספת).
+//   POST { orderId, action: 'confirm_payment' }  אישור ידני של הזמנה שממתינה לאימות, אחרי בדיקה
+//                                בממשק של טרנזילה. ההזמנה נספרת בדוחות; לא נשלח מייל ללקוח.
 import { requireAdmin } from '../_lib/adminAuth.js';
 import { deps } from '../_lib/deps.js';
 import { bodyObject, type ApiRequest, type ApiResponse } from '../_lib/http.js';
@@ -40,11 +42,29 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     if (req.method === 'POST') {
       const body = bodyObject(req);
       const order = typeof body.orderId === 'string' ? await store.getOrder(body.orderId) : null;
-      if (!order || body.action !== 'resend_email') {
+      if (!order || (body.action !== 'resend_email' && body.action !== 'confirm_payment')) {
         res.status(400).json({ error: 'בקשה לא תקינה' });
         return;
       }
-      if (order.payment_status !== 'paid') {
+      if (body.action === 'confirm_payment') {
+        if (order.payment_status !== 'awaiting_verification') {
+          res.status(409).json({ error: 'אפשר לאשר ידנית רק הזמנה שממתינה לאימות' });
+          return;
+        }
+        try {
+          await store.confirmOrderManually(order.id, admin.email);
+        } catch (error) {
+          // בקשה מקבילה כבר שינתה את מצב ההזמנה
+          if (error instanceof Error && error.message.includes('order_not_confirmable')) {
+            res.status(409).json({ error: 'אפשר לאשר ידנית רק הזמנה שממתינה לאימות' });
+            return;
+          }
+          throw error;
+        }
+        res.status(200).json({ ok: true });
+        return;
+      }
+      if (order.payment_status !== 'paid' || order.manually_confirmed_at) {
         res.status(409).json({ error: 'אפשר לשלוח אישור רק להזמנה ששולמה ואומתה' });
         return;
       }

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { isValidIsraeliPhone } from './checkoutValidation';
 import { isShoppingIlPromoActive } from './shoppingIlPromo';
+import { track, trackCartEvent, savePendingPurchase } from './analytics';
 import {
   FREE_SHIPPING_THRESHOLD_AGOROT,
   SHIPPING_AGOROT,
@@ -24,6 +25,7 @@ const CheckoutPage = () => {
   const location = useLocation();
   const formRef = useRef<HTMLFormElement>(null);
   const paymentFailedRef = useRef<HTMLDivElement>(null);
+  const checkoutTrackedRef = useRef(false);
 
   // 1. States
   const [quantity, setQuantity] = useState(1);
@@ -72,7 +74,15 @@ const CheckoutPage = () => {
     const params = new URLSearchParams(location.search);
     const qParam = parseInt(params.get('q') || '1');
     if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
-    if (params.get('payment') === 'failed') setPaymentFailed(true);
+    if (params.get('payment') === 'failed') {
+      setPaymentFailed(true);
+      if (!checkoutTrackedRef.current) track('payment_failed');
+    } else if (!checkoutTrackedRef.current) {
+      // מאיפה הגיעו לצ'קאאוט: הפופאפ מוסיף קופון, כפתור הקנייה מוסיף כמות, אייקון הסל — כלום
+      const source = params.get('coupon') ? 'promo_popup' : params.get('q') ? 'purchase_box' : 'cart_or_direct';
+      trackCartEvent('begin_checkout', qParam >= 1 && qParam <= 10 ? qParam : 1, { source });
+    }
+    checkoutTrackedRef.current = true;
     const couponParam = params.get('coupon');
     if (couponParam) {
       setCoupon(couponParam);
@@ -106,6 +116,7 @@ const CheckoutPage = () => {
     const timeout = setTimeout(() => {
       setShowPayment(false);
       setOrderExpired(true);
+      track('checkout_payment_expired');
     }, Math.max(0, new Date(payment.expiresAt).getTime() - Date.now()));
     return () => clearTimeout(timeout);
   }, [payment]);
@@ -156,6 +167,7 @@ const CheckoutPage = () => {
       });
       const result = await response.json();
 
+      track('coupon_apply', { coupon: code, success: !!result.valid });
       if (result.valid) {
         setCoupon(result.code);
         setDiscountPercent(result.discountPercent);
@@ -181,22 +193,27 @@ const CheckoutPage = () => {
   };
 
   const handleProceedToPayment = async () => {
+    const formError = (field: string, message: string) => {
+      track('checkout_form_error', { field });
+      alert(message);
+    };
     if (!fullName.trim() || !phone.trim() || !email.trim()) {
-      alert('אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
+      formError('contact_details', 'אנא מלא את פרטי החובה: שם מלא, טלפון ואימייל');
       return;
     }
     if (!isValidIsraeliPhone(phone)) {
-      alert('מספר טלפון לא תקין — יש להזין מספר ישראלי תקין');
+      formError('phone', 'מספר טלפון לא תקין — יש להזין מספר ישראלי תקין');
       return;
     }
     if (shippingMethod === 'delivery' && (!city.trim() || !address.trim())) {
-      alert('נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
+      formError('address', 'נבחר משלוח עד הבית. אנא מלא עיר, כתובת ומספר בית כדי להמשיך לטופס התשלום.');
       return;
     }
     if (shippingMethod === 'pickup' && !pickupLocation) {
-      alert('אנא בחר מיקום לאיסוף עצמי כדי להמשיך.');
+      formError('pickup_location', 'אנא בחר מיקום לאיסוף עצמי כדי להמשיך.');
       return;
     }
+    track('add_shipping_info', { currency: 'ILS', value: totalPrice, shipping_tier: shippingMethod });
 
     sessionStorage.setItem('cleanfry_shipping_method', shippingMethod);
 
@@ -236,17 +253,29 @@ const CheckoutPage = () => {
         } else {
           setDiscountPercent(result.pricing.coupon.discountPercent);
         }
+        track('checkout_price_changed');
         setPriceNotice(result.message);
         return;
       }
       if (!response.ok || !result.payment) {
+        track('checkout_error', { status: response.status });
         alert(result.message || 'אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
         return;
       }
 
+      track('add_payment_info', { currency: 'ILS', value: result.payment.sum, coupon: isCouponApplied ? coupon : undefined });
+      savePendingPurchase({
+        transactionId: result.orderRef,
+        value: result.payment.sum,
+        quantity,
+        coupon: isCouponApplied ? coupon : '',
+        shipping: currentShipping
+      });
+
       setPayment({ ...result.payment, expiresAt: result.expiresAt });
       setShowPayment(true);
     } catch (error) {
+      track('checkout_error', { status: 'network' });
       alert('אירעה שגיאה בהכנת ההזמנה. נסו שוב.');
     } finally {
       setIsPreparingPayment(false);

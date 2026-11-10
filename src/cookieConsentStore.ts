@@ -61,3 +61,34 @@ export function loadMailerLiteTracking(): void {
   firstScript?.parentNode?.insertBefore(script, firstScript);
   window.ml('account', '2287697');
 }
+
+// Microsoft Clarity — הקלטות סשן ומפות חום, לזיהוי איפה ולמה גולשים נוטשים. נטען רק אחרי הסכמה,
+// ורק אם הוגדר VITE_CLARITY_PROJECT_ID (בלי מזהה — לא נטען כלום).
+type ClarityFn = { (...args: unknown[]): void; q?: unknown[][] };
+declare global {
+  interface Window {
+    clarity?: ClarityFn;
+  }
+}
+
+let clarityLoaded = false;
+
+export function loadClarityTracking(): void {
+  const projectId = import.meta.env.VITE_CLARITY_PROJECT_ID as string | undefined;
+  if (!projectId || clarityLoaded || document.getElementById('clarity-tracking')) return;
+  clarityLoaded = true;
+
+  if (!window.clarity) {
+    const clarity: ClarityFn = (...args: unknown[]) => {
+      clarity.q = clarity.q || [];
+      clarity.q.push(args);
+    };
+    window.clarity = clarity;
+  }
+  const script = document.createElement('script');
+  script.id = 'clarity-tracking';
+  script.async = true;
+  script.src = `https://www.clarity.ms/tag/${encodeURIComponent(projectId)}`;
+  const firstScript = document.getElementsByTagName('script')[0];
+  firstScript?.parentNode?.insertBefore(script, firstScript);
+}

@@ -301,3 +301,24 @@ describe('order reference', () => {
     expect(parseOrderReference('garbage')).toBeNull();
   });
 });
+
+describe('manual confirmation followed by real verification', () => {
+  it('attaches the verified payment without flagging a duplicate or emailing again', async () => {
+    const { order, remarks } = await placeOrder();
+    useDeps(noopVerifier);
+    await notify({ Response: '000', index: '2001', sum: '236', remarks });
+    sendEmail.mockClear();
+    await store.confirmOrderManually(order.id, 'owner@cleanfry.co.il');
+
+    // בהמשך הוגדרו מפתחות API, וה-cron מאמת את האירוע
+    useDeps();
+    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 23600, currency: 'ILS', remarks });
+    const res = await call(reconcile, { method: 'POST', headers: { authorization: 'Bearer cron-secret' } });
+    expect(res.status).toBe(200);
+
+    const saved = (await store.getOrder(order.id))!;
+    expect(saved).toMatchObject({ payment_status: 'paid', duplicate_payment: false });
+    expect(store.payments).toHaveLength(1);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+});

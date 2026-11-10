@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { adminApi, formatShekels, type AttentionOrder } from './adminApi';
+import { adminApi, confirmSaleQuestion, formatShekels, type AttentionOrder } from './adminApi';
 import { formatIsraelDateTime } from './israelTime';
 
 function reasons(o: AttentionOrder): string[] {
@@ -36,13 +36,29 @@ export default function AttentionPanel({ orders, verificationConfigured, onChang
     }
   };
 
+  const confirmSale = async (o: AttentionOrder) => {
+    if (!window.confirm(confirmSaleQuestion(o.public_ref, o.total_agorot))) return;
+    setBusy(o.id);
+    setMessage('');
+    try {
+      await adminApi.confirmPayment(o.id);
+      setMessage(`הזמנה ${o.public_ref} אושרה ונספרת בדוחות`);
+      onChanged();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setBusy('');
+    }
+  };
+
   return (
     <section className="bg-white rounded-3xl shadow-sm border-2 border-amber-200 p-4 sm:p-6">
       <h2 className="text-xl font-black text-slate-800 mb-2">דורש תשומת לב</h2>
       {!verificationConfigured && (
         <p className="text-sm font-bold text-amber-800 bg-amber-50 p-3 rounded-xl mb-3">
           מפתחות ה-API של טרנזילה לא הוגדרו, ולכן לא ניתן לאמת תשלומים אוטומטית. הזמנות "ממתינות לאימות" לא נספרות
-          בדוחות עד שהמפתחות יוגדרו (האימות ירוץ עליהן אוטומטית). בינתיים בדקו אותן מול ממשק הניהול של טרנזילה.
+          בדוחות עד שהמפתחות יוגדרו (האימות ירוץ עליהן אוטומטית). בינתיים בדקו אותן מול ממשק הניהול של טרנזילה,
+          ואם העסקה עברה לחצו "אישור מכירה".
         </p>
       )}
       {message && <p role="status" className="text-sm font-bold mb-3">{message}</p>}
@@ -65,6 +81,12 @@ export default function AttentionPanel({ orders, verificationConfigured, onChang
               <button onClick={() => resend(o.id)} disabled={busy === o.id}
                 className="px-3 py-2 rounded-lg bg-slate-800 text-white text-sm font-bold disabled:opacity-50 whitespace-nowrap">
                 שליחת מייל אישור שוב
+              </button>
+            )}
+            {o.payment_status === 'awaiting_verification' && (
+              <button onClick={() => confirmSale(o)} disabled={busy === o.id}
+                className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-bold disabled:opacity-50 whitespace-nowrap">
+                אישור מכירה
               </button>
             )}
           </div>
