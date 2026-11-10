@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { isPromoDismissed, dismissPromo, subscribePromoDismissed } from './promoPopupStore';
 import { SHOPPING_IL_PROMO_END } from './shoppingIlPromo';
+import { track } from './analytics';
 
 const PromoPopup = () => {
   const location = useLocation();
@@ -14,16 +15,21 @@ const PromoPopup = () => {
 
   useEffect(() => {
     if (dismissed || new Date() > SHOPPING_IL_PROMO_END) return;
-    const timer = setTimeout(() => setVisible(true), 1500);
+    const timer = setTimeout(() => {
+      setVisible(true);
+      track('promo_popup_view', { promotion_id: 'NOV26' });
+    }, 1500);
     return () => clearTimeout(timer);
   }, [dismissed]);
 
   const handleClose = () => {
+    track('promo_popup_close', { promotion_id: 'NOV26' });
     setVisible(false);
     dismissPromo();
   };
 
   const handleClaim = () => {
+    track('promo_popup_click', { promotion_id: 'NOV26' });
     setVisible(false);
     dismissPromo();
     navigate('/checkout?q=1&coupon=NOV26');

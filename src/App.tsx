@@ -39,6 +39,7 @@ import AccessibilityPage from './AccessibilityPage';
 import OrderSuccessPage from './OrderSuccessPage'; // ◄ ייבוא דף התודה החדש של ההזמנות!
 import CookieConsent from './CookieConsent';
 import PromoPopup from './PromoPopup';
+import { trackCartEvent } from './analytics';
 import { getCookieConsent, setCookieConsent, subscribeCookieConsent } from './cookieConsentStore';
 
 // --- רכיב עזר לגלילה לראש הדף במעבר בין נתיבים ---
@@ -332,6 +333,25 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
     path: '/'
   });
 
+  // view_item: פעם אחת בביקור בדף, כשתיבת הרכישה נכנסת למסך — כך רואים כמה גולשים בכלל הגיעו אליה
+  useEffect(() => {
+    const box = purchaseBoxRef.current;
+    if (!box) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        trackCartEvent('view_item', 1);
+        observer.disconnect();
+      }
+    }, { threshold: 0.5 });
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleBuyClick = () => {
+    trackCartEvent('add_to_cart', quantity);
+    navigate(`/checkout?q=${quantity}`);
+  };
+
   const UNIT_PRICE = 59;
   const totalPrice = quantity * UNIT_PRICE;
   const isFreeShipping = totalPrice >= 199;
@@ -436,7 +456,7 @@ const HomePage = ({ purchaseBoxRef }: { purchaseBoxRef: React.RefObject<HTMLDivE
                 </div>
 
                 <button 
-                  onClick={() => navigate(`/checkout?q=${quantity}`)}
+                  onClick={handleBuyClick}
                   className="w-full mt-6 gradient-brand text-white py-6 px-10 rounded-2xl font-black text-2xl shadow-xl hover:brightness-110 transition-all min-h-[80px] flex items-center justify-center gap-3"
                 >
                   <ShoppingCart className="w-8 h-8" />
