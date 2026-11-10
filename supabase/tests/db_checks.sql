@@ -58,5 +58,26 @@ insert into results select 'anon no table access', not has_table_privilege('anon
 insert into results select 'anon no rpc', not has_function_privilege('anon', 'public.record_payment(uuid,text,text,integer,text)', 'execute')
   and not has_function_privilege('authenticated', 'public.coupon_report(date,date)', 'execute'), null;
 
+-- אישור ידני: רק הזמנה שממתינה לאימות; מועד התשלום לפי ה-notify המוצלח; נספרת בדוח בסכום ההזמנה
+insert into orders (id, quantity, delivery_method, pickup_location, unit_price_agorot, subtotal_agorot, shipping_agorot, total_agorot,
+  customer_name, customer_phone, customer_email, invoice_lines, price_locked_until, payment_status)
+values ('00000000-0000-0000-0000-000000000004', 2, 'pickup', 'tel-aviv', 5900, 11800, 0, 11800, 'd','0501234567','d@b.co','[]',
+  '2026-11-20T10:15:00Z', 'awaiting_verification');
+insert into payment_events (order_id, response_code, received_at) values ('00000000-0000-0000-0000-000000000004', '000', '2026-11-20T10:05:00Z');
+do $$ begin
+  perform admin_confirm_order('00000000-0000-0000-0000-000000000002', 'test');
+  insert into results values ('confirm paid order refused', false, 'confirm succeeded');
+exception when others then insert into results values ('confirm paid order refused', sqlerrm = 'order_not_confirmable', sqlerrm); end $$;
+insert into results select 'manual confirm', payment_status = 'paid' and paid_at = '2026-11-20T10:05:00Z' and not paid_after_expiry and manually_confirmed_by = 'test', null
+  from admin_confirm_order('00000000-0000-0000-0000-000000000004', 'test');
+insert into results select 'manual confirm in report', bool_and(paid_orders = 1 and gross_collected_agorot = 11800), string_agg(row(r.*)::text, ' | ')
+  from coupon_report('2026-11-20', '2026-11-20') r;
+insert into results select 'admin_orders period', count(*) = 1, string_agg(public_ref, ',') from admin_orders('2026-11-20', '2026-11-20');
+insert into results select 'later verification not duplicate', payment_recorded and not order_newly_paid and order_payment_status = 'paid', null
+  from record_payment('00000000-0000-0000-0000-000000000004', 'tranzila', 'T4', 11800, 'ILS');
+insert into results select 'not flagged duplicate', not duplicate_payment, null from orders where id = '00000000-0000-0000-0000-000000000004';
+insert into results select 'anon no confirm rpc', not has_function_privilege('anon', 'public.admin_confirm_order(uuid,text)', 'execute')
+  and not has_function_privilege('authenticated', 'public.admin_orders(date,date)', 'execute'), null;
+
 select * from results;
 rollback;

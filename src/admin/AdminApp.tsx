@@ -3,11 +3,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut } from 'lucide-react';
-import { adminApi, ApiError, supabase, type AdminCoupon, type AttentionOrder, type ReportResponse } from './adminApi';
+import { adminApi, ApiError, supabase, type AdminCoupon, type AttentionOrder, type OrdersResponse, type ReportResponse } from './adminApi';
 import PeriodPicker, { presetPeriod, type Period } from './PeriodPicker';
 import CouponsPanel from './CouponsPanel';
 import ReportPanel from './ReportPanel';
 import AttentionPanel from './AttentionPanel';
+import OrdersPanel from './OrdersPanel';
 
 function useNoIndex() {
   useEffect(() => {
@@ -62,6 +63,7 @@ function Dashboard({ session }: { session: Session }) {
   const [period, setPeriod] = useState<Period>(() => presetPeriod('7days'));
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
   const [report, setReport] = useState<ReportResponse | null>(null);
+  const [orders, setOrders] = useState<OrdersResponse | null>(null);
   const [attention, setAttention] = useState<{ verificationConfigured: boolean; orders: AttentionOrder[] }>({ verificationConfigured: true, orders: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -71,14 +73,16 @@ function Dashboard({ session }: { session: Session }) {
     setLoading(true);
     setError('');
     try {
-      const [c, r, a] = await Promise.all([
+      const [c, r, a, o] = await Promise.all([
         adminApi.listCoupons(period.from, period.to),
         adminApi.report(period.from, period.to),
-        adminApi.attention()
+        adminApi.attention(),
+        adminApi.orders(period.from, period.to)
       ]);
       setCoupons(c);
       setReport(r);
       setAttention(a);
+      setOrders(o);
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) setForbidden(true);
       else if (err instanceof ApiError && err.status === 401) await supabase!.auth.signOut();
@@ -119,6 +123,7 @@ function Dashboard({ session }: { session: Session }) {
       {error && <p role="alert" className="text-red-600 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
 
       <AttentionPanel orders={attention.orders} verificationConfigured={attention.verificationConfigured} onChanged={load} />
+      <OrdersPanel data={orders} loading={loading} onChanged={load} />
       <CouponsPanel coupons={coupons} loading={loading} onChanged={load} />
       <ReportPanel report={report} loading={loading} />
     </div>

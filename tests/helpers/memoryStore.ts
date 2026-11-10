@@ -85,7 +85,9 @@ export class MemoryStore implements Store {
       confirmation_email_sent_at: null,
       confirmation_email_attempts: 0,
       confirmation_email_last_error: null,
-      unverified_notice_sent_at: null
+      unverified_notice_sent_at: null,
+      manually_confirmed_at: null,
+      manually_confirmed_by: null
     };
     this.orders.push(row);
     return { ...row };
@@ -108,7 +110,15 @@ export class MemoryStore implements Store {
     if (this.payments.some((p) => p.provider_txn_index === txnIndex)) {
       return { payment_recorded: false, order_newly_paid: false, order_payment_status: order.payment_status };
     }
+    const hadPayment = this.payments.some((p) => p.order_id === orderId);
     this.payments.push({ provider_txn_index: txnIndex, order_id: orderId, amount_agorot: amountAgorot, currency });
+    if (order.payment_status === 'paid' && order.manually_confirmed_at && !hadPayment) {
+      if (amountAgorot !== order.total_agorot || currency !== order.currency) {
+        order.payment_status = 'amount_mismatch';
+        return { payment_recorded: true, order_newly_paid: false, order_payment_status: 'amount_mismatch' };
+      }
+      return { payment_recorded: true, order_newly_paid: false, order_payment_status: 'paid' };
+    }
     if (order.payment_status === 'paid') {
       order.duplicate_payment = true;
       return { payment_recorded: true, order_newly_paid: false, order_payment_status: 'paid' };
@@ -140,13 +150,32 @@ export class MemoryStore implements Store {
   }
 
   async listOrdersNeedingEmail(maxAttempts: number) {
-    return this.orders.filter((o) => o.payment_status === 'paid' && !o.confirmation_email_sent_at && o.confirmation_email_attempts < maxAttempts);
+    return this.orders.filter((o) => o.payment_status === 'paid' && !o.confirmation_email_sent_at && !o.manually_confirmed_at &&
+      o.confirmation_email_attempts < maxAttempts);
   }
 
   async listAttentionOrders() {
     return this.orders.filter((o) =>
       o.payment_status === 'awaiting_verification' || o.payment_status === 'amount_mismatch' ||
-      o.paid_after_expiry || o.duplicate_payment || (o.payment_status === 'paid' && !o.confirmation_email_sent_at));
+      o.paid_after_expiry || o.duplicate_payment || (o.payment_status === 'paid' && !o.confirmation_email_sent_at && !o.manually_confirmed_at));
+  }
+
+  async confirmOrderManually(orderId: string, actorEmail: string) {
+    const order = this.orders.find((o) => o.id === orderId);
+    if (!order) throw new Error('order_not_found');
+    if (order.payment_status !== 'awaiting_verification') throw new Error('order_not_confirmable');
+    const notified = this.events.filter((e) => e.order_id === orderId && e.response_code === '000').map((e) => e.received_at).sort()[0];
+    const paidAt = notified ? new Date(notified) : this.now();
+    Object.assign(order, {
+      payment_status: 'paid', paid_at: paidAt.toISOString(), paid_after_expiry: paidAt > new Date(order.price_locked_until),
+      manually_confirmed_at: this.now().toISOString(), manually_confirmed_by: actorEmail
+    });
+    return { ...order };
+  }
+
+  /** בלי סינון תקופה: גבולות ימים לפי שעון ישראל נבדקים מול Postgres אמיתי (supabase/tests) */
+  async listOrders() {
+    return this.orders.filter((o) => o.payment_status === 'paid' || o.payment_status === 'awaiting_verification').map((o) => ({ ...o }));
   }
 
   async insertPaymentEvent(event: PaymentEventInput) {
@@ -189,7 +218,11 @@ export class MemoryStore implements Store {
       units_sold: orders.reduce((s, o) => s + o.quantity, 0),
       product_sales_agorot: orders.reduce((s, o) => s + o.subtotal_agorot - o.discount_agorot, 0),
       discounts_agorot: orders.reduce((s, o) => s + o.discount_agorot, 0),
-      gross_collected_agorot: this.payments.filter((p) => orders.some((o) => o.id === p.order_id)).reduce((s, p) => s + p.amount_agorot, 0),
+      gross_collected_agorot: orders.reduce((s, o) => {
+        const paid = this.payments.filter((p) => p.order_id === o.id);
+        if (paid.length === 0 && o.manually_confirmed_at) return s + o.total_agorot;
+        return s + paid.reduce((t, p) => t + p.amount_agorot, 0);
+      }, 0),
       refunds_agorot: 0
     })).sort((a, b) => b.paid_orders - a.paid_orders);
   }

@@ -61,6 +61,40 @@ export interface AttentionOrder {
   details: string;
 }
 
+export interface AdminOrder {
+  id: string;
+  public_ref: string;
+  payment_status: 'paid' | 'awaiting_verification';
+  manually_confirmed: boolean;
+  created_at: string;
+  paid_at: string | null;
+  customer_name: string;
+  customer_phone: string;
+  delivery_method: 'delivery' | 'pickup';
+  pickup_location: 'kfar-saba' | 'tel-aviv' | null;
+  shipping_city: string;
+  quantity: number;
+  products_agorot: number;
+  discount_agorot: number;
+  shipping_agorot: number;
+  total_agorot: number;
+  coupon_code: string | null;
+}
+
+export interface OrdersResponse {
+  orders: AdminOrder[];
+  totals: {
+    orders: number;
+    delivery_orders: number;
+    pickup_orders: number;
+    quantity: number;
+    products_agorot: number;
+    shipping_agorot: number;
+    total_agorot: number;
+  };
+  pending: { orders: number; total_agorot: number };
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -95,8 +129,16 @@ export const adminApi = {
   report: (from: string, to: string) => request<ReportResponse>(`/api/admin/report?${periodQuery(from, to)}`),
   attention: () => request<{ verificationConfigured: boolean; orders: AttentionOrder[] }>('/api/admin/payments'),
   resendEmail: (orderId: string) =>
-    request<{ ok: true }>('/api/admin/payments', { method: 'POST', body: JSON.stringify({ orderId, action: 'resend_email' }) })
+    request<{ ok: true }>('/api/admin/payments', { method: 'POST', body: JSON.stringify({ orderId, action: 'resend_email' }) }),
+  confirmPayment: (orderId: string) =>
+    request<{ ok: true }>('/api/admin/payments', { method: 'POST', body: JSON.stringify({ orderId, action: 'confirm_payment' }) }),
+  orders: (from: string, to: string) => request<OrdersResponse>(`/api/admin/orders?${periodQuery(from, to)}`)
 };
+
+/** שאלת וידוא לפני אישור ידני של מכירה */
+export const confirmSaleQuestion = (ref: string, totalAgorot: number) =>
+  `לאשר את הזמנה ${ref}?\n\nוידאת בממשק של טרנזילה שעסקה של ${formatShekels(totalAgorot)} עברה בהצלחה?\n` +
+  'ההזמנה תיספר בדוחות. לא יישלח מייל ללקוח.';
 
 export const formatShekels = (agorot: number | null) =>
   agorot === null ? 'לא זמין' : `₪${(agorot / 100).toLocaleString('he-IL', { maximumFractionDigits: 2 })}`;
