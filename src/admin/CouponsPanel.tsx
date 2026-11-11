@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pause, Pencil, Play, Plus, Search } from 'lucide-react';
-import { adminApi, formatShekels, type AdminCoupon, type CouponState } from './adminApi';
+import { adminApi, formatShekels, type AdminCoupon, type AdminPartner, type CouponState } from './adminApi';
 import { formatIsraelDateTime } from './israelTime';
 import CouponForm from './CouponForm';
 
@@ -13,8 +13,9 @@ const STATE_LABELS: Record<CouponState, { label: string; className: string }> = 
 
 type SortKey = 'paid_orders' | 'gross_collected_agorot' | 'created_at';
 
-export default function CouponsPanel({ coupons, loading, onChanged }: {
+export default function CouponsPanel({ coupons, partners, loading, onChanged }: {
   coupons: AdminCoupon[];
+  partners: AdminPartner[];
   loading: boolean;
   onChanged: () => void;
 }) {
@@ -60,6 +61,8 @@ export default function CouponsPanel({ coupons, loading, onChanged }: {
       </button>
     </div>
   );
+
+  const partnerName = (c: AdminCoupon) => partners.find((p) => p.id === c.partner_id)?.display_name ?? '—';
 
   const badge = (state: CouponState) => (
     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${STATE_LABELS[state].className}`}>{STATE_LABELS[state].label}</span>
@@ -115,6 +118,7 @@ export default function CouponsPanel({ coupons, loading, onChanged }: {
               <div><dt className="text-slate-400 text-xs">הנחה</dt><dd className="font-bold">{c.discount_percent}%</dd></div>
               <div><dt className="text-slate-400 text-xs">הזמנות ששולמו</dt><dd className="font-bold">{c.paid_orders}</dd></div>
               <div><dt className="text-slate-400 text-xs">הכנסות</dt><dd className="font-bold">{formatShekels(c.gross_collected_agorot)}</dd></div>
+              <div><dt className="text-slate-400 text-xs">משפיענית</dt><dd className="font-bold">{partnerName(c)}</dd></div>
               <div><dt className="text-slate-400 text-xs">תוקף</dt><dd className="text-xs">{formatIsraelDateTime(c.starts_at)} – {formatIsraelDateTime(c.expires_at)}</dd></div>
             </dl>
             {actions(c)}
@@ -132,6 +136,7 @@ export default function CouponsPanel({ coupons, loading, onChanged }: {
                 <th className="py-2 px-2 font-bold">שם פנימי</th>
                 <th className="py-2 px-2 font-bold">הנחה</th>
                 <th className="py-2 px-2 font-bold">מצב</th>
+                <th className="py-2 px-2 font-bold">משפיענית</th>
                 <th className="py-2 px-2 font-bold">התחלה</th>
                 <th className="py-2 px-2 font-bold">תפוגה</th>
                 <th className="py-2 px-2 font-bold">הזמנות ששולמו</th>
@@ -146,6 +151,7 @@ export default function CouponsPanel({ coupons, loading, onChanged }: {
                   <td className="py-3 px-2 text-slate-600">{c.label || '—'}</td>
                   <td className="py-3 px-2 font-bold tabular-nums">{c.discount_percent}%</td>
                   <td className="py-3 px-2">{badge(c.state)}</td>
+                  <td className="py-3 px-2 text-slate-600">{partnerName(c)}</td>
                   <td className="py-3 px-2 text-xs text-slate-500">{formatIsraelDateTime(c.starts_at)}</td>
                   <td className="py-3 px-2 text-xs text-slate-500">{formatIsraelDateTime(c.expires_at)}</td>
                   <td className="py-3 px-2 font-bold tabular-nums">{c.paid_orders}</td>

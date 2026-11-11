@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import type { CouponRow } from '../../api/_lib/coupons';
 import type {
   Actor, CouponInput, CouponPatch, CouponReportRow, EventOutcome, NewOrder, OrderRow,
+  PartnerInput, PartnerMonthRow, PartnerPatch, PartnerRow, PartnerStats, PartnerTotalsRow,
   PaymentEventInput, PaymentEventRow, RecordPaymentResult, Store
 } from '../../api/_lib/store';
 
@@ -22,6 +23,7 @@ export class MemoryStore implements Store {
   payments: MemoryPayment[] = [];
   events: PaymentEventRow[] = [];
   admins = new Set<string>();
+  partners: PartnerRow[] = [];
   rateCounts = new Map<string, number>();
   /** מאפשר לבדיקה לדמות כשל זמני בשמירה */
   failNext: Partial<Record<keyof Store, number>> = {};
@@ -87,7 +89,9 @@ export class MemoryStore implements Store {
       confirmation_email_last_error: null,
       unverified_notice_sent_at: null,
       manually_confirmed_at: null,
-      manually_confirmed_by: null
+      manually_confirmed_by: null,
+      // כמו הטריגר orders_set_partner
+      ...this.partnerSnapshot(order.coupon_id)
     };
     this.orders.push(row);
     return { ...row };
@@ -228,4 +232,80 @@ export class MemoryStore implements Store {
   }
 
   async isAdmin(userId: string) { return this.admins.has(userId); }
+
+  private partnerSnapshot(couponId: string | null) {
+    const partnerId = this.coupons.find((c) => c.id === couponId)?.partner_id ?? null;
+    const partner = this.partners.find((p) => p.id === partnerId);
+    return { partner_id: partner?.id ?? null, partner_commission_percent: partner?.commission_percent ?? null };
+  }
+
+  async getPartner(id: string) { return this.partners.find((p) => p.id === id) ?? null; }
+  async getPartnerByUserId(userId: string) { return this.partners.find((p) => p.user_id === userId) ?? null; }
+  async getPartnerByUsername(username: string) { return this.partners.find((p) => p.username === username) ?? null; }
+  async listPartners() { return [...this.partners]; }
+
+  async createPartner(input: PartnerInput) {
+    this.maybeFail('createPartner');
+    if (this.partners.some((p) => p.username === input.username || p.user_id === input.user_id)) {
+      throw new Error('duplicate key value violates unique constraint');
+    }
+    const row: PartnerRow = { ...input, id: randomUUID(), is_active: true, created_at: this.now().toISOString() };
+    this.partners.push(row);
+    return { ...row };
+  }
+
+  async updatePartner(id: string, patch: PartnerPatch) {
+    const row = this.partners.find((p) => p.id === id);
+    if (!row) throw new Error('partner_not_found');
+    Object.assign(row, patch);
+    return { ...row };
+  }
+
+  async setCouponPartner(couponId: string, partnerId: string | null, actor: Actor) {
+    this.maybeFail('setCouponPartner');
+    const coupon = this.coupons.find((c) => c.id === couponId);
+    if (!coupon) throw new Error('coupon_not_found');
+    const partner = partnerId ? this.partners.find((p) => p.id === partnerId) : null;
+    if (partnerId && !partner) throw new Error('partner_not_found');
+    if ((coupon.partner_id ?? null) === partnerId) return;
+    coupon.partner_id = partnerId;
+    if (partner) {
+      for (const o of this.orders.filter((x) => x.coupon_id === couponId && !x.partner_id)) {
+        o.partner_id = partner.id;
+        o.partner_commission_percent = partner.commission_percent;
+      }
+    }
+    this.audit.push({ coupon_id: couponId, action: partnerId ? 'assign_partner' : 'unassign_partner', actor, changes: { partner_id: partnerId } });
+  }
+
+  private partnerOrders(partnerId?: string) {
+    return this.orders.filter((o) => o.partner_id && (!partnerId || o.partner_id === partnerId) &&
+      o.payment_status === 'paid' && o.fulfillment_status !== 'cancelled');
+  }
+
+  private static stats(orders: OrderRow[]): PartnerStats {
+    return {
+      orders_count: orders.length,
+      units: orders.reduce((s, o) => s + o.quantity, 0),
+      sales_agorot: orders.reduce((s, o) => s + o.subtotal_agorot - o.discount_agorot, 0),
+      commission_agorot: orders.reduce((s, o) =>
+        s + Math.round((o.subtotal_agorot - o.discount_agorot) * o.partner_commission_percent! / 100), 0)
+    };
+  }
+
+  async partnerMonthly(partnerId: string): Promise<PartnerMonthRow[]> {
+    const byMonth = new Map<string, OrderRow[]>();
+    for (const o of this.partnerOrders(partnerId)) {
+      const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit' })
+        .format(new Date(o.paid_at!));
+      byMonth.set(month, [...(byMonth.get(month) ?? []), o]);
+    }
+    return [...byMonth.entries()].sort(([a], [b]) => b.localeCompare(a))
+      .map(([month, orders]) => ({ month, ...MemoryStore.stats(orders) }));
+  }
+
+  async partnerTotals(): Promise<PartnerTotalsRow[]> {
+    const ids = [...new Set(this.partnerOrders().map((o) => o.partner_id!))];
+    return ids.map((id) => ({ partner_id: id, ...MemoryStore.stats(this.partnerOrders(id)) }));
+  }
 }

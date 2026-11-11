@@ -45,6 +45,9 @@ export interface OrderRow extends NewOrder {
   unverified_notice_sent_at: string | null;
   manually_confirmed_at: string | null;
   manually_confirmed_by: string | null;
+  /** המשפיענית שהקופון היה שייך לה ביצירת ההזמנה, והאחוז שלה באותו רגע (נקבע במסד הנתונים) */
+  partner_id: string | null;
+  partner_commission_percent: number | null;
 }
 
 export interface PaymentEventInput {
@@ -110,6 +113,42 @@ export interface CouponReportRow {
   refunds_agorot: number;
 }
 
+export interface PartnerRow {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string;
+  commission_percent: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PartnerInput {
+  user_id: string;
+  username: string;
+  display_name: string;
+  commission_percent: number;
+}
+
+export type PartnerPatch = Partial<Pick<PartnerRow, 'display_name' | 'commission_percent' | 'is_active'>>;
+
+/** סיכום מכירות של משפיענית — מספרים מצטברים בלבד, בלי פרטי לקוחות */
+export interface PartnerStats {
+  orders_count: number;
+  units: number;
+  sales_agorot: number;
+  commission_agorot: number;
+}
+
+export interface PartnerMonthRow extends PartnerStats {
+  /** YYYY-MM בשעון ישראל */
+  month: string;
+}
+
+export interface PartnerTotalsRow extends PartnerStats {
+  partner_id: string;
+}
+
 export interface Store {
   hitRateLimit(key: string, max: number, windowSeconds: number): Promise<boolean>;
 
@@ -140,6 +179,17 @@ export interface Store {
 
   couponReport(from: string, to: string): Promise<CouponReportRow[]>;
   isAdmin(userId: string): Promise<boolean>;
+
+  getPartner(id: string): Promise<PartnerRow | null>;
+  getPartnerByUserId(userId: string): Promise<PartnerRow | null>;
+  getPartnerByUsername(username: string): Promise<PartnerRow | null>;
+  listPartners(): Promise<PartnerRow[]>;
+  createPartner(input: PartnerInput, actor: Actor): Promise<PartnerRow>;
+  updatePartner(id: string, patch: PartnerPatch): Promise<PartnerRow>;
+  /** משייך קופון למשפיענית (או מבטל שיוך עם null). בשיוך, הזמנות קודמות בקופון שלא שויכו נספרות לה */
+  setCouponPartner(couponId: string, partnerId: string | null, actor: Actor): Promise<void>;
+  partnerMonthly(partnerId: string): Promise<PartnerMonthRow[]>;
+  partnerTotals(): Promise<PartnerTotalsRow[]>;
 }
 
 let serviceClient: SupabaseClient | null = null;
@@ -162,8 +212,18 @@ function check<T>(result: { data: T; error: { message: string } | null }): T {
 const toCoupon = (row: CouponRow): CouponRow => ({ ...row, discount_percent: Number(row.discount_percent) });
 const toOrder = (row: OrderRow): OrderRow => ({
   ...row,
-  discount_percent_snapshot: row.discount_percent_snapshot === null ? null : Number(row.discount_percent_snapshot)
+  discount_percent_snapshot: row.discount_percent_snapshot === null ? null : Number(row.discount_percent_snapshot),
+  partner_commission_percent: row.partner_commission_percent == null ? null : Number(row.partner_commission_percent)
 });
+const toPartner = (row: PartnerRow): PartnerRow => ({ ...row, commission_percent: Number(row.commission_percent) });
+const toStats = <T extends PartnerStats>(row: T): T => ({
+  ...row,
+  orders_count: Number(row.orders_count),
+  units: Number(row.units),
+  sales_agorot: Number(row.sales_agorot),
+  commission_agorot: Number(row.commission_agorot)
+});
+const PARTNER_COLUMNS = 'id, user_id, username, display_name, commission_percent, is_active, created_at';
 
 // הלקוח נוצר רק בשימוש הראשון, כך שחוסר בהגדרות מתגלה בתוך ה-try של הפונקציה (503) ולא מפיל אותה
 export function createSupabaseStore(client?: SupabaseClient): Store {
@@ -305,6 +365,44 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
     async isAdmin(userId) {
       const row = check(await db().from('admin_users').select('user_id').eq('user_id', userId).maybeSingle());
       return Boolean(row);
+    },
+
+    async getPartner(id) {
+      const row = check(await db().from('partners').select(PARTNER_COLUMNS).eq('id', id).maybeSingle());
+      return row ? toPartner(row as PartnerRow) : null;
+    },
+    async getPartnerByUserId(userId) {
+      const row = check(await db().from('partners').select(PARTNER_COLUMNS).eq('user_id', userId).maybeSingle());
+      return row ? toPartner(row as PartnerRow) : null;
+    },
+    async getPartnerByUsername(username) {
+      const row = check(await db().from('partners').select(PARTNER_COLUMNS).eq('username', username).maybeSingle());
+      return row ? toPartner(row as PartnerRow) : null;
+    },
+    async listPartners() {
+      const rows = check(await db().from('partners').select(PARTNER_COLUMNS).order('created_at', { ascending: false }));
+      return (rows as PartnerRow[]).map(toPartner);
+    },
+    async createPartner(input, actor) {
+      const row = check(await db().from('partners').insert({ ...input, created_by: actor.id }).select(PARTNER_COLUMNS).single());
+      return toPartner(row as PartnerRow);
+    },
+    async updatePartner(id, patch) {
+      const row = check(await db().from('partners').update(patch).eq('id', id).select(PARTNER_COLUMNS).single());
+      return toPartner(row as PartnerRow);
+    },
+    async setCouponPartner(couponId, partnerId, actor) {
+      check(await db().rpc('admin_set_coupon_partner', {
+        p_coupon_id: couponId, p_partner_id: partnerId, p_actor_id: actor.id, p_actor_email: actor.email
+      }));
+    },
+    async partnerMonthly(partnerId) {
+      const rows = check(await db().rpc('partner_monthly', { p_partner_id: partnerId })) as PartnerMonthRow[];
+      return rows.map(toStats);
+    },
+    async partnerTotals() {
+      const rows = check(await db().rpc('partner_totals')) as PartnerTotalsRow[];
+      return rows.map(toStats);
     }
   };
 }
