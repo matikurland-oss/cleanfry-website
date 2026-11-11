@@ -102,7 +102,7 @@ export const MAX_PARTNER_COMMISSION_PERCENT = 50;
 export const PARTNER_USERNAME_PATTERN = /^[a-z0-9_-]{3,30}$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const COMMISSION_ERROR = `אחוז עמלה חייב להיות בין 0 ל-${MAX_PARTNER_COMMISSION_PERCENT}`;
-const PASSWORD_ERROR = 'סיסמה: 8 עד 72 תווים';
+const PASSWORD_ERROR = 'סיסמה: 12 עד 72 תווים, עם אות קטנה, אות גדולה וספרה באנגלית';
 
 function parseCommission(value: unknown): number | null {
   const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
@@ -111,8 +111,10 @@ function parseCommission(value: unknown): number | null {
   return n;
 }
 
-const validPassword = (value: unknown): value is string =>
-  typeof value === 'string' && value.length >= 8 && value.length <= 72;
+// תואם להגדרת חוזק הסיסמה המומלצת ב-Supabase Auth (12 תווים, קטנה + גדולה + ספרה)
+export const validPassword = (value: unknown): value is string =>
+  typeof value === 'string' && value.length >= 12 && value.length <= 72 &&
+  /[a-z]/.test(value) && /[A-Z]/.test(value) && /[0-9]/.test(value);
 
 function parseDisplayName(value: unknown): string | null {
   if (typeof value !== 'string') return null;

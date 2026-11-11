@@ -9,6 +9,8 @@ import createOrder from '../api/create-order';
 import { setDepsForTests, type AuthAdmin } from '../api/_lib/deps';
 import { noopVerifier } from '../api/_lib/tranzila';
 import type { NewOrder } from '../api/_lib/store';
+import { validPassword } from '../api/_lib/adminValidation';
+import { generatePassword } from '../src/admin/PartnersPanel';
 import { MemoryStore } from './helpers/memoryStore';
 import { call } from './helpers/http';
 
@@ -79,7 +81,7 @@ async function paidCouponOrder(couponId: string, code: string, paidAt = NOW.toIS
 async function createPartner(body: Record<string, unknown> = {}) {
   return call(adminPartners, {
     method: 'POST', headers: as('admin-token'),
-    body: { username: 'dana', password: 'secret-pass-1', display_name: 'דנה', commission_percent: 15, ...body }
+    body: { username: 'dana', password: 'Secret-pass-123', display_name: 'דנה', commission_percent: 15, ...body }
   });
 }
 
@@ -102,14 +104,18 @@ describe('partner admin API', () => {
       coupons: [{ id: coupon.id, code: 'DANA10', discount_percent: 10, state: 'active' }],
       totals: { orders_count: 0, units: 0, sales_agorot: 0, commission_agorot: 0 }
     });
-    expect(authAdmin.createUser).toHaveBeenCalledWith('dana@partners.cleanfry.co.il', 'secret-pass-1');
+    expect(authAdmin.createUser).toHaveBeenCalledWith('dana@partners.cleanfry.co.il', 'Secret-pass-123');
     expect(store.audit).toContainEqual(expect.objectContaining({ coupon_id: coupon.id, action: 'assign_partner' }));
   });
 
   it('validates input', async () => {
     expect((await createPartner({ username: 'a' })).status).toBe(400);
     expect((await createPartner({ username: 'דנה' })).status).toBe(400);
-    expect((await createPartner({ password: 'short' })).status).toBe(400);
+    expect((await createPartner({ password: 'Short1' })).status).toBe(400);
+    expect((await createPartner({ password: 'alllowercase123' })).status).toBe(400); // בלי אות גדולה
+    expect((await createPartner({ password: 'ALLUPPERCASE123' })).status).toBe(400); // בלי אות קטנה
+    expect((await createPartner({ password: 'NoDigitsHereAtAll' })).status).toBe(400);
+    expect((await call(adminPartners, { method: 'PATCH', headers: as('admin-token'), query: { id: '00000000-0000-0000-0000-000000000000' }, body: {} })).status).toBe(404);
     expect((await createPartner({ commission_percent: 51 })).status).toBe(400);
     expect((await createPartner({ commission_percent: -1 })).status).toBe(400);
     expect((await createPartner({ display_name: '  ' })).status).toBe(400);
@@ -149,11 +155,11 @@ describe('partner admin API', () => {
 
     const res = await call(adminPartners, {
       method: 'PATCH', headers: as('admin-token'), query: { id },
-      body: { commission_percent: 20, is_active: false, password: 'new-password-2', coupon_ids: [b.id] }
+      body: { commission_percent: 20, is_active: false, password: 'New-password-22', coupon_ids: [b.id] }
     });
     expect(res.status).toBe(200);
     expect(res.body.partner).toMatchObject({ commission_percent: 20, is_active: false, coupons: [{ code: 'BBB' }] });
-    expect(authUsers.get('partner-user-1')!.password).toBe('new-password-2');
+    expect(authUsers.get('partner-user-1')!.password).toBe('New-password-22');
     expect(a.partner_id).toBeNull();
 
     expect((await call(adminPartners, { method: 'PATCH', headers: as('admin-token'), query: { id }, body: { username: 'x' } })).status).toBe(400);
@@ -165,6 +171,12 @@ describe('partner admin API', () => {
     const partnerId = (await createPartner({ coupon_ids: [coupon.id] })).body.partner.id;
     const res = await call(adminCoupons, { method: 'GET', headers: as('admin-token'), query: { from: '2026-11-01', to: '2026-11-08' } });
     expect(res.body.coupons[0].partner_id).toBe(partnerId);
+  });
+});
+
+describe('password generator', () => {
+  it('always produces a password the server accepts', () => {
+    for (let i = 0; i < 500; i++) expect(validPassword(generatePassword())).toBe(true);
   });
 });
 

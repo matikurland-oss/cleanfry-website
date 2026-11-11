@@ -7,10 +7,18 @@ import { adminApi, formatShekels, type AdminCoupon, type AdminPartner } from './
 
 const partnerLoginUrl = () => `${window.location.origin}/partner`;
 
-function generatePassword(): string {
-  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  return Array.from(bytes, (b) => chars[b % chars.length]).join('');
+const LOWER = 'abcdefghjkmnpqrstuvwxyz';
+const UPPER = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const DIGITS = '23456789';
+
+/** 14 תווים אקראיים, תמיד עם אות קטנה, אות גדולה וספרה (בלי תווים שמתבלבלים כמו l/1/O/0) */
+export function generatePassword(): string {
+  const all = LOWER + UPPER + DIGITS;
+  for (;;) {
+    const bytes = crypto.getRandomValues(new Uint8Array(14));
+    const password = Array.from(bytes, (b) => all[b % all.length]).join('');
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password)) return password;
+  }
 }
 
 const loginMessage = (name: string, username: string, password: string) =>
@@ -128,7 +136,8 @@ function PartnerForm({ partner, coupons, partners, onClose, onSaved }: {
         <label className="block">
           <span className="text-sm font-bold text-slate-600">{partner ? 'סיסמה חדשה (להשאיר ריק כדי לא לשנות)' : 'סיסמה'}</span>
           <div className="flex gap-2 mt-1">
-            <input required={!partner} minLength={8} maxLength={72} value={password} onChange={(e) => setPassword(e.target.value)}
+            <input required={!partner} minLength={12} maxLength={72} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{12,72}"
+              title="12 תווים לפחות, עם אות קטנה, אות גדולה וספרה באנגלית" value={password} onChange={(e) => setPassword(e.target.value)}
               className={`${input} font-mono`} dir="ltr" autoComplete="new-password" />
             <button type="button" onClick={() => setPassword(generatePassword())} className="shrink-0 px-3 rounded-xl bg-slate-100 font-bold text-sm text-slate-700">צור סיסמה</button>
           </div>
