@@ -27,6 +27,7 @@ import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useSEO } from './useSEO';
 
 const AdminApp = lazy(() => import('./admin/AdminApp'));
+const PartnerApp = lazy(() => import('./partner/PartnerApp'));
 
 // ייבוא הדפים הנוספים
 import ContactPage from './ContactPage';
@@ -582,6 +583,15 @@ export default function App() {
     return (
       <Suspense fallback={<p className="text-center mt-16 text-slate-500" dir="rtl">טוען...</p>}>
         <AdminApp />
+      </Suspense>
+    );
+  }
+
+  // אזור המשפיעניות — גם הוא בלי מעטפת האתר
+  if (location.pathname === '/partner' || location.pathname.startsWith('/partner/')) {
+    return (
+      <Suspense fallback={<p className="text-center mt-16 text-slate-500" dir="rtl">טוען...</p>}>
+        <PartnerApp />
       </Suspense>
     );
   }

@@ -3,12 +3,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut } from 'lucide-react';
-import { adminApi, ApiError, supabase, type AdminCoupon, type AttentionOrder, type OrdersResponse, type ReportResponse } from './adminApi';
+import { adminApi, ApiError, supabase, type AdminCoupon, type AdminPartner, type AttentionOrder, type OrdersResponse, type ReportResponse } from './adminApi';
 import PeriodPicker, { presetPeriod, type Period } from './PeriodPicker';
 import CouponsPanel from './CouponsPanel';
 import ReportPanel from './ReportPanel';
 import AttentionPanel from './AttentionPanel';
 import OrdersPanel from './OrdersPanel';
+import PartnersPanel from './PartnersPanel';
 
 function useNoIndex() {
   useEffect(() => {
@@ -62,6 +63,7 @@ function LoginForm() {
 function Dashboard({ session }: { session: Session }) {
   const [period, setPeriod] = useState<Period>(() => presetPeriod('7days'));
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
+  const [partners, setPartners] = useState<AdminPartner[]>([]);
   const [report, setReport] = useState<ReportResponse | null>(null);
   const [orders, setOrders] = useState<OrdersResponse | null>(null);
   const [attention, setAttention] = useState<{ verificationConfigured: boolean; orders: AttentionOrder[] }>({ verificationConfigured: true, orders: [] });
@@ -73,13 +75,15 @@ function Dashboard({ session }: { session: Session }) {
     setLoading(true);
     setError('');
     try {
-      const [c, r, a, o] = await Promise.all([
+      const [c, r, a, o, p] = await Promise.all([
         adminApi.listCoupons(period.from, period.to),
         adminApi.report(period.from, period.to),
         adminApi.attention(),
-        adminApi.orders(period.from, period.to)
+        adminApi.orders(period.from, period.to),
+        adminApi.listPartners()
       ]);
       setCoupons(c);
+      setPartners(p);
       setReport(r);
       setAttention(a);
       setOrders(o);
@@ -124,7 +128,8 @@ function Dashboard({ session }: { session: Session }) {
 
       <AttentionPanel orders={attention.orders} verificationConfigured={attention.verificationConfigured} onChanged={load} />
       <OrdersPanel data={orders} loading={loading} onChanged={load} />
-      <CouponsPanel coupons={coupons} loading={loading} onChanged={load} />
+      <CouponsPanel coupons={coupons} partners={partners} loading={loading} onChanged={load} />
+      <PartnersPanel partners={partners} coupons={coupons} loading={loading} onChanged={load} />
       <ReportPanel report={report} loading={loading} />
     </div>
   );

@@ -10,6 +10,8 @@ export interface CouponRow {
   expires_at: string | null;
   created_at: string;
   updated_at: string;
+  /** המשפיענית שהקופון שייך לה */
+  partner_id?: string | null;
 }
 
 export type CouponState = 'active' | 'paused' | 'not_started' | 'expired';

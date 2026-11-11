@@ -13,6 +13,8 @@ const routes = {
   '/api/admin/report': (await import('../api/admin/report.ts')).default,
   '/api/admin/payments': (await import('../api/admin/payments.ts')).default,
   '/api/admin/orders': (await import('../api/admin/orders.ts')).default,
+  '/api/admin/partners': (await import('../api/admin/partners.ts')).default,
+  '/api/partner/summary': (await import('../api/partner/summary.ts')).default,
 };
 
 const server = http.createServer(async (req, res) => {

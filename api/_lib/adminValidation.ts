@@ -94,3 +94,102 @@ export function validatePeriod(from: string, to: string): Result<{ from: string;
   if (toDate.getTime() - fromDate.getTime() > 731 * 86_400_000) return { ok: false, error: 'טווח ארוך מדי (עד שנתיים)' };
   return { ok: true, value: { from, to } };
 }
+
+// ---------------------------------------------------------------------------
+// משפיעניות
+// ---------------------------------------------------------------------------
+export const MAX_PARTNER_COMMISSION_PERCENT = 50;
+export const PARTNER_USERNAME_PATTERN = /^[a-z0-9_-]{3,30}$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const COMMISSION_ERROR = `אחוז עמלה חייב להיות בין 0 ל-${MAX_PARTNER_COMMISSION_PERCENT}`;
+const PASSWORD_ERROR = 'סיסמה: 12 עד 72 תווים, עם אות קטנה, אות גדולה וספרה באנגלית';
+
+function parseCommission(value: unknown): number | null {
+  const n = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+  if (typeof n !== 'number' || !Number.isFinite(n) || n < 0 || n > MAX_PARTNER_COMMISSION_PERCENT) return null;
+  if (Math.round(n * 100) !== n * 100) return null;
+  return n;
+}
+
+// תואם להגדרת חוזק הסיסמה המומלצת ב-Supabase Auth (12 תווים, קטנה + גדולה + ספרה)
+export const validPassword = (value: unknown): value is string =>
+  typeof value === 'string' && value.length >= 12 && value.length <= 72 &&
+  /[a-z]/.test(value) && /[A-Z]/.test(value) && /[0-9]/.test(value);
+
+function parseDisplayName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  return name.length >= 1 && name.length <= 60 ? name : null;
+}
+
+function parseCouponIds(value: unknown): string[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 20) return null;
+  if (!value.every((id) => typeof id === 'string' && UUID_PATTERN.test(id))) return null;
+  return [...new Set(value as string[])];
+}
+
+export interface PartnerCreateInput {
+  username: string;
+  password: string;
+  display_name: string;
+  commission_percent: number;
+  coupon_ids: string[];
+}
+
+export function validatePartnerCreate(body: Record<string, unknown>): Result<PartnerCreateInput> {
+  const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
+  if (!PARTNER_USERNAME_PATTERN.test(username)) {
+    return { ok: false, error: 'שם משתמש: 3–30 תווים, אותיות קטנות באנגלית, ספרות, מקף או קו תחתון' };
+  }
+  if (!validPassword(body.password)) return { ok: false, error: PASSWORD_ERROR };
+  const displayName = parseDisplayName(body.display_name);
+  if (displayName === null) return { ok: false, error: 'שם המשפיענית: 1–60 תווים' };
+  const commission = parseCommission(body.commission_percent);
+  if (commission === null) return { ok: false, error: COMMISSION_ERROR };
+  const couponIds = parseCouponIds(body.coupon_ids);
+  if (couponIds === null) return { ok: false, error: 'רשימת קופונים לא תקינה' };
+  return {
+    ok: true,
+    value: { username, password: body.password, display_name: displayName, commission_percent: commission, coupon_ids: couponIds }
+  };
+}
+
+export interface PartnerPatchInput {
+  display_name?: string;
+  commission_percent?: number;
+  is_active?: boolean;
+  password?: string;
+  /** הרשימה המלאה של הקופונים שלה: קופונים שלא ברשימה יוצאים ממנה */
+  coupon_ids?: string[];
+}
+
+export function validatePartnerPatch(body: Record<string, unknown>): Result<PartnerPatchInput> {
+  if ('username' in body) return { ok: false, error: 'לא ניתן לשנות שם משתמש' };
+  const patch: PartnerPatchInput = {};
+  if ('display_name' in body) {
+    const name = parseDisplayName(body.display_name);
+    if (name === null) return { ok: false, error: 'שם המשפיענית: 1–60 תווים' };
+    patch.display_name = name;
+  }
+  if ('commission_percent' in body) {
+    const commission = parseCommission(body.commission_percent);
+    if (commission === null) return { ok: false, error: COMMISSION_ERROR };
+    patch.commission_percent = commission;
+  }
+  if ('is_active' in body) {
+    if (typeof body.is_active !== 'boolean') return { ok: false, error: 'מצב לא תקין' };
+    patch.is_active = body.is_active;
+  }
+  if ('password' in body) {
+    if (!validPassword(body.password)) return { ok: false, error: PASSWORD_ERROR };
+    patch.password = body.password;
+  }
+  if ('coupon_ids' in body) {
+    const ids = parseCouponIds(body.coupon_ids);
+    if (ids === null) return { ok: false, error: 'רשימת קופונים לא תקינה' };
+    patch.coupon_ids = ids;
+  }
+  if (Object.keys(patch).length === 0) return { ok: false, error: 'אין שינויים' };
+  return { ok: true, value: patch };
+}

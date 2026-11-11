@@ -79,5 +79,43 @@ insert into results select 'not flagged duplicate', not duplicate_payment, null 
 insert into results select 'anon no confirm rpc', not has_function_privilege('anon', 'public.admin_confirm_order(uuid,text)', 'execute')
   and not has_function_privilege('authenticated', 'public.admin_orders(date,date)', 'execute'), null;
 
+-- משפיעניות: שיוך קופון משלים הזמנות קודמות; הזמנה חדשה מקבלת snapshot; שינוי אחוז לא משנה את העבר;
+-- רק הזמנות ששולמו ולא בוטלו נספרות; חודש לפי שעון ישראל
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000aa', 'dana@partners.cleanfry.co.il');
+insert into partners (id, user_id, username, display_name, commission_percent)
+values ('00000000-0000-0000-0000-0000000000bb', '00000000-0000-0000-0000-0000000000aa', 'dana', 'דנה', 15);
+select * from admin_set_coupon_partner((select id from coupons where code='NOV26'), '00000000-0000-0000-0000-0000000000bb', null, 'test');
+insert into results select 'partner backfill', partner_id = '00000000-0000-0000-0000-0000000000bb' and partner_commission_percent = 15, null
+  from orders where id = '00000000-0000-0000-0000-000000000001';
+insert into results select 'audit assign', exists(select 1 from coupon_audit where action = 'assign_partner'), null;
+update partners set commission_percent = 20 where username = 'dana';
+insert into orders (id, quantity, delivery_method, unit_price_agorot, subtotal_agorot, discount_agorot, shipping_agorot, total_agorot,
+  coupon_id, coupon_code_snapshot, discount_percent_snapshot, customer_name, customer_phone, customer_email, invoice_lines, price_locked_until)
+values ('00000000-0000-0000-0000-000000000005', 1, 'delivery', 5900, 5900, 1000, 3500, 8400,
+  (select id from coupons where code='NOV26'), 'NOV26', 18, 'e','0501234567','e@b.co','[]', '2026-12-01T10:15:00Z'),
+ ('00000000-0000-0000-0000-000000000006', 1, 'delivery', 5900, 5900, 1000, 3500, 8400,
+  (select id from coupons where code='NOV26'), 'NOV26', 18, 'f','0501234567','f@b.co','[]', '2026-12-01T10:15:00Z');
+insert into results select 'partner snapshot on insert', partner_commission_percent = 20, null
+  from orders where id = '00000000-0000-0000-0000-000000000005';
+insert into results select 'old rate kept', partner_commission_percent = 15, null from orders where id = '00000000-0000-0000-0000-000000000001';
+select * from record_payment('00000000-0000-0000-0000-000000000005', 'tranzila', 'T5', 8400, 'ILS');
+update orders set paid_at = '2026-11-30T22:30:00Z' where id = '00000000-0000-0000-0000-000000000005'; -- 00:30 ב-1.12 בישראל
+select * from record_payment('00000000-0000-0000-0000-000000000006', 'tranzila', 'T6', 8400, 'ILS');
+update orders set fulfillment_status = 'cancelled' where id = '00000000-0000-0000-0000-000000000006';
+-- הזמנה 1: 23600-4200 = 19400 * 15% = 2910, נובמבר. הזמנה 5: 4900 * 20% = 980, דצמבר. הזמנה 6 בוטלה.
+insert into results select 'partner monthly', string_agg(format('%s:%s:%s:%s:%s', month, orders_count, units, sales_agorot, commission_agorot), ',' order by month)
+  = '2026-11:1:4:19400:2910,2026-12:1:1:4900:980', string_agg(format('%s:%s:%s:%s:%s', month, orders_count, units, sales_agorot, commission_agorot), ',')
+  from partner_monthly('00000000-0000-0000-0000-0000000000bb');
+insert into results select 'partner totals', orders_count = 2 and commission_agorot = 3890, null
+  from partner_totals() where partner_id = '00000000-0000-0000-0000-0000000000bb';
+insert into results select 'anon no partner rpc', not has_function_privilege('anon', 'public.partner_monthly(uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'public.partner_totals()', 'execute')
+  and not has_function_privilege('authenticated', 'public.admin_set_coupon_partner(uuid,uuid,uuid,text)', 'execute')
+  and not has_table_privilege('anon', 'public.partners', 'select'), null;
+do $$ begin
+  update partners set commission_percent = 60 where username = 'dana';
+  insert into results values ('commission cap', false, 'update succeeded');
+exception when check_violation then insert into results values ('commission cap', true, sqlerrm); end $$;
+
 select * from results;
 rollback;

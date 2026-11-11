@@ -22,6 +22,18 @@ export interface AdminCoupon {
   state: CouponState;
   paid_orders: number;
   gross_collected_agorot: number;
+  partner_id?: string | null;
+}
+
+export interface AdminPartner {
+  id: string;
+  username: string;
+  display_name: string;
+  commission_percent: number;
+  is_active: boolean;
+  created_at: string;
+  coupons: { id: string; code: string; discount_percent: number; state: CouponState }[];
+  totals: { orders_count: number; units: number; sales_agorot: number; commission_agorot: number };
 }
 
 export interface ReportRow {
@@ -132,8 +144,17 @@ export const adminApi = {
     request<{ ok: true }>('/api/admin/payments', { method: 'POST', body: JSON.stringify({ orderId, action: 'resend_email' }) }),
   confirmPayment: (orderId: string) =>
     request<{ ok: true }>('/api/admin/payments', { method: 'POST', body: JSON.stringify({ orderId, action: 'confirm_payment' }) }),
-  orders: (from: string, to: string) => request<OrdersResponse>(`/api/admin/orders?${periodQuery(from, to)}`)
+  orders: (from: string, to: string) => request<OrdersResponse>(`/api/admin/orders?${periodQuery(from, to)}`),
+  listPartners: () => request<{ partners: AdminPartner[] }>('/api/admin/partners').then((r) => r.partners),
+  createPartner: (input: Record<string, unknown>) =>
+    request<{ partner: AdminPartner }>('/api/admin/partners', { method: 'POST', body: JSON.stringify(input) }),
+  updatePartner: (id: string, patch: Record<string, unknown>) =>
+    request<{ partner: AdminPartner }>(`/api/admin/partners?id=${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) })
 };
+
+export async function partnerRequest<T>(path: string): Promise<T> {
+  return request<T>(path);
+}
 
 /** שאלת וידוא לפני אישור ידני של מכירה */
 export const confirmSaleQuestion = (ref: string, totalAgorot: number) =>
