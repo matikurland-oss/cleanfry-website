@@ -63,7 +63,7 @@ export function Hero() {
               <ClockIcon size={22} />
             </span>
             <span className="flex flex-col leading-tight">
-              <strong className="text-lg">כ-25 דקות</strong>
+              <strong className="text-lg">כ-20 דקות</strong>
               <span className="text-sm text-cf-muted">משמן נוזלי לגוש מוצק</span>
             </span>
           </div>
@@ -96,13 +96,13 @@ export function TrustStrip() {
 const STEPS = [
   { title: 'מכבים את האש', desc: 'כיבוי מקור החום או הכיריים.', icon: <FlameOffIcon size={40} strokeWidth={1.8} />, bg: 'bg-cf-cream', num: 'text-cf-blue' },
   { title: 'מוסיפים ומערבבים', desc: 'הוספת אבקה כשהשמן חם וערבוב קל.', icon: <SpoonIcon size={40} strokeWidth={1.8} />, bg: 'bg-cf-green-light', num: 'text-cf-green-dark' },
-  { title: 'מחכים שיתקרר', desc: 'המתנה להתמצקות (כ-25 דקות).', icon: <ClockIcon size={40} strokeWidth={1.8} />, bg: 'bg-cf-blue-light', num: 'text-cf-blue' },
+  { title: 'מחכים שיתקרר', desc: 'המתנה להתמצקות (כ-20 דקות).', icon: <ClockIcon size={40} strokeWidth={1.8} />, bg: 'bg-cf-blue-light', num: 'text-cf-blue' },
   { title: 'זורקים לפח', desc: 'השלכת השמן המוצק לפח האשפה.', icon: <TrashIcon size={40} strokeWidth={1.8} />, bg: 'bg-cf-yellow', num: 'text-cf-navy' },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="how" aria-labelledby="how-title" className={`${gutter} cf-on-navy scroll-mt-20 bg-cf-navy py-[clamp(56px,7vw,104px)] text-cf-cream`}>
+    <section id="how" aria-labelledby="how-title" className={`${gutter} cf-on-navy bg-cf-navy py-[clamp(56px,7vw,104px)] text-cf-cream`}>
       <span id="how-it-works" className="block" aria-hidden="true" />
       <div className={container}>
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
@@ -140,7 +140,7 @@ const WHY = [
 
 export function WhySection() {
   return (
-    <section id="why" aria-labelledby="why-title" className={`${gutter} scroll-mt-20 py-[clamp(56px,7vw,104px)]`}>
+    <section id="why" aria-labelledby="why-title" className={`${gutter} py-[clamp(56px,7vw,104px)]`}>
       <div className={container}>
         <h2 id="why-title" className={`${sectionTitle} mb-3 text-center`}>למה לא פשוט לשפוך לכיור?</h2>
         <p className="mx-auto mb-11 mt-0 max-w-[720px] text-center text-[19px] leading-relaxed text-cf-body">
@@ -188,7 +188,7 @@ const FAQS = [
   { q: 'האם CleanFry ידידותי לסביבה?', a: 'בהחלט. CleanFry מבוסס על רכיבים טבעיים שהופכים את השמן לפסולת מוצקה המתפרקת באופן טבעי (Biodegradable), ובכך מונעת זיהום של מקורות מים.' },
   { q: 'לאיזה סוגי שמן CleanFry מתאים?', a: 'המוצר מתאים לכל סוגי שמני המאכל: שמן קנולה, שמן חמניות, שמן תירס, שמן זית וכו׳, ואפילו לשומן מן החי.' },
   { q: 'האם האבקה למיצוק שמן בטוחה לשימוש?', a: 'בהחלט. CleanFry מבוססת על רכיבים ממקור צמחי, היא אינה רעילה ובטוחה לחלוטין לשימוש במטבח הביתי. האבקה פותחה במיוחד כדי לתת מענה אקולוגי ונקי לטיפול בשמן משומש ללא חשש. חשוב לציין שהאבקה היא לא למאכל ויש להרחיקה מילדים.' },
-  { q: 'כמה אבקה צריך להוסיף כדי למצק את השמן?', a: 'המינון המומלץ הוא כף אחת של אבקת CleanFry לכל כוס שמן (כ-200-250 מ״ל). במידה והשמן מלוכלך מאוד משאריות טיגון, ניתן להוסיף מעט יותר כדי להבטיח מיצוק מלא ומהיר בתוך כ-25 דקות.' },
+  { q: 'כמה אבקה צריך להוסיף כדי למצק את השמן?', a: 'המינון המומלץ הוא כף אחת של אבקת CleanFry לכל כוס שמן (כ-200-250 מ״ל). במידה והשמן מלוכלך מאוד משאריות טיגון, ניתן להוסיף מעט יותר כדי להבטיח מיצוק מלא ומהיר בתוך כ-20 דקות.' },
   { q: 'איך משליכים את השמן אחרי שהשתמשתי בממצק שמן בישול?', a: 'ברגע שהשמן התקרר והפך לגוש מוצק וקשיח, ניתן פשוט להפרד אותו מהמחבת או מהסיר בעזרת מרית ולהשליך אותו ישירות לפח האשפה הביתי. אין צורך בשקיות מיוחדות.' },
   { q: 'האם ניתן להשתמש בשמן שוב אחרי המיצוק?', a: 'לא. אבקת CleanFry נועדה למטרת פינוי והשלכה בטוחה של שמן משומש בלבד. ברגע שהשמן עבר תהליך מיצוק, הוא הופך לחומר מוצק שאינו מתאים לבישול חוזר.' },
 ];
@@ -223,7 +223,7 @@ function FaqItem({ q, a }: { q: string; a: string; key?: string }) {
 
 export function FaqSection() {
   return (
-    <section id="faq" aria-labelledby="faq-title" className={`${gutter} scroll-mt-20 pb-[clamp(56px,7vw,104px)]`}>
+    <section id="faq" aria-labelledby="faq-title" className={`${gutter} pb-[clamp(56px,7vw,104px)]`}>
       <div className="mx-auto max-w-[920px]">
         <h2 id="faq-title" className={`${sectionTitle} mb-7 text-center`}>שאלות ותשובות</h2>
         <ul className="m-0 flex list-none flex-col gap-3 p-0">

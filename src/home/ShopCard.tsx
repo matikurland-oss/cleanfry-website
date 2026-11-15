@@ -46,8 +46,8 @@ export default function ShopCard({ purchaseBoxRef }: { purchaseBoxRef: React.Ref
   const stepBtn = 'flex h-[52px] w-[52px] items-center justify-center text-cf-navy transition-colors hover:bg-cf-cream disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
-    <section id="shop" aria-labelledby="shop-title" className={`${gutter} scroll-mt-24 py-[clamp(48px,7vw,104px)]`}>
-      <span id="purchase" className="block scroll-mt-24" aria-hidden="true" />
+    <section id="shop" aria-labelledby="shop-title" className={`${gutter} py-[clamp(48px,7vw,104px)]`}>
+      <span id="purchase" className="block" aria-hidden="true" />
       <div className={container}>
         <h2 id="shop-title" className={`${sectionTitle} mb-8 text-center`}>מארז אחד. המון טיגונים.</h2>
         <div className="flex flex-wrap overflow-hidden rounded-cf-block border border-cf-border bg-white">

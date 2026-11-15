@@ -50,7 +50,7 @@ export default function SiteHeader() {
   const linkClass = 'rounded-md text-cf-navy no-underline transition-colors hover:text-cf-blue';
 
   return (
-    <header className="cf-focus sticky top-0 z-40 border-b border-cf-border bg-cf-cream font-display text-cf-navy">
+    <header className="cf-focus relative border-b border-cf-border bg-cf-cream font-display text-cf-navy">
       <div className={`${container} ${gutter} flex min-h-[76px] items-center justify-between gap-4 py-3`}>
         <div className="flex shrink-0 items-center gap-2">
           <Link to="/" aria-label="CleanFry – לדף הבית" onClick={() => { setIsOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex items-center">
@@ -102,7 +102,7 @@ export default function SiteHeader() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden border-t border-cf-border bg-cf-cream lg:hidden"
+            className="absolute inset-x-0 top-full overflow-hidden border-y border-cf-border bg-cf-cream shadow-lg lg:hidden"
           >
             <div className={`${gutter} flex flex-col gap-1 pb-5 pt-2`}>
               {NAV_LINKS.map((link) => (

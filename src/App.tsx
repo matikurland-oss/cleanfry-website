@@ -64,8 +64,11 @@ export default function App() {
       <ScrollToTop />
       <CookieConsent />
       <PromoPopup />
-      <AnnouncementBar />
-      <SiteHeader />
+      {/* פס ההודעות והתפריט נשארים יחד בראש המסך בזמן גלילה */}
+      <div className="sticky top-0 z-40">
+        <AnnouncementBar />
+        <SiteHeader />
+      </div>
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />

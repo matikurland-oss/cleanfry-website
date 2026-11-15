@@ -30,6 +30,8 @@
 }
 html {
   scroll-behavior: smooth;
+  /* גלילה לעוגן לא תסתתר מתחת לפס ההודעות והתפריט הקבועים */
+  scroll-padding-top: 8.5rem;
 }
 
 @layer base {
