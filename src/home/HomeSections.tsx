@@ -48,13 +48,13 @@ export function Hero() {
         <div className="relative min-w-0 flex-[1_1_460px]">
           <div className="aspect-[440/371] overflow-hidden rounded-[40px] bg-cf-blue-light">
             <img
-              src="/product-1200.webp"
-              srcSet="/product-800.webp 800w, /product-1200.webp 1200w"
+              src="/hero-1280.webp"
+              srcSet="/hero-640.webp 640w, /hero-960.webp 960w, /hero-1280.webp 1280w"
               sizes="(min-width: 1000px) 640px, 92vw"
-              width={1200}
-              height={1013}
+              width={1280}
+              height={1066}
               fetchPriority="high"
-              alt="מארז CleanFry ליד מחבת עם שמן במטבח"
+              alt="שמן בישול שהתמצק לגוש מושלך מהמחבת לפח, ולידו מארז CleanFry"
               className="block h-full w-full object-cover"
             />
           </div>
