@@ -5,6 +5,7 @@ import { isShoppingIlPromoActive } from '../shoppingIlPromo';
 import { getCookieConsent, subscribeCookieConsent } from '../cookieConsentStore';
 import { BagIcon, CloseIcon, MenuIcon } from './icons';
 import { container, gutter, pill } from './layout';
+import { scrollToSection } from './scroll';
 
 const NAV_LINKS = [
   { name: 'לרכישה', href: '/#shop' },
@@ -40,10 +41,10 @@ export default function SiteHeader() {
     setIsOpen(false);
     if (!href.includes('#') || location.pathname !== '/') return;
     const id = href.split('#')[1];
-    const element = document.getElementById(id);
-    if (!element) return;
+    if (!document.getElementById(id)) return;
     e.preventDefault();
-    element.scrollIntoView({ behavior: 'smooth' });
+    // גלילה אחרי סגירת תפריט המובייל, אחרת הסגירה מבטלת את הגלילה החלקה
+    setTimeout(() => scrollToSection(id), 50);
     window.history.replaceState(null, '', `/#${id}`);
   };
 

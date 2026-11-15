@@ -65,7 +65,7 @@ export default function App() {
       <CookieConsent />
       <PromoPopup />
       {/* פס ההודעות והתפריט נשארים יחד בראש המסך בזמן גלילה */}
-      <div className="sticky top-0 z-40">
+      <div id="site-top" className="sticky top-0 z-40">
         <AnnouncementBar />
         <SiteHeader />
       </div>

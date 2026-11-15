@@ -4,13 +4,12 @@ import {
   ClockIcon, CycleIcon, DropIcon, FlameOffIcon, GlassIcon, LeafIcon, PipeIcon, SpoonIcon, TrashIcon, TruckIcon,
 } from './icons';
 import { container, gutter, pill, sectionTitle } from './layout';
+import { scrollToSection } from './scroll';
 
 // גלילה חלקה לעוגן בדף (כפתורי ה-hero וה-CTA)
 export const scrollToId = (id: string) => (e: MouseEvent) => {
-  const el = document.getElementById(id);
-  if (!el) return;
+  if (!scrollToSection(id)) return;
   e.preventDefault();
-  el.scrollIntoView({ behavior: 'smooth' });
   window.history.replaceState(null, '', `/#${id}`);
 };
 

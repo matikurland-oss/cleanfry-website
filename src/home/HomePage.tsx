@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSEO } from '../useSEO';
 import ShopCard from './ShopCard';
+import { scrollToSection } from './scroll';
 import CommunitySection from './CommunitySection';
 import { CtaBanner, FaqSection, Hero, HowItWorks, Reviews, TrustStrip, WhySection, type Review } from './HomeSections';
 
@@ -22,7 +23,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!hash) return;
     const id = decodeURIComponent(hash.slice(1));
-    const frame = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }));
+    const frame = requestAnimationFrame(() => scrollToSection(id));
     return () => cancelAnimationFrame(frame);
   }, [hash]);
 

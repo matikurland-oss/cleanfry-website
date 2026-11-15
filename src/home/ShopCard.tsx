@@ -50,7 +50,7 @@ export default function ShopCard({ purchaseBoxRef }: { purchaseBoxRef: React.Ref
       <span id="purchase" className="block" aria-hidden="true" />
       <div className={container}>
         <h2 id="shop-title" className={`${sectionTitle} mb-8 text-center`}>מארז אחד. המון טיגונים.</h2>
-        <div className="flex flex-wrap overflow-hidden rounded-cf-block border border-cf-border bg-white">
+        <div id="shop-card" className="flex flex-wrap overflow-hidden rounded-cf-block border border-cf-border bg-white">
           <div className="flex min-w-0 flex-[1_1_420px] items-center justify-center bg-cf-green-light p-[clamp(20px,4vw,56px)]">
             <img
               src="/shop-960.webp"
@@ -80,7 +80,7 @@ export default function ShopCard({ purchaseBoxRef }: { purchaseBoxRef: React.Ref
             </ul>
 
             {/* אזור הרכישה — עליו נמדד view_item, כמו תיבת הרכישה הקודמת */}
-            <div ref={purchaseBoxRef} className="flex flex-col gap-5 pt-1.5">
+            <div ref={purchaseBoxRef} id="shop-buy" className="flex flex-col gap-5 pt-1.5">
             <div className="flex flex-col gap-2.5">
               <span id="qty-label" className="text-base font-bold">בחירת כמות מארזים</span>
               <div className="flex flex-wrap items-center gap-4">
