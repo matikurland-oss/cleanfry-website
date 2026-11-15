@@ -53,13 +53,13 @@ export default function ShopCard({ purchaseBoxRef }: { purchaseBoxRef: React.Ref
         <div className="flex flex-wrap overflow-hidden rounded-cf-block border border-cf-border bg-white">
           <div className="flex min-w-0 flex-[1_1_420px] items-center justify-center bg-cf-green-light p-[clamp(20px,4vw,56px)]">
             <img
-              src="/product-800.webp"
-              srcSet="/product-800.webp 800w, /product-1200.webp 1200w"
+              src="/shop-960.webp"
+              srcSet="/shop-640.webp 640w, /shop-960.webp 960w, /shop-1280.webp 1280w"
               sizes="(min-width: 900px) 520px, 90vw"
-              width={800}
-              height={675}
+              width={960}
+              height={800}
               loading="lazy"
-              alt="מארז CleanFry – אבקה למיצוק שמן בישול ביתי"
+              alt="מארז CleanFry – אבקה למיצוק שמן בישול, על שיש המטבח"
               className="block h-auto w-full max-w-[520px] rounded-cf-card"
             />
           </div>
