@@ -25,11 +25,17 @@ update public.orders set tier_unit_price_agorot = unit_price_agorot where tier_u
 update public.orders set coupon_applied = true, coupon_stacks_snapshot = false
 where coupon_id is not null and coupon_applied is null;
 
--- נתיב יצירה שלא שולח מחיר מדרגה (למשל סקריפט ישן) מקבל את המחיר שהוחל, כדי שהעמודה תמיד תהיה מלאה
+-- תאימות לקוד שלא מכיר את העמודות החדשות (הגרסה שרצה באתר בזמן הרצת המיגרציה, או סקריפט ישן):
+-- מחיר המדרגה = המחיר שהוחל, וקופון שנשמר על הזמנה כזו הוחל (בקוד הישן קופון תקף תמיד הוחל) בלי כפל מבצעים.
+-- כך המיגרציה בטוחה להרצה לפני העלאת הקוד החדש.
 create function public.orders_default_tier_price() returns trigger
 language plpgsql set search_path = public as $$
 begin
   new.tier_unit_price_agorot := coalesce(new.tier_unit_price_agorot, new.unit_price_agorot);
+  if new.coupon_id is not null and new.coupon_applied is null then
+    new.coupon_applied := true;
+    new.coupon_stacks_snapshot := coalesce(new.coupon_stacks_snapshot, false);
+  end if;
   return new;
 end $$;
 
@@ -217,7 +223,8 @@ $$;
 revoke execute on function
   public.admin_create_coupon(text, text, numeric, boolean, timestamptz, timestamptz, uuid, text, text, boolean),
   public.admin_update_coupon(uuid, jsonb, uuid, text),
-  public.coupon_report(date, date)
+  public.coupon_report(date, date),
+  public.orders_default_tier_price()
 from public, anon, authenticated;
 
 grant execute on function
