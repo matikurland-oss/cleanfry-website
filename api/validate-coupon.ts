@@ -31,8 +31,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return;
     }
 
-    // discountPercent באחוזים (18 = 18%)
-    res.status(200).json({ valid: true, code: coupon.code, discountPercent: coupon.discount_percent });
+    // discountPercent באחוזים (18 = 18%); stacksPromotions = כפל מבצעים (ראו shared/pricing.ts)
+    res.status(200).json({
+      valid: true, code: coupon.code, discountPercent: coupon.discount_percent, stacksPromotions: coupon.stacks_promotions === true
+    });
   } catch {
     res.status(503).json({ valid: false, message: 'שגיאה זמנית באימות הקופון, נסו שוב' });
   }

@@ -1,15 +1,35 @@
 // חישוב מחיר הזמנה — מקור האמת היחיד לכללי התמחור. רץ בשרת (create-order) כדי לקבוע את הסכום המחייב,
-// ומיובא גם ל-CheckoutPage רק לצורך תצוגה מקדימה. אין כאן שום סוד: זו לוגיקה טהורה.
+// ומיובא גם לדף הבית ול-CheckoutPage רק לצורך תצוגה. אין כאן שום סוד: זו לוגיקה טהורה.
 //
-// כללים (נשמרו מהקוד הקודם ב-CheckoutPage):
-// - ההנחה חלה על מחיר המוצרים בלבד, ומעוגלת לשקל שלם (חצי ומעלה — כלפי מעלה).
-// - סף משלוח חינם נבדק מול סכום המוצרים אחרי ההנחה.
+// כללים (CLEANFRY-QUANTITY-TIERS-SPEC.md):
+// - המדרגה נקבעת לפי כמות המארזים בהזמנה, ומחירה חל על כל המארזים. המשלוח עד הבית נקבע לפי אותה מדרגה.
 // - איסוף עצמי תמיד חינם.
+// - קופון חל על המוצרים בלבד ולא משנה את המדרגה או את המשלוח.
+//   כפל מבצעים = כן: ההנחה על מחיר המדרגה.
+//   כפל מבצעים = לא: ההנחה על מחיר המחירון (LIST_PRICE), והלקוח מקבל את הזול מבין מחיר המדרגה למחיר הקופון.
+// - הנחה מעוגלת לאגורה (חצי ומעלה כלפי מעלה).
 // כל הסכומים באגורות (מספרים שלמים). אחוז הנחה מיוצג כאחוז רגיל: 18 = 18%.
 
-export const UNIT_PRICE_AGOROT = 5900;
-export const SHIPPING_AGOROT = 3500;
-export const FREE_SHIPPING_THRESHOLD_AGOROT = 19900;
+/** מחיר מארז בודד בלי מדרגה. זה גם המחיר המחוק שמוצג ליד מחירי המדרגות — חייב להיות מחיר שנגבה בפועל */
+export const LIST_PRICE_AGOROT = 5900;
+
+export interface Tier {
+  /** כמות מינימלית למדרגה */
+  min: number;
+  priceAgorot: number;
+  homeShippingAgorot: number;
+}
+
+/** מסודר מהגבוה לנמוך. המדרגה הנמוכה (min: 1) חייבת להיות במחיר המחירון */
+export const TIERS: readonly Tier[] = [
+  { min: 5, priceAgorot: 5100, homeShippingAgorot: 0 },
+  { min: 3, priceAgorot: 5500, homeShippingAgorot: 1900 },
+  { min: 1, priceAgorot: LIST_PRICE_AGOROT, homeShippingAgorot: 3500 }
+];
+
+/** הכמות שממנה המשלוח עד הבית חינם */
+export const FREE_SHIPPING_MIN_QUANTITY = TIERS.find((t) => t.homeShippingAgorot === 0)!.min;
+
 export const MIN_QUANTITY = 1;
 export const MAX_QUANTITY = 10;
 export const CURRENCY = 'ILS';
@@ -17,52 +37,88 @@ export const CURRENCY = 'ILS';
 export type DeliveryMethod = 'delivery' | 'pickup';
 export type PickupLocation = 'kfar-saba' | 'tel-aviv';
 
+export interface CouponTerms {
+  /** אחוז הנחה (0–100, לא כולל) */
+  discountPercent: number;
+  /** כפל מבצעים: true = ההנחה על מחיר המדרגה */
+  stacks: boolean;
+}
+
 export interface PriceInput {
   quantity: number;
   deliveryMethod: DeliveryMethod;
-  /** אחוז הנחה (0–100), או 0 כשאין קופון */
-  discountPercent: number;
+  coupon: CouponTerms | null;
 }
 
 export interface PriceBreakdown {
   quantity: number;
+  tier: Tier;
+  /** מחיר המדרגה למארז */
+  tierPriceAgorot: number;
+  /** המחיר למארז שעליו חושב סכום המוצרים (מחיר המדרגה, או מחיר המחירון כשקופון בלי כפל מבצעים הוחל) */
   unitPriceAgorot: number;
   subtotalAgorot: number;
   discountAgorot: number;
   productsAfterDiscountAgorot: number;
-  isFreeShipping: boolean;
+  couponApplied: boolean;
+  couponStacks: boolean | null;
+  /** דמי המשלוח עד הבית במדרגה הזו (גם כשנבחר איסוף) */
+  homeShippingAgorot: number;
   shippingAgorot: number;
   totalAgorot: number;
+  /** כמות × מחיר מחירון */
+  listSubtotalAgorot: number;
+  /** חיסכון לעומת מחיר מארז בודד, בלי משלוח */
+  savedAgorot: number;
 }
 
 export function isValidQuantity(quantity: unknown): quantity is number {
   return Number.isInteger(quantity) && (quantity as number) >= MIN_QUANTITY && (quantity as number) <= MAX_QUANTITY;
 }
 
-export function priceOrder({ quantity, deliveryMethod, discountPercent }: PriceInput): PriceBreakdown {
+export function tierFor(quantity: number): Tier {
+  return TIERS.find((t) => quantity >= t.min) ?? TIERS[TIERS.length - 1];
+}
+
+export function priceOrder({ quantity, deliveryMethod, coupon }: PriceInput): PriceBreakdown {
   if (!isValidQuantity(quantity)) throw new Error('invalid quantity');
-  if (!(discountPercent >= 0 && discountPercent < 100)) throw new Error('invalid discount');
+  if (coupon && !(coupon.discountPercent >= 0 && coupon.discountPercent < 100)) throw new Error('invalid discount');
 
-  const subtotalShekels = (UNIT_PRICE_AGOROT / 100) * quantity;
-  // חישוב בשלמים (נקודות בסיס) כדי שעיגול של חצי שקל יהיה דטרמיניסטי ולא תלוי בדיוק של float
-  const basisPoints = Math.round(discountPercent * 100);
-  const discountShekels = Math.floor((subtotalShekels * basisPoints + 5000) / 10000);
+  const tier = tierFor(quantity);
+  // חישוב בשלמים (נקודות בסיס) כדי שההשוואה והעיגול יהיו דטרמיניסטיים ולא תלויים בדיוק של float
+  const basisPoints = coupon ? Math.round(coupon.discountPercent * 100) : 0;
 
-  const subtotalAgorot = subtotalShekels * 100;
-  const discountAgorot = discountShekels * 100;
+  let unitPriceAgorot = tier.priceAgorot;
+  let couponApplied = false;
+  if (coupon && basisPoints > 0) {
+    const couponBase = coupon.stacks ? tier.priceAgorot : LIST_PRICE_AGOROT;
+    if (couponBase * (10000 - basisPoints) < tier.priceAgorot * 10000) {
+      unitPriceAgorot = couponBase;
+      couponApplied = true;
+    }
+  }
+
+  const subtotalAgorot = unitPriceAgorot * quantity;
+  const discountAgorot = couponApplied ? Math.floor((subtotalAgorot * basisPoints + 5000) / 10000) : 0;
   const productsAfterDiscountAgorot = subtotalAgorot - discountAgorot;
-  const isFreeShipping = productsAfterDiscountAgorot >= FREE_SHIPPING_THRESHOLD_AGOROT;
-  const shippingAgorot = deliveryMethod === 'pickup' || isFreeShipping ? 0 : SHIPPING_AGOROT;
+  const shippingAgorot = deliveryMethod === 'pickup' ? 0 : tier.homeShippingAgorot;
+  const listSubtotalAgorot = LIST_PRICE_AGOROT * quantity;
 
   return {
     quantity,
-    unitPriceAgorot: UNIT_PRICE_AGOROT,
+    tier,
+    tierPriceAgorot: tier.priceAgorot,
+    unitPriceAgorot,
     subtotalAgorot,
     discountAgorot,
     productsAfterDiscountAgorot,
-    isFreeShipping,
+    couponApplied,
+    couponStacks: coupon ? coupon.stacks : null,
+    homeShippingAgorot: tier.homeShippingAgorot,
     shippingAgorot,
-    totalAgorot: productsAfterDiscountAgorot + shippingAgorot
+    totalAgorot: productsAfterDiscountAgorot + shippingAgorot,
+    listSubtotalAgorot,
+    savedAgorot: Math.max(0, listSubtotalAgorot - productsAfterDiscountAgorot)
   };
 }
 
@@ -74,16 +130,16 @@ export interface InvoiceLine {
 
 // פירוט החשבונית לטרנזילה (json_purchase_data) לפי המבנה השטוח שאושר בפועל.
 // טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(product_price × product_quantity), לכן מחיר היחידה כבר נטו
-// אחרי ההנחה, ושארית העיגול לאגורה נספגת בשורת המשלוח/איסוף.
+// אחרי ההנחה (מעוגל כלפי מטה לאגורה), ושארית העיגול (תמיד אי-שלילית) נספגת בשורת המשלוח/איסוף.
 export function buildInvoiceLines(
   price: PriceBreakdown,
   deliveryMethod: DeliveryMethod,
   pickupLocation: PickupLocation | '' | null,
   couponCode: string | null
 ): InvoiceLine[] {
-  const unitAgorot = Math.round(price.productsAfterDiscountAgorot / price.quantity);
+  const unitAgorot = Math.floor(price.productsAfterDiscountAgorot / price.quantity);
   const remainderAgorot = price.productsAfterDiscountAgorot - unitAgorot * price.quantity;
-  const couponSuffix = couponCode && price.discountAgorot > 0 ? ` (קופון: ${couponCode})` : '';
+  const couponSuffix = couponCode && price.couponApplied && price.discountAgorot > 0 ? ` (קופון: ${couponCode})` : '';
 
   return [
     { product_name: `מארז CleanFry${couponSuffix}`, product_quantity: price.quantity, product_price: unitAgorot / 100 },

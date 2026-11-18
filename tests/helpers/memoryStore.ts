@@ -46,7 +46,7 @@ export class MemoryStore implements Store {
 
   addCoupon(partial: Partial<CouponRow> & { code: string; discount_percent: number }): CouponRow {
     const row: CouponRow = {
-      id: randomUUID(), label: '', is_active: true, starts_at: null, expires_at: null,
+      id: randomUUID(), label: '', is_active: true, stacks_promotions: false, starts_at: null, expires_at: null,
       created_at: this.now().toISOString(), updated_at: this.now().toISOString(), ...partial
     };
     this.coupons.push(row);
@@ -219,6 +219,8 @@ export class MemoryStore implements Store {
       coupon_code: orders[0].coupon_code_snapshot,
       coupon_label: this.coupons.find((c) => c.id === couponId)?.label ?? null,
       paid_orders: orders.length,
+      applied_orders: orders.filter((o) => o.coupon_id && o.coupon_applied !== false).length,
+      not_applied_orders: orders.filter((o) => o.coupon_id && o.coupon_applied === false).length,
       units_sold: orders.reduce((s, o) => s + o.quantity, 0),
       product_sales_agorot: orders.reduce((s, o) => s + o.subtotal_agorot - o.discount_agorot, 0),
       discounts_agorot: orders.reduce((s, o) => s + o.discount_agorot, 0),

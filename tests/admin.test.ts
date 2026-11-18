@@ -72,6 +72,24 @@ describe('admin coupons', () => {
     expect(store.audit[0]).toMatchObject({ action: 'create', actor: { id: ADMIN.id } });
   });
 
+  it('stacking (כפל מבצעים) defaults to off and can be toggled', async () => {
+    const created = await call(adminCoupons, { method: 'POST', headers: as('admin-token'), body: { code: 'DANA15', discount_percent: 15 } });
+    expect(created.body.coupon.stacks_promotions).toBe(false);
+    const on = await call(adminCoupons, {
+      method: 'PATCH', headers: as('admin-token'), query: { id: created.body.coupon.id }, body: { stacks_promotions: true }
+    });
+    expect(on.status).toBe(200);
+    expect(on.body.coupon.stacks_promotions).toBe(true);
+    const bad = await call(adminCoupons, {
+      method: 'PATCH', headers: as('admin-token'), query: { id: created.body.coupon.id }, body: { stacks_promotions: 'yes' }
+    });
+    expect(bad.status).toBe(400);
+    const withStacks = await call(adminCoupons, {
+      method: 'POST', headers: as('admin-token'), body: { code: 'STACK10', discount_percent: 10, stacks_promotions: true }
+    });
+    expect(withStacks.body.coupon.stacks_promotions).toBe(true);
+  });
+
   it('accepts exactly the 25% cap', async () => {
     const res = await call(adminCoupons, { method: 'POST', headers: as('admin-token'), body: { code: 'MAX25', discount_percent: 25 } });
     expect(res.status).toBe(201);
@@ -155,6 +173,7 @@ function order(overrides: Partial<NewOrder> = {}): NewOrder {
     quantity: 2, delivery_method: 'delivery', pickup_location: null, unit_price_agorot: 5900,
     subtotal_agorot: 11800, discount_agorot: 0, shipping_agorot: 3500, total_agorot: 15300, currency: 'ILS',
     coupon_id: null, coupon_code_snapshot: null, discount_percent_snapshot: null,
+    tier_unit_price_agorot: 5900, coupon_stacks_snapshot: null, coupon_applied: null,
     customer_name: 'ישראל', customer_phone: '0501234567', customer_email: 'a@b.co', customer_business_id: '',
     shipping_city: 'חיפה', shipping_address: 'הנמל 1', shipping_apartment: '', shipping_zip: '',
     invoice_lines: [], price_locked_until: '2026-11-08T10:15:00Z', ...overrides

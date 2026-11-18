@@ -27,7 +27,7 @@ describe('validate-coupon', () => {
     store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     store.addCoupon({ code: 'OTHER', discount_percent: 50 });
     const res = await call(validateCoupon, { method: 'POST', body: { code: ' nov26 ' } });
-    expect(res.body).toEqual({ valid: true, code: 'NOV26', discountPercent: 18 });
+    expect(res.body).toEqual({ valid: true, code: 'NOV26', discountPercent: 18, stacksPromotions: false });
     expect(res.headers['cache-control']).toContain('no-store');
   });
 
@@ -61,14 +61,16 @@ describe('create-order', () => {
     const coupon = store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     const res = await call(createOrder, {
       method: 'POST',
-      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'nov26', displayedTotal: 229, ...customer }
+      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'nov26', displayedTotal: 212.52, ...customer }
     });
     expect(res.status).toBe(200);
-    expect(res.body.payment.sum).toBe(229);
+    // 4 × 59 = 236 − 18% (42.48) + משלוח מדרגה 3–4 (19) = 212.52
+    expect(res.body.payment.sum).toBe(212.52);
     const order = store.orders[0];
     expect(order).toMatchObject({
-      payment_status: 'pending', total_agorot: 22900, discount_agorot: 4200, shipping_agorot: 3500,
-      coupon_id: coupon.id, coupon_code_snapshot: 'NOV26', discount_percent_snapshot: 18
+      payment_status: 'pending', total_agorot: 21252, discount_agorot: 4248, shipping_agorot: 1900,
+      coupon_id: coupon.id, coupon_code_snapshot: 'NOV26', discount_percent_snapshot: 18,
+      unit_price_agorot: 5900, tier_unit_price_agorot: 5500, coupon_stacks_snapshot: false, coupon_applied: true
     });
     expect(new Date(order.price_locked_until).getTime() - NOW.getTime()).toBe(15 * 60_000);
     expect(parseOrderReference(res.body.payment.remarks)).toBe(order.id);
@@ -86,7 +88,7 @@ describe('create-order', () => {
       }
     });
     expect(res.status).toBe(409);
-    expect(res.body.pricing.total).toBe(88); // 59 - 6 + 35
+    expect(res.body.pricing.total).toBe(88.1); // 59 - 5.90 + 35
     expect(store.orders).toHaveLength(0);
   });
 
@@ -99,12 +101,12 @@ describe('create-order', () => {
 
     const res = await call(createOrder, {
       method: 'POST',
-      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'NOV26', displayedTotal: 229, ...customer }
+      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'NOV26', displayedTotal: 212.52, ...customer }
     });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('coupon_invalid');
-    expect(res.body.pricing).toMatchObject({ total: 236, coupon: null }); // 236 ≥ 199 → משלוח חינם
-    expect(res.body.message).toContain('236');
+    expect(res.body.pricing).toMatchObject({ total: 239, coupon: null }); // 4 × 55 + 19
+    expect(res.body.message).toContain('239');
     expect(store.orders).toHaveLength(0);
   });
 
@@ -139,9 +141,66 @@ describe('create-order', () => {
     const coupon = store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     await call(createOrder, {
       method: 'POST',
-      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'NOV26', displayedTotal: 229, ...customer }
+      body: { quantity: 4, deliveryMethod: 'delivery', couponCode: 'NOV26', displayedTotal: 212.52, ...customer }
     });
     await store.updateCoupon(coupon.id, { discount_percent: 30 }, { id: 'a', email: 'a@b.co' });
-    expect(store.orders[0]).toMatchObject({ discount_percent_snapshot: 18, discount_agorot: 4200, total_agorot: 22900 });
+    expect(store.orders[0]).toMatchObject({ discount_percent_snapshot: 18, discount_agorot: 4248, total_agorot: 21252 });
+  });
+});
+
+describe('create-order – quantity tiers', () => {
+  const order = (body: Record<string, unknown>) =>
+    call(createOrder, { method: 'POST', body: { deliveryMethod: 'delivery', ...customer, ...body } });
+
+  it.each([
+    [1, 94], [2, 153], [3, 184], [4, 239], [5, 255], [6, 306], [10, 510]
+  ])('%i packs with home delivery cost ₪%d, and the Tranzila sum matches', async (quantity, total) => {
+    const res = await order({ quantity, displayedTotal: total });
+    expect(res.status).toBe(200);
+    expect(res.body.payment.sum).toBe(total);
+    const lines = JSON.parse(decodeURIComponent(res.body.payment.jsonPurchaseData)) as { product_price: number; product_quantity: number }[];
+    expect(lines.reduce((s, l) => s + Math.round(l.product_price * 100) * l.product_quantity, 0)).toBe(total * 100);
+  });
+
+  it('rejects 5 packs sent with the total of 3 packs', async () => {
+    const res = await order({ quantity: 5, displayedTotal: 184 });
+    expect(res.status).toBe(409);
+    expect(res.body.pricing.total).toBe(255);
+    expect(store.orders).toHaveLength(0);
+  });
+
+  it('15% coupon with stacking: 3 packs = 159.25, 5 packs = 216.75 with free shipping', async () => {
+    store.addCoupon({ code: 'DANA15', discount_percent: 15, stacks_promotions: true });
+    expect((await order({ quantity: 3, couponCode: 'DANA15', displayedTotal: 159.25 })).status).toBe(200);
+    const five = await order({ quantity: 5, couponCode: 'DANA15', displayedTotal: 216.75 });
+    expect(five.status).toBe(200);
+    expect(store.orders[1]).toMatchObject({ unit_price_agorot: 5100, shipping_agorot: 0, coupon_applied: true, coupon_stacks_snapshot: true });
+  });
+
+  it('15% coupon without stacking: 3 packs = 169.45, 5 packs = 250.75', async () => {
+    store.addCoupon({ code: 'DANA15', discount_percent: 15 });
+    expect((await order({ quantity: 3, couponCode: 'DANA15', displayedTotal: 169.45 })).status).toBe(200);
+    expect((await order({ quantity: 5, couponCode: 'DANA15', displayedTotal: 250.75 })).status).toBe(200);
+    expect(store.orders[1]).toMatchObject({ unit_price_agorot: 5900, tier_unit_price_agorot: 5100, discount_agorot: 4425 });
+  });
+
+  it('a 5% coupon without stacking is entered but not applied on 5 packs', async () => {
+    const coupon = store.addCoupon({ code: 'SMALL5', discount_percent: 5 });
+    const res = await order({ quantity: 5, couponCode: 'SMALL5', displayedTotal: 255 });
+    expect(res.status).toBe(200);
+    expect(res.body.pricing).toMatchObject({ total: 255, discount: 0, couponApplied: false, coupon: { code: 'SMALL5' } });
+    expect(store.orders[0]).toMatchObject({
+      coupon_id: coupon.id, coupon_applied: false, discount_agorot: 0, unit_price_agorot: 5100, total_agorot: 25500
+    });
+    const lines = JSON.parse(decodeURIComponent(res.body.payment.jsonPurchaseData));
+    expect(lines[0].product_name).toBe('מארז CleanFry');
+  });
+
+  it('turning stacking on in the admin affects the next order immediately', async () => {
+    const coupon = store.addCoupon({ code: 'DANA15', discount_percent: 15 });
+    await store.updateCoupon(coupon.id, { stacks_promotions: true }, { id: 'a', email: 'a@b.co' });
+    const check = await call(validateCoupon, { method: 'POST', body: { code: 'DANA15' } });
+    expect(check.body.stacksPromotions).toBe(true);
+    expect((await order({ quantity: 5, couponCode: 'DANA15', displayedTotal: 216.75 })).status).toBe(200);
   });
 });

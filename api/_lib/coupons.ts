@@ -6,6 +6,8 @@ export interface CouponRow {
   label: string;
   discount_percent: number;
   is_active: boolean;
+  /** כפל מבצעים: true = ההנחה חלה גם על מחיר המדרגה; false = על מחיר המחירון, והזול מבין השניים */
+  stacks_promotions: boolean;
   starts_at: string | null;
   expires_at: string | null;
   created_at: string;

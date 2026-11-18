@@ -60,6 +60,7 @@ function order(overrides: Partial<NewOrder> = {}): NewOrder {
     quantity: 2, delivery_method: 'delivery', pickup_location: null, unit_price_agorot: 5900,
     subtotal_agorot: 11800, discount_agorot: 0, shipping_agorot: 3500, total_agorot: 15300, currency: 'ILS',
     coupon_id: null, coupon_code_snapshot: null, discount_percent_snapshot: null,
+    tier_unit_price_agorot: 5900, coupon_stacks_snapshot: null, coupon_applied: null,
     customer_name: 'ישראל ישראלי', customer_phone: '0501234567', customer_email: 'secret@customer.co', customer_business_id: '',
     shipping_city: 'חיפה', shipping_address: 'הנמל 1', shipping_apartment: '', shipping_zip: '',
     invoice_lines: [], price_locked_until: '2026-11-08T10:15:00Z', ...overrides
@@ -70,7 +71,8 @@ function order(overrides: Partial<NewOrder> = {}): NewOrder {
 async function paidCouponOrder(couponId: string, code: string, paidAt = NOW.toISOString(), overrides: Partial<NewOrder> = {}) {
   const row = await store.createOrder(order({
     quantity: 3, subtotal_agorot: 17700, discount_agorot: 1800, shipping_agorot: 0, total_agorot: 15900,
-    coupon_id: couponId, coupon_code_snapshot: code, discount_percent_snapshot: 10, ...overrides
+    coupon_id: couponId, coupon_code_snapshot: code, discount_percent_snapshot: 10,
+    coupon_stacks_snapshot: false, coupon_applied: true, ...overrides
   }));
   await store.recordPayment(row.id, `T-${row.id}`, row.total_agorot, 'ILS');
   const saved = store.orders.find((o) => o.id === row.id)!;
@@ -188,7 +190,7 @@ describe('partner sales attribution', () => {
     const res = await call(createOrder, {
       method: 'POST',
       body: {
-        quantity: 1, deliveryMethod: 'pickup', pickupLocation: 'tel-aviv', couponCode: 'dana10', displayedTotal: 53,
+        quantity: 1, deliveryMethod: 'pickup', pickupLocation: 'tel-aviv', couponCode: 'dana10', displayedTotal: 53.1,
         name: 'לקוח', phone: '0501234567', email: 'c@d.co'
       }
     });
@@ -305,4 +307,29 @@ describe('partner summary', () => {
     }
     expect(json).not.toMatch(/customer|shipping|public_ref|phone|email/);
   });
+
+  it('an order where her code was entered but not applied still earns commission, and the report flags it', async () => {
+    const coupon = store.addCoupon({ code: 'SMALL5', discount_percent: 5 });
+    await createPartner({ coupon_ids: [coupon.id] });
+    // 5 מארזים: מחיר החבילה (51) זול מהקופון (56.05), אז ההנחה לא הוחלה
+    const res = await call(createOrder, {
+      method: 'POST',
+      body: {
+        quantity: 5, deliveryMethod: 'pickup', pickupLocation: 'tel-aviv', couponCode: 'SMALL5', displayedTotal: 255,
+        name: 'לקוח', phone: '0501234567', email: 'c@d.co'
+      }
+    });
+    expect(res.status).toBe(200);
+    const row = store.orders[0];
+    expect(row).toMatchObject({ coupon_applied: false, discount_agorot: 0, partner_commission_percent: 15 });
+    await store.recordPayment(row.id, 'T-small5', row.total_agorot, 'ILS');
+
+    const summary = await summaryAs('partner-user-1-token');
+    expect(summary.body.totals).toMatchObject({ orders: 1, sales_agorot: 25500, commission_agorot: 3825 });
+
+    const report = await call(adminReport, { method: 'GET', headers: as('admin-token'), query: { from: '2026-11-01', to: '2026-11-30' } });
+    expect(report.body.rows.find((r: { coupon_code: string }) => r.coupon_code === 'SMALL5'))
+      .toMatchObject({ paid_orders: 1, applied_orders: 0, not_applied_orders: 1, discounts_agorot: 0, product_sales_agorot: 25500 });
+  });
 });
+
