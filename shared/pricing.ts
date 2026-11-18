@@ -23,7 +23,7 @@ export interface Tier {
 /** מסודר מהגבוה לנמוך. המדרגה הנמוכה (min: 1) חייבת להיות במחיר המחירון */
 export const TIERS: readonly Tier[] = [
   { min: 5, priceAgorot: 5100, homeShippingAgorot: 0 },
-  { min: 3, priceAgorot: 5500, homeShippingAgorot: 1900 },
+  { min: 3, priceAgorot: 5500, homeShippingAgorot: 3500 },
   { min: 1, priceAgorot: LIST_PRICE_AGOROT, homeShippingAgorot: 3500 }
 ];
 

@@ -38,7 +38,7 @@ beforeEach(() => {
 
 async function placeOrder(coupon?: string) {
   const body: Record<string, unknown> = {
-    quantity: 4, deliveryMethod: 'delivery', displayedTotal: coupon ? 212.52 : 239,
+    quantity: 4, deliveryMethod: 'delivery', displayedTotal: coupon ? 228.52 : 255,
     name: 'ישראל', phone: '0501234567', email: 'a@b.co', city: 'חיפה', address: 'הנמל 1'
   };
   if (coupon) body.couponCode = coupon;
@@ -53,9 +53,9 @@ describe('tranzila-notify', () => {
   it('records a verified payment and attributes it to the right coupon', async () => {
     const coupon = store.addCoupon({ code: 'NOV26', discount_percent: 18 });
     const { order, remarks } = await placeOrder('NOV26');
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 21252, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 22852, currency: 'ILS', remarks });
 
-    const res = await notify({ Response: '000', index: '1001', sum: '212.52', currency: '1', remarks, ccno: '4580000000000000', myid: '123456789' });
+    const res = await notify({ Response: '000', index: '1001', sum: '228.52', currency: '1', remarks, ccno: '4580000000000000', myid: '123456789' });
     expect(res.body.outcome).toBe('recorded');
 
     const saved = await store.getOrder(order.id);
@@ -69,7 +69,7 @@ describe('tranzila-notify', () => {
 
   it('does not mark a forged notify as paid (valid reference, no such transaction at Tranzila)', async () => {
     const { order, remarks } = await placeOrder();
-    const res = await notify({ Response: '000', index: '999', sum: '239', remarks });
+    const res = await notify({ Response: '000', index: '999', sum: '255', remarks });
     expect(res.body.outcome).toBe('verification_failed');
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
     expect(store.payments).toHaveLength(0);
@@ -80,7 +80,7 @@ describe('tranzila-notify', () => {
   it('rejects a notify with a forged order reference', async () => {
     const { order } = await placeOrder();
     const forged = `${order.id}.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`;
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks: forged });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks: forged });
     const res = await notify({ Response: '000', index: '1001', remarks: forged });
     expect(res.body.outcome).toBe('invalid_reference');
     expect((await store.getOrder(order.id))!.payment_status).toBe('pending');
@@ -89,7 +89,7 @@ describe('tranzila-notify', () => {
   it('without Tranzila API keys, keeps the order awaiting verification and does not count it', async () => {
     useDeps(noopVerifier);
     const { order, remarks } = await placeOrder();
-    const res = await notify({ Response: '000', index: '1001', sum: '239', remarks });
+    const res = await notify({ Response: '000', index: '1001', sum: '255', remarks });
     expect(res.body.outcome).toBe('unverified');
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
     expect(await store.couponReport()).toHaveLength(0);
@@ -98,13 +98,13 @@ describe('tranzila-notify', () => {
   it('without API keys notifies the owner once (flagged unverified), and still sends the confirmation once verified', async () => {
     useDeps(noopVerifier);
     const { order, remarks } = await placeOrder();
-    await notify({ Response: '000', index: '1001', sum: '239', remarks });
-    await notify({ Response: '000', index: '1001', sum: '239', remarks });
+    await notify({ Response: '000', index: '1001', sum: '255', remarks });
+    await notify({ Response: '000', index: '1001', sum: '255', remarks });
     expect(sendEmail).toHaveBeenCalledTimes(1);
     expect(sendEmail.mock.calls[0][1]).toEqual({ unverified: true });
 
     useDeps(fakeVerifier);
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
     const paid = (await store.getOrder(order.id))!;
     expect(paid.payment_status).toBe('paid');
@@ -129,8 +129,8 @@ describe('tranzila-notify', () => {
 
   it('counts a duplicate or concurrent notify for the same transaction once', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
-    const body = { Response: '000', index: '1001', sum: '239', remarks };
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
+    const body = { Response: '000', index: '1001', sum: '255', remarks };
     const results = await Promise.all([notify(body), notify(body), notify(body)]);
 
     expect(results.map((r) => r.body.outcome).sort()).toEqual(['duplicate', 'duplicate', 'recorded']);
@@ -152,7 +152,7 @@ describe('tranzila-notify', () => {
   it('records a payment that arrives after the 15 minute lock, flagged for review', async () => {
     const { order, remarks } = await placeOrder();
     now = new Date(now.getTime() + 20 * 60_000);
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     await notify({ Response: '000', index: '1001', remarks });
     expect(await store.getOrder(order.id)).toMatchObject({ payment_status: 'paid', paid_after_expiry: true });
   });
@@ -166,7 +166,7 @@ describe('tranzila-notify', () => {
 
   it('recovers from a temporary storage failure through reconcile, without duplicates', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     store.failNext.recordPayment = 1;
 
     const first = await notify({ Response: '000', index: '1001', remarks });
@@ -186,7 +186,7 @@ describe('tranzila-notify', () => {
 
   it('keeps the purchase when the confirmation email fails, and retries it without a new purchase', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     sendEmail.mockRejectedValueOnce(new Error('formspree down'));
 
     await notify({ Response: '000', index: '1001', remarks });
@@ -206,7 +206,7 @@ describe('tranzila-notify', () => {
     expect((await store.getOrder(order.id))!.payment_status).toBe('awaiting_verification');
 
     useDeps(fakeVerifier);
-    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('1001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     await call(reconcile, { method: 'GET', headers: { authorization: 'Bearer cron-secret' } });
     expect((await store.getOrder(order.id))!.payment_status).toBe('paid');
   });
@@ -215,7 +215,7 @@ describe('tranzila-notify', () => {
     const victim = await placeOrder();
     const attacker = await placeOrder();
     // עסקה אמיתית של הקורבן, באותו סכום, שמשויכת אצל טרנזילה להפניה של הקורבן
-    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks: victim.remarks });
+    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks: victim.remarks });
 
     const res = await notify({ Response: '000', index: '2001', remarks: attacker.remarks });
     expect(res.body.outcome).toBe('invalid_reference');
@@ -233,7 +233,7 @@ describe('tranzila-notify', () => {
       await call(tranzilaNotify, { method: 'POST', body: { Response: '000', index: `9${i}`, remarks: flooded.remarks }, headers: { 'x-forwarded-for': `10.0.0.${i}` } });
     }
     // האירוע האמיתי נכשל זמנית ונכנס לתור
-    tranzilaTransactions.set('3001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks: real.remarks });
+    tranzilaTransactions.set('3001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks: real.remarks });
     store.failNext.recordPayment = 1;
     await notify({ Response: '000', index: '3001', remarks: real.remarks });
 
@@ -243,8 +243,8 @@ describe('tranzila-notify', () => {
 
   it('a real second charge on an already-paid order is still recorded on retry and flagged', async () => {
     const { order, remarks } = await placeOrder();
-    tranzilaTransactions.set('4001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
-    tranzilaTransactions.set('4002', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('4001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
+    tranzilaTransactions.set('4002', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     await notify({ Response: '000', index: '4001', remarks });
 
     store.failNext.recordPayment = 1;
@@ -306,13 +306,13 @@ describe('manual confirmation followed by real verification', () => {
   it('attaches the verified payment without flagging a duplicate or emailing again', async () => {
     const { order, remarks } = await placeOrder();
     useDeps(noopVerifier);
-    await notify({ Response: '000', index: '2001', sum: '239', remarks });
+    await notify({ Response: '000', index: '2001', sum: '255', remarks });
     sendEmail.mockClear();
     await store.confirmOrderManually(order.id, 'owner@cleanfry.co.il');
 
     // בהמשך הוגדרו מפתחות API, וה-cron מאמת את האירוע
     useDeps();
-    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 23900, currency: 'ILS', remarks });
+    tranzilaTransactions.set('2001', { kind: 'verified', amountAgorot: 25500, currency: 'ILS', remarks });
     const res = await call(reconcile, { method: 'POST', headers: { authorization: 'Bearer cron-secret' } });
     expect(res.status).toBe(200);
 

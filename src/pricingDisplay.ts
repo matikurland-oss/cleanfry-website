@@ -42,13 +42,17 @@ export function nextTierMessage(quantity: number, deliveryMethod: DeliveryMethod
   if (!cheaperUnit && !cheaperShip) return best;
 
   if (cheaperShip && next.homeShippingAgorot === 0 && add === 1) {
-    return {
-      good: false,
-      addQuantity: add,
-      text: `עוד מארז אחד ב-₪${formatShekels(then.totalAgorot - now.totalAgorot)} בלבד` +
-        (cheaperUnit ? `: ₪${formatShekels(thenUnit)} למארז ומשלוח חינם` : ' ותקבלו משלוח חינם') +
+    const diff = then.totalAgorot - now.totalAgorot;
+    const benefit = cheaperUnit ? `₪${formatShekels(thenUnit)} למארז ומשלוח חינם` : 'משלוח חינם';
+    // המשלוח שנחסך יכול לכסות את המארז הנוסף כולו, ואפילו יותר
+    const text = diff > 0
+      ? `עוד מארז אחד ב-₪${formatShekels(diff)} בלבד` +
+        (cheaperUnit ? `: ${benefit}` : ' ותקבלו משלוח חינם') +
         ` (₪${formatShekels(then.totalAgorot)} במקום ₪${formatShekels(now.totalAgorot)})`
-    };
+      : diff === 0
+        ? `עוד מארז אחד בלי תוספת תשלום: ${benefit} (₪${formatShekels(then.totalAgorot)} בשני המקרים)`
+        : `עם עוד מארז תשלמו פחות: ₪${formatShekels(then.totalAgorot)} במקום ₪${formatShekels(now.totalAgorot)} (${benefit})`;
+    return { good: false, addQuantity: add, text };
   }
 
   const parts: string[] = [];
