@@ -64,6 +64,12 @@ export default function CouponsPanel({ coupons, partners, loading, onChanged }: 
 
   const partnerName = (c: AdminCoupon) => partners.find((p) => p.id === c.partner_id)?.display_name ?? '—';
 
+  const stacksBadge = (c: AdminCoupon) => (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${c.stacks_promotions ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+      כפל מבצעים: {c.stacks_promotions ? 'דלוק' : 'כבוי'}
+    </span>
+  );
+
   const badge = (state: CouponState) => (
     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${STATE_LABELS[state].className}`}>{STATE_LABELS[state].label}</span>
   );
@@ -115,7 +121,7 @@ export default function CouponsPanel({ coupons, partners, loading, onChanged }: 
             </div>
             {c.label && <p className="text-sm text-slate-500">{c.label}</p>}
             <dl className="grid grid-cols-2 gap-2 text-sm my-3">
-              <div><dt className="text-slate-400 text-xs">הנחה</dt><dd className="font-bold">{c.discount_percent}%</dd></div>
+              <div><dt className="text-slate-400 text-xs">הנחה</dt><dd className="font-bold">{c.discount_percent}% {stacksBadge(c)}</dd></div>
               <div><dt className="text-slate-400 text-xs">הזמנות ששולמו</dt><dd className="font-bold">{c.paid_orders}</dd></div>
               <div><dt className="text-slate-400 text-xs">הכנסות</dt><dd className="font-bold">{formatShekels(c.gross_collected_agorot)}</dd></div>
               <div><dt className="text-slate-400 text-xs">משפיענית</dt><dd className="font-bold">{partnerName(c)}</dd></div>
@@ -149,7 +155,7 @@ export default function CouponsPanel({ coupons, partners, loading, onChanged }: 
                 <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/60">
                   <td className="py-3 px-2 font-mono font-black" dir="ltr">{c.code}</td>
                   <td className="py-3 px-2 text-slate-600">{c.label || '—'}</td>
-                  <td className="py-3 px-2 font-bold tabular-nums">{c.discount_percent}%</td>
+                  <td className="py-3 px-2 font-bold tabular-nums"><div>{c.discount_percent}%</div>{stacksBadge(c)}</td>
                   <td className="py-3 px-2">{badge(c.state)}</td>
                   <td className="py-3 px-2 text-slate-600">{partnerName(c)}</td>
                   <td className="py-3 px-2 text-xs text-slate-500">{formatIsraelDateTime(c.starts_at)}</td>

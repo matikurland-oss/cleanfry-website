@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
-import { FREE_SHIPPING_THRESHOLD_AGOROT, agorotToShekels } from '../../shared/pricing';
+import { FREE_SHIPPING_MIN_QUANTITY } from '../../shared/pricing';
 
 const MESSAGES = [
-  `משלוח חינם בקנייה מעל ₪${agorotToShekels(FREE_SHIPPING_THRESHOLD_AGOROT)}`,
+  `משלוח חינם מ-${FREE_SHIPPING_MIN_QUANTITY} מארזים`,
   'איסוף עצמי ללא עלות',
   '100% רכיבים ממקור צמחי',
   'שומרים על הצנרת ועל הסביבה',

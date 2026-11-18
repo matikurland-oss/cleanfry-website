@@ -15,11 +15,18 @@ import { isValidIsraeliPhone } from './checkoutValidation';
 import { isShoppingIlPromoActive } from './shoppingIlPromo';
 import { track, trackCartEvent, savePendingPurchase } from './analytics';
 import {
-  FREE_SHIPPING_THRESHOLD_AGOROT,
-  SHIPPING_AGOROT,
-  UNIT_PRICE_AGOROT,
+  LIST_PRICE_AGOROT,
+  MAX_QUANTITY,
   priceOrder
 } from '../shared/pricing';
+import { formatShekels, nextTierMessage, packsLabel } from './pricingDisplay';
+
+/** מחיר מחוק עם ״במקום״ לקוראי מסך */
+const Was = ({ agorot }: { agorot: number }) => (
+  <del className="font-medium text-slate-400 decoration-[#B42318] decoration-2">
+    <span className="sr-only">במקום </span>₪{formatShekels(agorot)}
+  </del>
+);
 
 const CheckoutPage = () => {
   const location = useLocation();
@@ -31,6 +38,8 @@ const CheckoutPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [coupon, setCoupon] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
+  // כפל מבצעים של הקופון (מגיע מהשרת עם בדיקת הקופון)
+  const [stacksPromotions, setStacksPromotions] = useState(false);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [shippingMethod, setShippingMethod] = useState<'delivery' | 'pickup'>('delivery');
   const [pickupLocation, setPickupLocation] = useState<'kfar-saba' | 'tel-aviv' | ''>(''); 
@@ -54,33 +63,34 @@ const CheckoutPage = () => {
   // שדות הטופס לטרנזילה — מגיעים מהשרת (api/create-order), שקבע את הסכום המחייב בעצמו
   const [payment, setPayment] = useState<{ sum: number; jsonPurchaseData: string; remarks: string; expiresAt: string } | null>(null);
 
-  // 2. הגדרות מחיר
-  const UNIT_PRICE = UNIT_PRICE_AGOROT / 100;
-  const SHIPPING_COST = SHIPPING_AGOROT / 100;
-  const FREE_SHIPPING_THRESHOLD = FREE_SHIPPING_THRESHOLD_AGOROT / 100;
-
-  // 3. חישובי סכומים — לתצוגה בלבד. אותה פונקציה (shared/pricing) רצה בשרת וקובעת את הסכום המחייב;
-  // השרת לא מקבל מהדפדפן סכום, אחוז הנחה או עלות משלוח. אחוז ההנחה כאן (18 = 18%) מגיע מ-validate-coupon.
-  const price = priceOrder({ quantity, deliveryMethod: shippingMethod, discountPercent: isCouponApplied ? discountPercent : 0 });
-  const subtotal = price.subtotalAgorot / 100;
+  // 2-3. חישובי סכומים — לתצוגה בלבד. אותה פונקציה (shared/pricing) רצה בשרת וקובעת את הסכום המחייב;
+  // השרת לא מקבל מהדפדפן סכום, אחוז הנחה או עלות משלוח. אחוז ההנחה (18 = 18%) וכפל המבצעים מגיעים מ-validate-coupon.
+  const couponTerms = isCouponApplied ? { discountPercent, stacks: stacksPromotions } : null;
+  const price = priceOrder({ quantity, deliveryMethod: shippingMethod, coupon: couponTerms });
   const discount = price.discountAgorot / 100;
-  const amountAfterDiscount = price.productsAfterDiscountAgorot / 100;
-  const isFreeShipping = price.isFreeShipping;
   const currentShipping = price.shippingAgorot / 100;
   const totalPrice = price.totalAgorot / 100;
+  const struck = price.unitPriceAgorot < LIST_PRICE_AGOROT;
+  const nudge = nextTierMessage(quantity, shippingMethod, couponTerms);
 
   // 4. זיהוי כמות מה-URL + חזרה מתשלום שנכשל
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const qParam = parseInt(params.get('q') || '1');
-    if (qParam >= 1 && qParam <= 10) setQuantity(qParam);
+    if (qParam >= 1 && qParam <= MAX_QUANTITY) setQuantity(qParam);
+    // שיטת הקבלה שנבחרה בדף הבית
+    if (params.get('ship') === 'pickup') {
+      setShippingMethod('pickup');
+      const loc = params.get('loc');
+      if (loc === 'tel-aviv' || loc === 'kfar-saba') setPickupLocation(loc);
+    }
     if (params.get('payment') === 'failed') {
       setPaymentFailed(true);
       if (!checkoutTrackedRef.current) track('payment_failed');
     } else if (!checkoutTrackedRef.current) {
       // מאיפה הגיעו לצ'קאאוט: הפופאפ מוסיף קופון, כפתור הקנייה מוסיף כמות, אייקון הסל — כלום
       const source = params.get('coupon') ? 'promo_popup' : params.get('q') ? 'purchase_box' : 'cart_or_direct';
-      trackCartEvent('begin_checkout', qParam >= 1 && qParam <= 10 ? qParam : 1, { source });
+      trackCartEvent('begin_checkout', qParam >= 1 && qParam <= MAX_QUANTITY ? qParam : 1, { source });
     }
     checkoutTrackedRef.current = true;
     const couponParam = params.get('coupon');
@@ -171,6 +181,7 @@ const CheckoutPage = () => {
       if (result.valid) {
         setCoupon(result.code);
         setDiscountPercent(result.discountPercent);
+        setStacksPromotions(result.stacksPromotions === true);
         setIsCouponApplied(true);
         setPriceNotice('');
         setShowPayment(false);
@@ -187,8 +198,14 @@ const CheckoutPage = () => {
   const handleRemoveCoupon = () => {
     setCoupon('');
     setDiscountPercent(0);
+    setStacksPromotions(false);
     setIsCouponApplied(false);
     setCouponError('');
+    setShowPayment(false);
+  };
+
+  const changeQuantity = (next: number) => {
+    setQuantity(Math.min(MAX_QUANTITY, Math.max(1, next)));
     setShowPayment(false);
   };
 
@@ -252,6 +269,7 @@ const CheckoutPage = () => {
           setIsCouponApplied(false);
         } else {
           setDiscountPercent(result.pricing.coupon.discountPercent);
+          setStacksPromotions(result.pricing.coupon.stacksPromotions === true);
         }
         track('checkout_price_changed');
         setPriceNotice(result.message);
@@ -412,20 +430,26 @@ const CheckoutPage = () => {
               <div className="flex flex-wrap justify-between items-center gap-3 mb-8 bg-slate-50 p-4 rounded-2xl">
                 <div className="text-right">
                   <p className="font-bold text-lg text-slate-800">מארז CleanFry</p>
-                  <p className="text-sm text-slate-500">₪{UNIT_PRICE} ליחידה</p>
+                  <p className="text-sm text-slate-500 tabular-nums">
+                    ₪{formatShekels(price.tierPriceAgorot)} למארז{price.tierPriceAgorot < LIST_PRICE_AGOROT && <> <Was agorot={LIST_PRICE_AGOROT} /></>}
+                  </p>
                 </div>
                 <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button onClick={() => { if (quantity > 1) { setQuantity(q => q - 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500"><Minus size={18} /></button>
-                  <span className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button onClick={() => { if (quantity < 10) { setQuantity(q => q + 1); setShowPayment(false); } }} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition"><Plus size={18} /></button>
+                  <button type="button" aria-label="הורדת מארז" disabled={quantity <= 1} onClick={() => changeQuantity(quantity - 1)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500 disabled:opacity-40"><Minus size={18} /></button>
+                  <span aria-live="polite" className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
+                  <button type="button" aria-label="הוספת מארז" disabled={quantity >= MAX_QUANTITY} onClick={() => changeQuantity(quantity + 1)} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-40"><Plus size={18} /></button>
                 </div>
               </div>
 
-              {shippingMethod === 'delivery' && !isFreeShipping && (
-                <div className="mb-6 p-4 bg-orange-50 rounded-2xl border border-orange-100 text-orange-700 text-sm">
-                  <p className="font-bold">חסרים לך ₪{FREE_SHIPPING_THRESHOLD - amountAfterDiscount} למשלוח חינם!</p>
-                </div>
-              )}
+              {/* הודעת המדרגה הבאה (מחליפה את ״חסרים לך ₪X למשלוח חינם״) */}
+              <div aria-live="polite" className={`mb-6 p-4 rounded-2xl border text-sm flex flex-wrap items-center justify-between gap-3 ${nudge.good ? 'bg-green-50 border-green-100 text-green-700' : 'bg-orange-50 border-orange-100 text-orange-700'}`}>
+                <p className="font-bold flex items-center gap-2"><Truck size={18} className="shrink-0" />{nudge.text}</p>
+                {nudge.addQuantity > 0 && quantity + nudge.addQuantity <= MAX_QUANTITY && (
+                  <button type="button" onClick={() => changeQuantity(quantity + nudge.addQuantity)} className="min-h-11 px-4 rounded-full bg-white border border-orange-200 font-bold text-orange-800 hover:bg-orange-100 transition">
+                    {nudge.addQuantity === 1 ? 'הוספת מארז' : `הוספת ${packsLabel(nudge.addQuantity)}`}
+                  </button>
+                )}
+              </div>
 
               <div className="mb-8">
                 <div className="flex gap-2">
@@ -439,18 +463,29 @@ const CheckoutPage = () => {
                 {couponError && (
                   <p className="text-red-500 text-sm mt-2 font-medium">{couponError}</p>
                 )}
-                {isCouponApplied && (
+                {isCouponApplied && price.couponApplied && (
                   <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{discount}</span></div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{formatShekels(price.discountAgorot)}</span></div>
                   </div>
+                )}
+                {isCouponApplied && price.couponApplied && !stacksPromotions && price.tierPriceAgorot < LIST_PRICE_AGOROT && (
+                  <p className="text-sm mt-2 text-slate-600 bg-slate-50 p-2 rounded-lg">הקופון מחליף את מחיר החבילה (אין כפל מבצעים), כי הוא זול יותר.</p>
+                )}
+                {isCouponApplied && !price.couponApplied && (
+                  <p className="text-sm mt-3 font-bold text-green-700 bg-green-50 p-2 rounded-lg border border-green-100">מחיר החבילה זול מהקופון, אז קיבלתם אותו במקום הקופון (אין כפל מבצעים).</p>
                 )}
               </div>
 
               <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
-                <div className="flex justify-between"><span>סיכום ביניים ({quantity} יח'):</span><span className="font-bold">₪{subtotal}</span></div>
-                {discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>הנחה:</span><span>-₪{discount}</span></div>}
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : ""}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (isFreeShipping ? "חינם" : `₪${SHIPPING_COST}`)}</span></div>
-                <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{totalPrice}</span></div>
+                <div className="flex flex-wrap justify-between gap-x-3 tabular-nums">
+                  <span>{quantity} × <span className="inline-flex items-baseline gap-1.5">₪{formatShekels(price.unitPriceAgorot)}{struck && <Was agorot={LIST_PRICE_AGOROT} />}</span></span>
+                  <span className="font-bold inline-flex items-baseline gap-1.5">₪{formatShekels(price.subtotalAgorot)}{struck && <Was agorot={price.listSubtotalAgorot} />}</span>
+                </div>
+                {price.couponApplied && discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>קופון {coupon.toUpperCase().trim()} ({discountPercent}%):</span><span className="tabular-nums">-₪{formatShekels(price.discountAgorot)}</span></div>}
+                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : "tabular-nums"}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (currentShipping === 0 ? "חינם" : `₪${formatShekels(price.shippingAgorot)}`)}</span></div>
+                <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span aria-live="polite" className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{formatShekels(price.totalAgorot)}</span></div>
+                <p className="text-sm font-bold text-slate-500 tabular-nums">יוצא ₪{formatShekels(price.totalAgorot / quantity)} למארז כולל הכל</p>
+                {price.savedAgorot > 0 && <p className="text-sm font-bold text-green-600 tabular-nums">חסכתם ₪{formatShekels(price.savedAgorot)} לעומת מחיר מארז בודד</p>}
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-3 text-[10px] font-bold">
