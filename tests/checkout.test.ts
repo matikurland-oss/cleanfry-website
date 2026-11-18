@@ -196,6 +196,20 @@ describe('create-order – quantity tiers', () => {
     expect(lines[0].product_name).toBe('מארז CleanFry');
   });
 
+  it('the coupon never touches shipping: the invoice shipping line stays exactly ₪19', async () => {
+    store.addCoupon({ code: 'ODD777', discount_percent: 7.77 });
+    // 3 × 59 = 177 − 7.77% (13.75) = 163.25 + משלוח 19 = 182.25. 163.25 לא מתחלק ב-3, אז אגורת העיגול נכנסת לשורת מוצר
+    const res = await order({ quantity: 3, couponCode: 'ODD777', displayedTotal: 182.25 });
+    expect(res.status).toBe(200);
+    expect(store.orders[0]).toMatchObject({ shipping_agorot: 1900, discount_agorot: 1375, total_agorot: 18225 });
+    const lines = JSON.parse(decodeURIComponent(res.body.payment.jsonPurchaseData));
+    expect(lines).toEqual([
+      { product_name: 'מארז CleanFry (קופון: ODD777)', product_quantity: 1, product_price: 54.41 },
+      { product_name: 'מארז CleanFry (קופון: ODD777)', product_quantity: 2, product_price: 54.42 },
+      { product_name: 'דמי משלוח עד הבית', product_quantity: 1, product_price: 19 }
+    ]);
+  });
+
   it('turning stacking on in the admin affects the next order immediately', async () => {
     const coupon = store.addCoupon({ code: 'DANA15', discount_percent: 15 });
     await store.updateCoupon(coupon.id, { stacks_promotions: true }, { id: 'a', email: 'a@b.co' });

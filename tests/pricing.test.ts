@@ -117,21 +117,65 @@ describe('priceOrder – validation and rounding', () => {
   });
 });
 
-describe('buildInvoiceLines', () => {
-  it('line items always sum exactly to the total', () => {
+describe('the coupon discounts products only, never shipping', () => {
+  it('shipping is the same with or without a coupon, for every quantity, percent and stacking', () => {
     for (let q = 1; q <= 10; q++) {
-      for (const pct of [0, 5, 7, 13, 15, 18, 25]) {
-        for (const stacks of [true, false]) {
-          for (const method of ['delivery', 'pickup'] as const) {
-            const p = priceOrder({ quantity: q, deliveryMethod: method, coupon: pct ? coupon(pct, stacks) : null });
-            const lines = buildInvoiceLines(p, method, method === 'pickup' ? 'tel-aviv' : null, pct ? 'CODE' : null);
-            const sumAgorot = lines.reduce((s, l) => s + Math.round(l.product_price * 100) * l.product_quantity, 0);
-            expect(sumAgorot, `q=${q} pct=${pct} stacks=${stacks} ${method}`).toBe(p.totalAgorot);
-            expect(lines[0].product_quantity).toBe(q);
+      for (const method of ['delivery', 'pickup'] as const) {
+        const plain = priceOrder({ quantity: q, deliveryMethod: method, coupon: null });
+        expect(plain.shippingAgorot).toBe(method === 'pickup' ? 0 : tierFor(q).homeShippingAgorot);
+        for (const pct of [5, 7, 7.77, 12.5, 13.33, 15, 18, 25]) {
+          for (const stacks of [true, false]) {
+            const p = priceOrder({ quantity: q, deliveryMethod: method, coupon: coupon(pct, stacks) });
+            const label = `q=${q} pct=${pct} stacks=${stacks} ${method}`;
+            expect(p.shippingAgorot, label).toBe(plain.shippingAgorot);
+            // ההנחה לא עולה על האחוז מסכום המוצרים (מעוגל לאגורה)
+            expect(p.discountAgorot, label).toBeLessThanOrEqual(Math.round(p.subtotalAgorot * pct / 100));
+            expect(p.totalAgorot, label).toBe(p.subtotalAgorot - p.discountAgorot + p.shippingAgorot);
           }
         }
       }
     }
+  });
+});
+
+describe('buildInvoiceLines', () => {
+  it('line items sum exactly to the total, and the shipping line is exactly the shipping price', () => {
+    for (let q = 1; q <= 10; q++) {
+      for (const pct of [0, 5, 7, 7.77, 12.5, 13.33, 15, 18, 25]) {
+        for (const stacks of [true, false]) {
+          for (const method of ['delivery', 'pickup'] as const) {
+            const p = priceOrder({ quantity: q, deliveryMethod: method, coupon: pct ? coupon(pct, stacks) : null });
+            const lines = buildInvoiceLines(p, method, method === 'pickup' ? 'tel-aviv' : null, pct ? 'CODE' : null);
+            const label = `q=${q} pct=${pct} stacks=${stacks} ${method}`;
+            const sumAgorot = lines.reduce((s, l) => s + Math.round(l.product_price * 100) * l.product_quantity, 0);
+            expect(sumAgorot, label).toBe(p.totalAgorot);
+            const shippingLine = lines[lines.length - 1];
+            expect(Math.round(shippingLine.product_price * 100), label).toBe(p.shippingAgorot);
+            const productLines = lines.slice(0, -1);
+            expect(productLines.reduce((s, l) => s + l.product_quantity, 0), label).toBe(q);
+            expect(productLines.every((l) => l.product_price > 0 && l.product_quantity > 0), label).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it('splits the product line (not the shipping line) when the products total does not divide evenly', () => {
+    let found = false;
+    for (let q = 2; q <= 10 && !found; q++) {
+      for (const pct of [12.5, 7.77, 13.33]) {
+        const p = priceOrder({ quantity: q, deliveryMethod: 'delivery', coupon: coupon(pct, true) });
+        if (p.productsAfterDiscountAgorot % q === 0) continue;
+        const lines = buildInvoiceLines(p, 'delivery', null, 'CODE');
+        expect(lines).toHaveLength(3);
+        expect(lines[1].product_price - lines[0].product_price).toBeCloseTo(0.01, 5);
+        expect(lines[0].product_name).toBe(lines[1].product_name);
+        expect(lines[2].product_price).toBe(p.shippingAgorot / 100);
+        found = true;
+        break;
+      }
+    }
+    expect(found).toBe(true);
   });
 
   it('shows the coupon code in the product name only when the coupon was applied', () => {

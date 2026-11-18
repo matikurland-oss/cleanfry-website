@@ -130,7 +130,9 @@ export interface InvoiceLine {
 
 // פירוט החשבונית לטרנזילה (json_purchase_data) לפי המבנה השטוח שאושר בפועל.
 // טרנזילה מאמתת ש-sum שווה בדיוק ל-Σ(product_price × product_quantity), לכן מחיר היחידה כבר נטו
-// אחרי ההנחה (מעוגל כלפי מטה לאגורה), ושארית העיגול (תמיד אי-שלילית) נספגת בשורת המשלוח/איסוף.
+// אחרי ההנחה. ההנחה חלה על המוצרים בלבד: שורת המשלוח/איסוף תמיד במחיר המשלוח המדויק.
+// כשסכום המוצרים לא מתחלק בדיוק לאגורות, שארית העיגול (r אגורות, פחות מהכמות) נכנסת לשורות המוצר:
+// r מארזים במחיר גבוה באגורה אחת מהשאר.
 export function buildInvoiceLines(
   price: PriceBreakdown,
   deliveryMethod: DeliveryMethod,
@@ -139,16 +141,24 @@ export function buildInvoiceLines(
 ): InvoiceLine[] {
   const unitAgorot = Math.floor(price.productsAfterDiscountAgorot / price.quantity);
   const remainderAgorot = price.productsAfterDiscountAgorot - unitAgorot * price.quantity;
-  const couponSuffix = couponCode && price.couponApplied && price.discountAgorot > 0 ? ` (קופון: ${couponCode})` : '';
+  const productName = `מארז CleanFry${couponCode && price.couponApplied && price.discountAgorot > 0 ? ` (קופון: ${couponCode})` : ''}`;
+
+  const productLines: InvoiceLine[] = [];
+  if (price.quantity - remainderAgorot > 0) {
+    productLines.push({ product_name: productName, product_quantity: price.quantity - remainderAgorot, product_price: unitAgorot / 100 });
+  }
+  if (remainderAgorot > 0) {
+    productLines.push({ product_name: productName, product_quantity: remainderAgorot, product_price: (unitAgorot + 1) / 100 });
+  }
 
   return [
-    { product_name: `מארז CleanFry${couponSuffix}`, product_quantity: price.quantity, product_price: unitAgorot / 100 },
+    ...productLines,
     {
       product_name: deliveryMethod === 'pickup'
         ? (pickupLocation === 'kfar-saba' ? 'איסוף עצמי - סניף כפר סבא' : 'איסוף עצמי - סניף תל אביב')
         : 'דמי משלוח עד הבית',
       product_quantity: 1,
-      product_price: (price.shippingAgorot + remainderAgorot) / 100
+      product_price: price.shippingAgorot / 100
     }
   ];
 }
