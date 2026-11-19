@@ -1,6 +1,14 @@
 // טקסטים לתצוגת התמחור (דף הבית והעגלה). לוגיקת המחיר עצמה נמצאת ב-shared/pricing.ts — כאן רק ניסוח.
 // nextTierMessage הוא תרגום נאמן של הפונקציה בקובץ הרפרנס (cleanfry-bundles-reference.html).
-import { priceOrder, TIERS, type CouponTerms, type DeliveryMethod } from '../shared/pricing';
+import {
+  FREE_SHIPPING_MIN_QUANTITY,
+  REGULAR_HOME_SHIPPING_AGOROT,
+  priceOrder,
+  TIERS,
+  type CouponTerms,
+  type DeliveryMethod,
+  type PriceBreakdown
+} from '../shared/pricing';
 
 /** ₪ בלי אגורות כשהסכום שלם, אחרת שתי ספרות: 159.25, 433.50, 255 */
 export function formatShekels(agorot: number): string {
@@ -63,4 +71,37 @@ export function nextTierMessage(quantity: number, deliveryMethod: DeliveryMethod
       : `משלוח ב-₪${formatShekels(next.homeShippingAgorot)} במקום ₪${formatShekels(now.homeShippingAgorot)}`);
   }
   return { good: false, addQuantity: add, text: `הוסיפו ${packsLabel(add)} ותקבלו ${parts.join(' ו')}` };
+}
+
+export interface OrderSavings {
+  /** חיסכון במוצרים לעומת מחיר מארז בודד (נטו, אחרי קופון אם הוחל) */
+  productsAgorot: number;
+  /** הפרש בין משלוח רגיל למשלוח בפועל. באיסוף עצמי אפס — אין חיסכון על משלוח שלא נרכש */
+  shippingAgorot: number;
+  totalAgorot: number;
+}
+
+export function orderSavings(price: PriceBreakdown, deliveryMethod: DeliveryMethod): OrderSavings {
+  const productsAgorot = price.savedAgorot;
+  const shippingAgorot = deliveryMethod === 'delivery' ? Math.max(0, REGULAR_HOME_SHIPPING_AGOROT - price.shippingAgorot) : 0;
+  return { productsAgorot, shippingAgorot, totalAgorot: productsAgorot + shippingAgorot };
+}
+
+/** ״סה״כ חסכתם ₪28 — ₪12 במוצרים ו־₪16 במשלוח״. מחרוזת ריקה כשאין חיסכון */
+export function savingsText({ productsAgorot, shippingAgorot, totalAgorot }: OrderSavings): string {
+  if (totalAgorot <= 0) return '';
+  const head = `סה״כ חסכתם ₪${formatShekels(totalAgorot)}`;
+  if (productsAgorot > 0 && shippingAgorot > 0) {
+    return `${head} — ₪${formatShekels(productsAgorot)} במוצרים ו־₪${formatShekels(shippingAgorot)} במשלוח`;
+  }
+  return `${head} ${shippingAgorot > 0 ? 'במשלוח' : 'במוצרים'}`;
+}
+
+/** הסבר המשלוח באזור הרכישה. הספים והמחירים נגזרים מהמדרגות */
+export function shippingNote(): string {
+  const reduced = [...TIERS].reverse().find((t) => t.homeShippingAgorot > 0 && t.homeShippingAgorot < REGULAR_HOME_SHIPPING_AGOROT);
+  const reducedPart = reduced
+    ? `מ-${reduced.min} מארזים משלוח עד הבית ב-₪${formatShekels(reduced.homeShippingAgorot)}, ומ-${FREE_SHIPPING_MIN_QUANTITY} מארזים המשלוח עלינו.`
+    : `מ-${FREE_SHIPPING_MIN_QUANTITY} מארזים המשלוח עד הבית עלינו.`;
+  return `${reducedPart} איסוף עצמי מתל אביב או מכפר סבא תמיד בחינם.`;
 }

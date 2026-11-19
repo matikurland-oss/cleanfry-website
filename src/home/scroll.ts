@@ -1,7 +1,12 @@
 // גלילה לעוגן בדף הבית.
-// לעוגן הרכישה (#shop / #purchase) הגלילה מבטיחה שאזור הרכישה, כולל כפתור ההזמנה, יהיה גלוי במלואו.
+// לעוגן הרכישה (#shop / #purchase) הגלילה מביאה לאזור הבחירה (#shop-card: מארזים + סיכום) ומבטיחה גישה לכפתור ההזמנה:
+// - הבחירה והסיכום נכנסים במסך: ראש האזור מתחת לפסים העליונים.
+// - לא נכנסים, ובמסך צר (פס רכישה קבוע בתחתית): ראש אזור הבחירה מתחת לפסים; הכפתור זמין בפס הקבוע.
+// - לא נכנסים, במסך רחב: תחתית הסיכום (#shop-buy, כולל הכפתור) בתחתית המסך.
 const PURCHASE_IDS = new Set(['shop', 'purchase']);
 const GAP = 16;
+/** חייב להתאים ל-lg:hidden של פס הרכישה ב-ShopCard (lg = 1024px) */
+const STICKY_BAR_QUERY = '(max-width: 1023.98px)';
 
 export function scrollToSection(id: string): boolean {
   if (PURCHASE_IDS.has(id)) {
@@ -11,10 +16,9 @@ export function scrollToSection(id: string): boolean {
       const topBar = document.getElementById('site-top')?.getBoundingClientRect().height ?? 0;
       const available = window.innerHeight - topBar - GAP * 2;
       const cardRect = card.getBoundingClientRect();
-      const top = cardRect.height <= available
-        // הכרטיס כולו נכנס במסך: ראש הכרטיס מתחת לפס העליון
+      const alignTop = cardRect.height <= available || window.matchMedia(STICKY_BAR_QUERY).matches;
+      const top = alignTop
         ? window.scrollY + cardRect.top - topBar - GAP
-        // הכרטיס גבוה מהמסך: תחתית אזור הרכישה (כולל הכפתור) בתחתית המסך
         : window.scrollY + buy.getBoundingClientRect().bottom - window.innerHeight + GAP;
       window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
       return true;
