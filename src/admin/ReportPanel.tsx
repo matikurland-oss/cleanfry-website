@@ -3,6 +3,8 @@ import { formatShekels, type ReportResponse, type ReportRow } from './adminApi';
 
 const COLUMNS: { key: keyof ReportRow; label: string; money?: boolean }[] = [
   { key: 'paid_orders', label: 'הזמנות ששולמו' },
+  { key: 'applied_orders', label: 'מתוכן עם הנחה' },
+  { key: 'not_applied_orders', label: 'קוד הוזן, לא הוחל' },
   { key: 'units_sold', label: 'מארזים שנמכרו' },
   { key: 'product_sales_agorot', label: 'מכירות מוצרים', money: true },
   { key: 'discounts_agorot', label: 'סך הנחות', money: true },
@@ -27,6 +29,8 @@ export default function ReportPanel({ report, loading }: { report: ReportRespons
       <ul className="text-xs text-slate-500 mb-4 space-y-1 bg-slate-50 p-3 rounded-xl list-disc pr-5">
         <li>נספרות רק הזמנות שהתשלום שלהן אומת מול טרנזילה או שאישרת ידנית. הזמנות ממתינות ותשלומים שנכשלו לא נספרים.</li>
         <li>רכישה משויכת לתקופה לפי מועד התשלום, לפי ימים בשעון ישראל.</li>
+        <li>״מכירות מוצרים״ = סכום המוצרים אחרי הנחה, בלי משלוח (הבסיס לעמלת משפיעניות).</li>
+        <li>״קוד הוזן, לא הוחל״: הלקוח הזין את הקוד, אבל מחיר החבילה היה זול יותר מהקופון (קופון בלי כפל מבצעים), ולכן לא ניתנה הנחה. ההזמנה עדיין נספרת לקופון ולעמלת המשפיענית.</li>
         <li>החזרים מוצגים עבור הרכישות שבתקופה, גם אם ההחזר בוצע מאוחר יותר.</li>
         {report && !report.refundsAvailable && (
           <li className="font-bold text-amber-700">אין עדיין מקור מאומת לנתוני החזרים, ולכן "החזרים" ו"גבייה נטו" מוצגים כ"לא זמין".</li>

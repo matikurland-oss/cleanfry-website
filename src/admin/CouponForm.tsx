@@ -15,6 +15,7 @@ export default function CouponForm({ coupon, onClose, onSaved }: {
   const [startsAt, setStartsAt] = useState(isoToIsraelLocal(coupon?.starts_at ?? null));
   const [expiresAt, setExpiresAt] = useState(isoToIsraelLocal(coupon?.expires_at ?? null));
   const [isActive, setIsActive] = useState(coupon?.is_active ?? true);
+  const [stacks, setStacks] = useState(coupon?.stacks_promotions ?? false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -25,6 +26,7 @@ export default function CouponForm({ coupon, onClose, onSaved }: {
     const fields = {
       label: label.trim(),
       discount_percent: Number(discount),
+      stacks_promotions: stacks,
       starts_at: israelLocalToIso(startsAt),
       expires_at: israelLocalToIso(expiresAt)
     };
@@ -77,6 +79,17 @@ export default function CouponForm({ coupon, onClose, onSaved }: {
           <span className="block text-xs text-slate-500">עד 25%.</span>
           {coupon && <span className="text-xs text-slate-500">שינוי האחוז חל רק על הזמנות חדשות. הזמנות ודוחות קיימים לא משתנים.</span>}
         </label>
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer">
+            <input type="checkbox" role="switch" checked={stacks} onChange={(e) => setStacks(e.target.checked)} aria-describedby="stacks-help" className="w-4 h-4" />
+            כפל מבצעים (הקופון חל גם על מחיר החבילה)
+          </label>
+          <p id="stacks-help" className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+            דלוק: ההנחה מחושבת על מחיר החבילה. כבוי: ההנחה מחושבת על ₪59, והלקוח מקבל את הזול מבין החבילה לקופון.
+            {coupon && ' השינוי חל רק על הזמנות חדשות.'}
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">

@@ -42,6 +42,7 @@ export function validateCouponCreate(body: Record<string, unknown>): Result<Coup
       label,
       discount_percent: discount,
       is_active: body.is_active === undefined ? true : body.is_active === true,
+      stacks_promotions: body.stacks_promotions === true,
       starts_at: startsAt.value,
       expires_at: expiresAt.value
     }
@@ -66,6 +67,10 @@ export function validateCouponPatch(
   if ('is_active' in body) {
     if (typeof body.is_active !== 'boolean') return { ok: false, error: 'מצב לא תקין' };
     patch.is_active = body.is_active;
+  }
+  if ('stacks_promotions' in body) {
+    if (typeof body.stacks_promotions !== 'boolean') return { ok: false, error: 'ערך כפל מבצעים לא תקין' };
+    patch.stacks_promotions = body.stacks_promotions;
   }
   for (const key of ['starts_at', 'expires_at'] as const) {
     if (key in body) {

@@ -1,7 +1,7 @@
 // API ניהול קופונים (מנהלים בלבד). אין מחיקה; אין שינוי קוד. כל שינוי נרשם ב-coupon_audit.
 //   GET   ?from=YYYY-MM-DD&to=YYYY-MM-DD   רשימת קופונים + מצב + ביצועים בתקופה
-//   POST  { code, label, discount_percent, is_active, starts_at, expires_at }
-//   PATCH ?id=<uuid>  { label?, discount_percent?, is_active?, starts_at?, expires_at? }
+//   POST  { code, label, discount_percent, is_active, stacks_promotions, starts_at, expires_at }
+//   PATCH ?id=<uuid>  { label?, discount_percent?, is_active?, stacks_promotions?, starts_at?, expires_at? }
 import { requireAdmin } from '../_lib/adminAuth.js';
 import { validateCouponCreate, validateCouponPatch, validatePeriod } from '../_lib/adminValidation.js';
 import { couponState } from '../_lib/coupons.js';

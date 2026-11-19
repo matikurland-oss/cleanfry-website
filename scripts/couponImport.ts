@@ -53,7 +53,7 @@ export function planImport(raw: unknown): ImportPlan {
     }
 
     seen.add(code);
-    plan.valid.push({ code, label: 'יובא מ-Edge Config', discount_percent: percent, is_active: true, starts_at: null, expires_at: expiresAt });
+    plan.valid.push({ code, label: 'יובא מ-Edge Config', discount_percent: percent, is_active: true, stacks_promotions: false, starts_at: null, expires_at: expiresAt });
   }
   return plan;
 }

@@ -1,7 +1,10 @@
 // אירועי משפך ל-GA4 (תג ה-gtag נטען ב-index.html). שמות האירועים לפי ההמלצות של GA4 לאיקומרס,
 // כדי שדוחות המשפך והרכישות של GA יזהו אותם אוטומטית. track לא זורק אף פעם — חוסם פרסומות
 // או gtag שלא נטען לא אמורים לשבור את האתר.
-import { UNIT_PRICE_AGOROT } from '../shared/pricing';
+import { isValidQuantity, LIST_PRICE_AGOROT, tierFor } from '../shared/pricing';
+
+// מחיר המארז במדרגה של הכמות (לפני קופון), כמו שמוצג ללקוח
+const unitPrice = (quantity: number) => (isValidQuantity(quantity) ? tierFor(quantity).priceAgorot : LIST_PRICE_AGOROT) / 100;
 
 type Gtag = (command: 'event', name: string, params?: Record<string, unknown>) => void;
 declare global {
@@ -22,11 +25,11 @@ export function track(name: string, params: Record<string, unknown> = {}): void 
 }
 
 export function productItems(quantity: number) {
-  return [{ item_id: 'cleanfry', item_name: 'CleanFry', price: UNIT_PRICE_AGOROT / 100, quantity }];
+  return [{ item_id: 'cleanfry', item_name: 'CleanFry', price: unitPrice(quantity), quantity }];
 }
 
 export function trackCartEvent(name: 'view_item' | 'add_to_cart' | 'begin_checkout', quantity: number, extra: Record<string, unknown> = {}): void {
-  track(name, { currency: CURRENCY, value: (UNIT_PRICE_AGOROT / 100) * quantity, items: productItems(quantity), ...extra });
+  track(name, { currency: CURRENCY, value: unitPrice(quantity) * quantity, items: productItems(quantity), ...extra });
 }
 
 // הרכישה מסתיימת בעמוד אחר (/order-success, אחרי טרנזילה), ולכן שומרים את פרטי ההזמנה

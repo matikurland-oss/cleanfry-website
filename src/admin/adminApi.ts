@@ -15,6 +15,8 @@ export interface AdminCoupon {
   label: string;
   discount_percent: number;
   is_active: boolean;
+  /** כפל מבצעים: ההנחה חלה גם על מחיר החבילה */
+  stacks_promotions: boolean;
   starts_at: string | null;
   expires_at: string | null;
   created_at: string;
@@ -41,6 +43,10 @@ export interface ReportRow {
   coupon_code: string | null;
   coupon_label: string | null;
   paid_orders: number;
+  /** הזמנות שבהן ההנחה הוחלה */
+  applied_orders: number;
+  /** הזמנות שבהן הקוד הוזן אבל מחיר החבילה היה זול יותר */
+  not_applied_orders: number;
   units_sold: number;
   product_sales_agorot: number;
   discounts_agorot: number;

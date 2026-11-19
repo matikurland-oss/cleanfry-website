@@ -16,6 +16,12 @@ export interface NewOrder {
   coupon_id: string | null;
   coupon_code_snapshot: string | null;
   discount_percent_snapshot: number | null;
+  /** מחיר המדרגה למארז בזמן ההזמנה (unit_price_agorot = המחיר שעליו חושב סכום המוצרים בפועל) */
+  tier_unit_price_agorot: number;
+  /** ערך "כפל מבצעים" של הקופון בזמן ההזמנה */
+  coupon_stacks_snapshot: boolean | null;
+  /** האם הקופון שהוזן הוחל בפועל (false = מחיר החבילה היה זול יותר) */
+  coupon_applied: boolean | null;
   customer_name: string;
   customer_phone: string;
   customer_email: string;
@@ -89,6 +95,7 @@ export interface CouponInput {
   label: string;
   discount_percent: number;
   is_active: boolean;
+  stacks_promotions: boolean;
   starts_at: string | null;
   expires_at: string | null;
 }
@@ -106,6 +113,10 @@ export interface CouponReportRow {
   coupon_code: string | null;
   coupon_label: string | null;
   paid_orders: number;
+  /** הזמנות שבהן ההנחה הוחלה בפועל */
+  applied_orders: number;
+  /** הזמנות שבהן הקוד הוזן אבל מחיר החבילה היה זול יותר, ולכן ההנחה לא הוחלה */
+  not_applied_orders: number;
   units_sold: number;
   product_sales_agorot: number;
   discounts_agorot: number;
@@ -251,6 +262,7 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
         p_label: input.label,
         p_discount_percent: input.discount_percent,
         p_is_active: input.is_active,
+        p_stacks_promotions: input.stacks_promotions,
         p_starts_at: input.starts_at,
         p_expires_at: input.expires_at,
         p_actor_id: actor.id,
@@ -355,6 +367,8 @@ export function createSupabaseStore(client?: SupabaseClient): Store {
       return rows.map((r) => ({
         ...r,
         paid_orders: Number(r.paid_orders),
+        applied_orders: Number(r.applied_orders),
+        not_applied_orders: Number(r.not_applied_orders),
         units_sold: Number(r.units_sold),
         product_sales_agorot: Number(r.product_sales_agorot),
         discounts_agorot: Number(r.discounts_agorot),

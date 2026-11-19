@@ -1,5 +1,5 @@
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
-import { FREE_SHIPPING_THRESHOLD_AGOROT, UNIT_PRICE_AGOROT, agorotToShekels } from '../../shared/pricing';
+import { FREE_SHIPPING_MIN_QUANTITY, LIST_PRICE_AGOROT, agorotToShekels } from '../../shared/pricing';
 import {
   ClockIcon, CycleIcon, DropIcon, FlameOffIcon, GlassIcon, LeafIcon, PipeIcon, SpoonIcon, TrashIcon, TruckIcon,
 } from './icons';
@@ -15,7 +15,7 @@ export const scrollToId = (id: string) => (e: MouseEvent) => {
 
 // ---------- Hero ----------
 export function Hero() {
-  const price = agorotToShekels(UNIT_PRICE_AGOROT);
+  const price = agorotToShekels(LIST_PRICE_AGOROT);
   return (
     <section id="top" className={`${gutter} pb-[clamp(48px,6vw,88px)] pt-[clamp(32px,5vw,72px)]`}>
       <div className={`${container} flex flex-wrap items-center gap-[clamp(28px,4vw,64px)]`}>
@@ -78,7 +78,7 @@ export function TrustStrip() {
     { icon: <LeafIcon size={22} className="text-cf-green" />, text: '100% רכיבים צמחיים' },
     { icon: <DropIcon size={22} className="text-cf-blue" />, text: 'מגן על צנרת הניקוז' },
     { icon: <CycleIcon size={22} className="text-cf-green" />, text: 'מתפרק באופן טבעי' },
-    { icon: <TruckIcon size={22} className="text-cf-blue" />, text: `משלוח חינם מעל ₪${agorotToShekels(FREE_SHIPPING_THRESHOLD_AGOROT)}` },
+    { icon: <TruckIcon size={22} className="text-cf-blue" />, text: `משלוח חינם מ-${FREE_SHIPPING_MIN_QUANTITY} מארזים` },
   ];
   return (
     <section aria-label="היתרונות בקצרה" className={`${gutter} border-y border-cf-border bg-white py-[22px]`}>

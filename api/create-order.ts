@@ -32,7 +32,10 @@ function pricingForClient(price: PriceBreakdown, coupon: CouponRow | null) {
     discount: price.discountAgorot / 100,
     shipping: price.shippingAgorot / 100,
     total: price.totalAgorot / 100,
-    coupon: coupon ? { code: coupon.code, discountPercent: coupon.discount_percent } : null
+    couponApplied: price.couponApplied,
+    coupon: coupon
+      ? { code: coupon.code, discountPercent: coupon.discount_percent, stacksPromotions: coupon.stacks_promotions === true }
+      : null
   };
 }
 
@@ -84,7 +87,12 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       coupon = found && couponState(found, currentTime) === 'active' ? found : null;
     }
 
-    const price = priceOrder({ quantity, deliveryMethod, discountPercent: coupon?.discount_percent ?? 0 });
+    // המדרגה נקבעת לפי הכמות; הקופון (אם יש) מוחל רק אם הוא זול יותר ממחיר המדרגה, לפי הגדרת כפל המבצעים שלו
+    const price = priceOrder({
+      quantity,
+      deliveryMethod,
+      coupon: coupon ? { discountPercent: coupon.discount_percent, stacks: coupon.stacks_promotions === true } : null
+    });
 
     // הקופון שהלקוח ביקש כבר לא תקף, או שהסכום שהוצג לו שונה ממה שהשרת חישב: עוצרים ומציגים את השינוי
     if (couponCode && !coupon) {
@@ -118,6 +126,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       coupon_id: coupon?.id ?? null,
       coupon_code_snapshot: coupon?.code ?? null,
       discount_percent_snapshot: coupon?.discount_percent ?? null,
+      tier_unit_price_agorot: price.tierPriceAgorot,
+      coupon_stacks_snapshot: coupon ? coupon.stacks_promotions === true : null,
+      coupon_applied: coupon ? price.couponApplied : null,
       customer_name: customer.name,
       customer_phone: customer.phone,
       customer_email: customer.email,
