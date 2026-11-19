@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ShoppingBag, MapPin, Truck, Instagram, Facebook } from 'lucide-react';
+import { ShoppingBag, MapPin, Instagram, Facebook } from 'lucide-react';
+import { CheckIcon, TruckIcon } from './home/icons';
+import { btnOutline, btnPrimary, notice, pageShell, pageTitle } from './home/layout';
 import { trackPendingPurchase } from './analytics';
 
 const OrderSuccessPage = () => {
@@ -15,69 +17,58 @@ const OrderSuccessPage = () => {
   // כך לקוח לא יכול "לשכנע" את האתר ששילם בלי שבאמת שולם.
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4 py-12" dir="rtl">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center border border-slate-100">
-        
-        {/* אייקון הצלחה חגיגי */}
-        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="text-green-500" size={48} />
+    <div className={pageShell}>
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 rounded-[28px] border border-cf-border bg-white p-[clamp(28px,5vw,48px)] text-center md:rounded-[36px]">
+
+        {/* אייקון הצלחה */}
+        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-cf-green-light text-cf-green" aria-hidden="true">
+          <CheckIcon size={40} />
+        </span>
+
+        <div className="flex flex-col gap-3">
+          <h1 className={pageTitle}>ההזמנה התקבלה!</h1>
+          <p className="m-0 text-lg text-cf-body">תודה רבה על רכישתך. אנחנו מכינים את ההזמנה למשלוח/איסוף.</p>
         </div>
 
-        <h1 className="text-3xl font-black text-slate-800 mb-3">ההזמנה התקבלה!</h1>
-        <p className="text-slate-600 font-medium mb-6">תודה רבה על רכישתך. אנחנו מכינים את ההזמנה למשלוח/איסוף.</p>
-        
         {/* קוביית מידע משתנה לפי שיטת קבלה */}
-        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-right text-blue-950 text-sm mb-6 space-y-3">
-          <p className="font-bold flex items-center gap-2 text-base text-blue-900 mb-1">
-            <ShoppingBag size={18} /> מה קורה עכשיו?
+        <div className={`${notice.info} w-full space-y-3 text-right`}>
+          <p className="m-0 flex items-center gap-2 text-base font-extrabold">
+            <ShoppingBag size={18} aria-hidden="true" /> מה קורה עכשיו?
           </p>
-          
-          <p className="font-medium">• אישור ההזמנה וחשבונית נשלחו לכתובת המייל שלך.</p>
-          
+
+          <p className="m-0">• אישור ההזמנה וחשבונית נשלחו לכתובת המייל שלך.</p>
+
           {savedMethod === 'pickup' ? (
-            <div className="pt-2 border-t border-blue-200 text-blue-900">
-              <p className="font-bold flex items-center gap-1 text-slate-800 mb-1">
-                <MapPin size={16} className="text-blue-600" /> הנחיות לאיסוף עצמי:
+            <div className="border-t border-cf-blue/20 pt-3">
+              <p className="mb-1 mt-0 flex items-center gap-1.5 font-bold">
+                <MapPin size={16} className="text-cf-blue" aria-hidden="true" /> הנחיות לאיסוף עצמי:
               </p>
-              <p>המארז ממתין לך מוכן. נציג שלנו יתקשר או ישלח וואטסאפ בכדי לתאם איתך את מועד האיסוף (תל אביב או כפר סבא).</p>
+              <p className="m-0">המארז ממתין לך מוכן. נציג שלנו יתקשר או ישלח וואטסאפ בכדי לתאם איתך את מועד האיסוף (תל אביב או כפר סבא).</p>
             </div>
           ) : (
-            <div className="pt-2 border-t border-blue-200 text-blue-900">
-              <p className="font-bold flex items-center gap-1 text-slate-800 mb-1">
-                <Truck size={16} className="text-blue-600" /> עדכון משלוח:
+            <div className="border-t border-cf-blue/20 pt-3">
+              <p className="mb-1 mt-0 flex items-center gap-1.5 font-bold">
+                <TruckIcon size={16} className="text-cf-blue" /> עדכון משלוח:
               </p>
-              <p>צוות המחסן אורז את ההזמנה שלך. המשלוח ייצא אליך עם שליח עד הבית ויגיע תוך 3-5 ימי עסקים. תקבלו הודעת SMS כשהשליח בדרך.</p>
+              <p className="m-0">צוות המחסן אורז את ההזמנה שלך. המשלוח ייצא אליך עם שליח עד הבית ויגיע תוך 3-5 ימי עסקים. תקבלו הודעת SMS כשהשליח בדרך.</p>
             </div>
           )}
         </div>
 
         {/* הצטרפות לקהילה / רשתות חברתיות */}
-        <div className="border-t border-slate-100 pt-6 mb-8">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">הישארו מעודכנים בקהילת CleanFry</p>
-          <div className="flex justify-center gap-4">
-            <a 
-              href="https://www.instagram.com/cleanfry_official/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition"
-            >
-              <Instagram size={16} /> אינסטגרם
+        <div className="w-full border-t border-cf-border pt-6">
+          <p className="mb-4 mt-0 text-[15px] font-bold">הישארו מעודכנים בקהילת CleanFry</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <a href="https://www.instagram.com/cleanfry_official/" target="_blank" rel="noreferrer" className={`${btnOutline} gap-2`}>
+              <Instagram size={18} aria-hidden="true" /> אינסטגרם
             </a>
-            <a 
-              href="https://www.facebook.com/profile.php?id=61574285984183" 
-              target="_blank" 
-              rel="noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition"
-            >
-              <Facebook size={16} /> פייסבוק
+            <a href="https://www.facebook.com/profile.php?id=61574285984183" target="_blank" rel="noreferrer" className={`${btnOutline} gap-2`}>
+              <Facebook size={18} aria-hidden="true" /> פייסבוק
             </a>
           </div>
         </div>
 
-        <Link 
-          to="/" 
-          className="inline-block w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition"
-        >
+        <Link to="/" className={`${btnPrimary} w-full`}>
           חזרה לחנות
         </Link>
       </div>

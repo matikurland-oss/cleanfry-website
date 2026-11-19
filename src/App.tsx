@@ -60,7 +60,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" dir="rtl">
+    <div className="cf-focus flex min-h-screen flex-col bg-cf-cream font-display text-cf-navy" dir="rtl">
       <ScrollToTop />
       <CookieConsent />
       <PromoPopup />

@@ -1,29 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Truck, 
-  ChevronRight, 
-  CreditCard,
-  Plus,
-  Minus,
-  CheckCircle2,
-  X,
-  MapPin
-} from 'lucide-react';
+import { ShieldCheck, ChevronRight, CreditCard, X, MapPin } from 'lucide-react';
 import { isValidIsraeliPhone } from './checkoutValidation';
 import { isShoppingIlPromoActive } from './shoppingIlPromo';
 import { track, trackCartEvent, savePendingPurchase } from './analytics';
 import {
   LIST_PRICE_AGOROT,
   MAX_QUANTITY,
+  REGULAR_HOME_SHIPPING_AGOROT,
   priceOrder
 } from '../shared/pricing';
-import { formatShekels, nextTierMessage, packsLabel } from './pricingDisplay';
+import { formatShekels, nextTierMessage, orderSavings, packsLabel, savingsText } from './pricingDisplay';
+import { CheckIcon, MinusIcon, PlusIcon, TruckIcon } from './home/icons';
+import { btnPrimary, card, cardTitle, field, notice, pageShell, pageTitle, pill } from './home/layout';
 
-/** מחיר מחוק עם ״במקום״ לקוראי מסך */
+/** מחיר מחוק (על רקע כחול כהה) עם ״במקום״ לקוראי מסך */
 const Was = ({ agorot }: { agorot: number }) => (
-  <del className="font-medium text-slate-400 decoration-[#B42318] decoration-2">
+  <del className="font-medium text-cf-on-navy decoration-cf-lime decoration-2">
     <span className="sr-only">במקום </span>₪{formatShekels(agorot)}
   </del>
 );
@@ -307,236 +300,249 @@ const CheckoutPage = () => {
   // פירוט החשבונית (json_purchase_data) נבנה בשרת — ראו buildInvoiceLines ב-shared/pricing.ts.
   // כבר מקודד ב-encodeURIComponent לפי ההנחיה של טרנזילה.
 
+  const savingLine = savingsText(orderSavings(price, shippingMethod));
+  const reducedShipping = shippingMethod === 'delivery' && price.shippingAgorot > 0 && price.shippingAgorot < REGULAR_HOME_SHIPPING_AGOROT;
+  const optionBtn = (selected: boolean) =>
+    `flex min-h-[76px] w-full items-center justify-between gap-3 rounded-[20px] border-[3px] p-4 text-right text-cf-navy transition-colors ${selected ? 'border-cf-green bg-cf-green-light' : 'border-cf-border bg-cf-cream hover:border-cf-green/50'}`;
+  const radioDot = (selected: boolean) => (
+    <span aria-hidden="true" className={`flex h-6 w-6 flex-none items-center justify-center rounded-full border-2 ${selected ? 'border-cf-green bg-cf-green' : 'border-cf-muted/50 bg-white'}`}>
+      {selected && <span className="h-2.5 w-2.5 rounded-full bg-white" />}
+    </span>
+  );
+  const textInput = (props: { value: string; onChange: (v: string) => void; placeholder: string; type?: string; wide?: boolean; autoComplete?: string }) => (
+    <input
+      type={props.type ?? 'text'}
+      placeholder={props.placeholder}
+      aria-label={props.placeholder.replace(' *', '')}
+      aria-required={props.placeholder.endsWith('*') || undefined}
+      autoComplete={props.autoComplete}
+      value={props.value}
+      onChange={(e) => { props.onChange(e.target.value); setShowPayment(false); }}
+      className={`${field} ${props.wide ? 'md:col-span-2' : ''}`}
+    />
+  );
+  const pickupLocations = [
+    { id: 'kfar-saba', name: 'כפר סבא', street: 'רח\' - בן גוריון 7' },
+    { id: 'tel-aviv', name: 'תל אביב', street: 'רח\' - משה וילנסקי 11' }
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20" dir="rtl">
+    <div className={pageShell}>
       {/* התראה צפה שקופצת מיד עם החזרה מתשלום שנכשל, בנוסף להודעה בתוך תיבת התשלום */}
       {paymentFailed && (
-        <div className="fixed top-4 inset-x-4 sm:inset-x-auto sm:right-4 z-50 max-w-sm bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-fadeIn">
-          <span className="text-2xl">❌</span>
-          <p className="font-bold text-sm">התשלום נכשל — לא בוצע חיוב</p>
+        <div role="alert" className="fixed inset-x-4 top-4 z-50 flex max-w-sm items-center gap-3 rounded-[18px] bg-[#B42318] px-5 py-4 text-white shadow-2xl animate-fadeIn sm:inset-x-auto sm:right-4">
+          <X size={22} className="shrink-0" aria-hidden="true" />
+          <p className="m-0 text-[15px] font-bold">התשלום נכשל — לא בוצע חיוב</p>
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-white border-b py-4 px-6 mb-8 flex justify-between items-center max-w-6xl mx-auto rounded-b-2xl shadow-sm">
-        <Link to="/" className="text-blue-600 font-bold flex items-center gap-1 hover:opacity-80">
-          <ChevronRight size={18} /> חזרה לחנות
-        </Link>
-        <span className="font-black text-xl text-slate-800 tracking-tight">הסל שלי</span>
-      </div>
+      <div className="mx-auto max-w-[1180px]">
+        <div className="mb-8 flex flex-col gap-3">
+          <Link to="/" className="inline-flex min-h-11 items-center gap-1 self-start font-bold text-cf-green-dark no-underline hover:underline">
+            <ChevronRight size={18} aria-hidden="true" /> חזרה לחנות
+          </Link>
+          <h1 className={pageTitle}>הסל שלי</h1>
+        </div>
 
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+        <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12">
+
           {/* עמודה ימנית */}
-          <div className="lg:col-span-7 space-y-6 text-right">
-            
-            {/* בחירת שיטת קבלה */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
-              <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <Truck className="text-blue-500" size={28} /> איך תרצו לקבל את החבילה?
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div 
-                  onClick={() => { setShippingMethod('delivery'); setPickupLocation(''); setShowPayment(false); }}
-                  className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'delivery' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
-                >
-                  <div className="text-right">
-                    <p className="font-bold text-slate-800">משלוח עד הבית</p>
-                    <p className="text-xs text-slate-500">3-5 ימי עסקים</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingMethod === 'delivery' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
-                    {shippingMethod === 'delivery' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                </div>
+          <div className="flex flex-col gap-7 lg:col-span-7">
 
-                <div 
-                  onClick={() => { setShippingMethod('pickup'); setShowPayment(false); }}
-                  className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center justify-between ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-slate-50'}`}
+            {/* בחירת שיטת קבלה */}
+            <section aria-labelledby="ship-title" className={card}>
+              <h2 id="ship-title" className={`${cardTitle} mb-6 flex items-center gap-2.5`}>
+                <TruckIcon size={28} className="shrink-0 text-cf-green" /> איך תרצו לקבל את החבילה?
+              </h2>
+
+              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+                <button
+                  type="button"
+                  aria-pressed={shippingMethod === 'delivery'}
+                  onClick={() => { setShippingMethod('delivery'); setPickupLocation(''); setShowPayment(false); }}
+                  className={optionBtn(shippingMethod === 'delivery')}
                 >
-                  <div className="text-right">
-                    <p className="font-bold text-slate-800">איסוף עצמי</p>
-                    <p className="text-xs text-green-600 font-bold underline">חינם</p>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">ת"א / כפר סבא</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${shippingMethod === 'pickup' ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`}>
-                    {shippingMethod === 'pickup' && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                </div>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[17px] font-bold">משלוח עד הבית</span>
+                    <span className="text-sm text-cf-muted">3-5 ימי עסקים</span>
+                  </span>
+                  {radioDot(shippingMethod === 'delivery')}
+                </button>
+
+                <button
+                  type="button"
+                  aria-pressed={shippingMethod === 'pickup'}
+                  onClick={() => { setShippingMethod('pickup'); setShowPayment(false); }}
+                  className={optionBtn(shippingMethod === 'pickup')}
+                >
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[17px] font-bold">איסוף עצמי</span>
+                    <span className="text-sm font-bold text-cf-green-dark">חינם</span>
+                    <span className="text-[13px] text-cf-muted">ת"א / כפר סבא</span>
+                  </span>
+                  {radioDot(shippingMethod === 'pickup')}
+                </button>
               </div>
 
               {shippingMethod === 'pickup' && (
-                <div className="mt-5 p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl text-blue-900 shadow-sm animate-fadeIn">
-                  <div className="flex items-center gap-2 mb-4">
-                    <MapPin className="text-blue-600 flex-shrink-0" size={22} />
-                    <p className="font-black text-lg">אנא בחר מיקום לאיסוף עצמי *</p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <label 
-                      onClick={() => { setPickupLocation('kfar-saba'); setShowPayment(false); }}
-                      className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'kfar-saba' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
-                    >
-                      <input type="radio" name="pickup-location" checked={pickupLocation === 'kfar-saba'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
-                      <div className="text-right">
-                        <span className="font-bold text-slate-800">כפר סבא</span>
-                        <span className="text-xs text-slate-500 block">רח' - בן גוריון 7</span>
-                      </div>
-                    </label>
+                <div role="radiogroup" aria-labelledby="pickup-title" className="mt-5 rounded-[20px] bg-cf-blue-light p-5 animate-fadeIn">
+                  <p id="pickup-title" className="mb-4 mt-0 flex items-center gap-2 text-lg font-extrabold text-cf-navy">
+                    <MapPin className="shrink-0 text-cf-blue" size={22} aria-hidden="true" /> אנא בחר מיקום לאיסוף עצמי *
+                  </p>
 
-                    <label 
-                      onClick={() => { setPickupLocation('tel-aviv'); setShowPayment(false); }}
-                      className={`flex items-center gap-3 p-3 bg-white rounded-xl border-2 cursor-pointer transition-all hover:bg-slate-50 ${pickupLocation === 'tel-aviv' ? 'border-blue-600 shadow-sm' : 'border-slate-200'}`}
-                    >
-                      <input type="radio" name="pickup-location" checked={pickupLocation === 'tel-aviv'} onChange={() => {}} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300" />
-                      <div className="text-right">
-                        <span className="font-bold text-slate-800">תל אביב</span>
-                        <span className="text-xs text-slate-500 block">רח' - משה וילנסקי 11</span>
-                      </div>
-                    </label>
+                  <div className="flex flex-col gap-3">
+                    {pickupLocations.map((loc) => (
+                      <label
+                        key={loc.id}
+                        onClick={() => { setPickupLocation(loc.id); setShowPayment(false); }}
+                        className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border-2 bg-white p-3.5 transition-colors ${pickupLocation === loc.id ? 'border-cf-green' : 'border-cf-border hover:border-cf-green/50'}`}
+                      >
+                        <input type="radio" name="pickup-location" checked={pickupLocation === loc.id} onChange={() => {}} className="h-5 w-5 accent-cf-green" />
+                        <span className="flex flex-col">
+                          <span className="font-bold text-cf-navy">{loc.name}</span>
+                          <span className="text-sm text-cf-muted">{loc.street}</span>
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               )}
-            </div>
+            </section>
 
             {/* פרטי משלוח */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 text-right">
-              <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CheckCircle2 className="text-blue-500" /> פרטי התקשרות ומשלוח
+            <section aria-labelledby="details-title" className={card}>
+              <h2 id="details-title" className={`${cardTitle} mb-6 flex items-center gap-2.5`}>
+                <CheckIcon size={26} className="shrink-0 text-cf-green" /> פרטי התקשרות ומשלוח
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder="שם מלא *" value={fullName} onChange={(e) => { setFullName(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                <input type="tel" placeholder="טלפון *" value={phone} onChange={(e) => { setPhone(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                <input type="email" placeholder="אימייל לאישור הזמנה *" value={email} onChange={(e) => { setEmail(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                <input type="text" placeholder="ח.פ / עוסק מורשה (אופציונלי)" value={businessId} onChange={(e) => { setBusinessId(e.target.value); setShowPayment(false); }} className="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+              <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+                {textInput({ placeholder: 'שם מלא *', value: fullName, onChange: setFullName, autoComplete: 'name' })}
+                {textInput({ placeholder: 'טלפון *', type: 'tel', value: phone, onChange: setPhone, autoComplete: 'tel' })}
+                {textInput({ placeholder: 'אימייל לאישור הזמנה *', type: 'email', value: email, onChange: setEmail, wide: true, autoComplete: 'email' })}
+                {textInput({ placeholder: 'ח.פ / עוסק מורשה (אופציונלי)', value: businessId, onChange: setBusinessId, wide: true })}
                 {shippingMethod === 'delivery' && (
                   <>
-                    <input type="text" placeholder="עיר *" value={city} onChange={(e) => { setCity(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                    <input type="text" placeholder="כתובת ומספר בית *" value={address} onChange={(e) => { setAddress(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                    <input type="text" placeholder="מספר דירה (אופציונלי)" value={apartment} onChange={(e) => { setApartment(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
-                    <input type="text" placeholder="מיקוד (אופציונלי)" value={zip} onChange={(e) => { setZip(e.target.value); setShowPayment(false); }} className="p-4 bg-slate-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all text-right" />
+                    {textInput({ placeholder: 'עיר *', value: city, onChange: setCity, autoComplete: 'address-level2' })}
+                    {textInput({ placeholder: 'כתובת ומספר בית *', value: address, onChange: setAddress, autoComplete: 'street-address' })}
+                    {textInput({ placeholder: 'מספר דירה (אופציונלי)', value: apartment, onChange: setApartment })}
+                    {textInput({ placeholder: 'מיקוד (אופציונלי)', value: zip, onChange: setZip, autoComplete: 'postal-code' })}
                   </>
                 )}
               </div>
-            </div>
+            </section>
           </div>
 
           {/* עמודה שמאלית */}
-          <div className="lg:col-span-5 space-y-5 text-right">
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
-              <h2 className="text-2xl font-black mb-6 border-b pb-4 text-slate-800">סיכום הזמנה</h2>
+          <div className="flex flex-col gap-7 lg:col-span-5">
+            <section aria-labelledby="summary-title" className="cf-on-navy flex flex-col gap-5 rounded-[28px] bg-cf-navy p-[clamp(22px,3vw,32px)] text-cf-cream md:rounded-[36px]">
+              <h2 id="summary-title" className="m-0 text-[22px] font-extrabold leading-[1.3] sm:text-2xl">סיכום הזמנה</h2>
 
-              <div className="flex flex-wrap justify-between items-center gap-3 mb-8 bg-slate-50 p-4 rounded-2xl">
-                <div className="text-right">
-                  <p className="font-bold text-lg text-slate-800">מארז CleanFry</p>
-                  <p className="text-sm text-slate-500 tabular-nums">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-white/[0.07] p-4">
+                <div>
+                  <p className="m-0 text-lg font-bold">מארז CleanFry</p>
+                  <p className="m-0 text-sm text-cf-on-navy tabular-nums">
                     ₪{formatShekels(price.tierPriceAgorot)} למארז{price.tierPriceAgorot < LIST_PRICE_AGOROT && <> <Was agorot={LIST_PRICE_AGOROT} /></>}
                   </p>
                 </div>
-                <div className="flex items-center gap-4 bg-white rounded-full p-1 border shadow-sm">
-                  <button type="button" aria-label="הורדת מארז" disabled={quantity <= 1} onClick={() => changeQuantity(quantity - 1)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-50 transition text-slate-400 hover:text-red-500 disabled:opacity-40"><Minus size={18} /></button>
-                  <span aria-live="polite" className="font-black text-xl w-6 text-center tabular-nums">{quantity}</span>
-                  <button type="button" aria-label="הוספת מארז" disabled={quantity >= MAX_QUANTITY} onClick={() => changeQuantity(quantity + 1)} className="w-10 h-10 rounded-full bg-blue-600 text-white shadow-md flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-40"><Plus size={18} /></button>
+                <div className="inline-flex items-center overflow-hidden rounded-full border-2 border-cf-on-navy/60">
+                  <button type="button" aria-label="הורדת מארז" disabled={quantity <= 1} onClick={() => changeQuantity(quantity - 1)} className="flex h-11 w-11 items-center justify-center text-cf-cream transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"><MinusIcon size={20} /></button>
+                  <span aria-live="polite" className="min-w-9 text-center text-xl font-extrabold tabular-nums">{quantity}</span>
+                  <button type="button" aria-label="הוספת מארז" disabled={quantity >= MAX_QUANTITY} onClick={() => changeQuantity(quantity + 1)} className="flex h-11 w-11 items-center justify-center text-cf-cream transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"><PlusIcon size={20} /></button>
                 </div>
               </div>
 
               {/* הודעת המדרגה הבאה (מחליפה את ״חסרים לך ₪X למשלוח חינם״) */}
-              <div aria-live="polite" className={`mb-6 p-4 rounded-2xl border text-sm flex flex-wrap items-center justify-between gap-3 ${nudge.good ? 'bg-green-50 border-green-100 text-green-700' : 'bg-orange-50 border-orange-100 text-orange-700'}`}>
-                <p className="font-bold flex items-center gap-2"><Truck size={18} className="shrink-0" />{nudge.text}</p>
+              <div aria-live="polite" className={`flex flex-wrap items-center justify-between gap-3 rounded-[18px] px-4 py-3.5 text-[15px] ${nudge.good ? 'bg-cf-green-light text-cf-green-dark' : 'bg-cf-yellow text-cf-navy'}`}>
+                <p className="m-0 flex items-center gap-2 font-bold"><TruckIcon size={20} className="shrink-0" />{nudge.text}</p>
                 {nudge.addQuantity > 0 && quantity + nudge.addQuantity <= MAX_QUANTITY && (
-                  <button type="button" onClick={() => changeQuantity(quantity + nudge.addQuantity)} className="min-h-11 px-4 rounded-full bg-white border border-orange-200 font-bold text-orange-800 hover:bg-orange-100 transition">
+                  <button type="button" onClick={() => changeQuantity(quantity + nudge.addQuantity)} className={`${pill} min-h-11 bg-cf-navy px-4 font-bold text-cf-cream`}>
                     {nudge.addQuantity === 1 ? 'הוספת מארז' : `הוספת ${packsLabel(nudge.addQuantity)}`}
                   </button>
                 )}
               </div>
 
-              <div className="mb-8">
+              <div>
                 <div className="flex gap-2">
-                  <input type="text" placeholder="קוד קופון" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(''); }} disabled={isCouponApplied || isValidatingCoupon} className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-blue-500 disabled:opacity-50 text-right" />
+                  <input type="text" placeholder="קוד קופון" aria-label="קוד קופון" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(''); }} disabled={isCouponApplied || isValidatingCoupon} className={`${field} flex-1 bg-white`} />
                   {!isCouponApplied ? (
-                    <button onClick={() => handleApplyCoupon()} disabled={isValidatingCoupon} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-black transition disabled:opacity-50">{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
+                    <button type="button" onClick={() => handleApplyCoupon()} disabled={isValidatingCoupon} className={`${pill} min-h-12 bg-cf-cream px-6 font-bold text-cf-navy disabled:opacity-50`}>{isValidatingCoupon ? 'בודק...' : 'החל'}</button>
                   ) : (
-                    <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold hover:bg-red-100 transition flex items-center gap-1"><X size={18} /> ביטול</button>
+                    <button type="button" onClick={handleRemoveCoupon} className={`${pill} min-h-12 gap-1 border-2 border-cf-on-navy/60 px-4 font-bold text-cf-cream`}><X size={18} aria-hidden="true" /> ביטול</button>
                   )}
                 </div>
                 {couponError && (
-                  <p className="text-red-500 text-sm mt-2 font-medium">{couponError}</p>
+                  <p role="alert" className="mb-0 mt-2 text-sm font-medium text-[#FFB4A8]">{couponError}</p>
                 )}
                 {isCouponApplied && price.couponApplied && (
-                  <div className="flex items-center justify-between gap-2 text-green-600 text-sm mt-3 font-bold bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} /><span>קופון הופעל! חסכת ₪{formatShekels(price.discountAgorot)}</span></div>
-                  </div>
+                  <p className="mb-0 mt-3 flex items-center gap-2 text-sm font-bold text-cf-lime"><CheckIcon size={16} className="shrink-0" />קופון הופעל! חסכת ₪{formatShekels(price.discountAgorot)}</p>
                 )}
                 {isCouponApplied && price.couponApplied && !stacksPromotions && price.tierPriceAgorot < LIST_PRICE_AGOROT && (
-                  <p className="text-sm mt-2 text-slate-600 bg-slate-50 p-2 rounded-lg">הקופון מחליף את מחיר החבילה (אין כפל מבצעים), כי הוא זול יותר.</p>
+                  <p className="mb-0 mt-2 text-sm text-cf-on-navy">הקופון מחליף את מחיר החבילה (אין כפל מבצעים), כי הוא זול יותר.</p>
                 )}
                 {isCouponApplied && !price.couponApplied && (
-                  <p className="text-sm mt-3 font-bold text-green-700 bg-green-50 p-2 rounded-lg border border-green-100">מחיר החבילה זול מהקופון, אז קיבלתם אותו במקום הקופון (אין כפל מבצעים).</p>
+                  <p className="mb-0 mt-3 text-sm font-bold text-cf-lime">מחיר החבילה זול מהקופון, אז קיבלתם אותו במקום הקופון (אין כפל מבצעים).</p>
                 )}
               </div>
 
-              <div className="space-y-3 pt-4 border-t border-slate-100 text-slate-600">
+              <div className="flex flex-col gap-3 border-t border-cf-muted pt-4 text-[17px] text-cf-on-navy">
                 <div className="flex flex-wrap justify-between gap-x-3 tabular-nums">
                   <span>{quantity} × <span className="inline-flex items-baseline gap-1.5">₪{formatShekels(price.unitPriceAgorot)}{struck && <Was agorot={LIST_PRICE_AGOROT} />}</span></span>
-                  <span className="font-bold inline-flex items-baseline gap-1.5">₪{formatShekels(price.subtotalAgorot)}{struck && <Was agorot={price.listSubtotalAgorot} />}</span>
+                  <span className="inline-flex items-baseline gap-1.5 font-bold text-cf-cream">₪{formatShekels(price.subtotalAgorot)}{struck && <Was agorot={price.listSubtotalAgorot} />}</span>
                 </div>
-                {price.couponApplied && discount > 0 && <div className="flex justify-between text-green-600 font-bold"><span>קופון {coupon.toUpperCase().trim()} ({discountPercent}%):</span><span className="tabular-nums">-₪{formatShekels(price.discountAgorot)}</span></div>}
-                <div className="flex justify-between"><span>דמי משלוח:</span><span className={currentShipping === 0 ? "text-green-600 font-bold" : "tabular-nums"}>{shippingMethod === 'pickup' ? "איסוף עצמי (חינם)" : (currentShipping === 0 ? "חינם" : `₪${formatShekels(price.shippingAgorot)}`)}</span></div>
-                <div className="flex flex-wrap justify-between items-end gap-y-1 pt-6 mt-2 border-t-2 border-slate-100"><span className="text-xl font-black text-slate-800">סה"כ לתשלום:</span><span aria-live="polite" className="text-brand-blue text-3xl sm:text-4xl md:text-5xl font-black tabular-nums">₪{formatShekels(price.totalAgorot)}</span></div>
-                <p className="text-sm font-bold text-slate-500 tabular-nums">יוצא ₪{formatShekels(price.totalAgorot / quantity)} למארז כולל הכל</p>
-                {price.savedAgorot > 0 && <p className="text-sm font-bold text-green-600 tabular-nums">חסכתם ₪{formatShekels(price.savedAgorot)} לעומת מחיר מארז בודד</p>}
+                {price.couponApplied && discount > 0 && <div className="flex justify-between font-bold text-cf-lime"><span>קופון {coupon.toUpperCase().trim()} ({discountPercent}%):</span><span className="tabular-nums">-₪{formatShekels(price.discountAgorot)}</span></div>}
+                <div className="flex justify-between gap-3">
+                  <span>דמי משלוח:</span>
+                  <span className={currentShipping === 0 ? 'font-bold text-cf-lime' : 'tabular-nums'}>
+                    {shippingMethod === 'pickup' ? 'איסוף עצמי (חינם)' : (currentShipping === 0 ? 'חינם' : `₪${formatShekels(price.shippingAgorot)}`)}
+                    {reducedShipping && <> <Was agorot={REGULAR_HOME_SHIPPING_AGOROT} /></>}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-baseline justify-between gap-y-1 border-t border-cf-muted pt-4">
+                  <span className="text-lg font-bold text-cf-cream">סה"כ לתשלום:</span>
+                  <span aria-live="polite" className="text-[clamp(34px,4vw,44px)] font-black leading-none text-cf-cream tabular-nums">₪{formatShekels(price.totalAgorot)}</span>
+                </div>
+                <p className="m-0 text-sm text-cf-on-navy tabular-nums">יוצא ₪{formatShekels(price.totalAgorot / quantity)} למארז כולל הכל</p>
+                {savingLine && <p className="m-0 text-[15px] font-bold text-cf-lime tabular-nums">{savingLine}</p>}
               </div>
 
-              <div className="mt-8 flex items-center justify-center gap-3 text-[10px] font-bold">
+              <div className="flex items-center justify-center gap-3 text-[11px] font-bold text-cf-on-navy">
                 {isShoppingIlPromoActive() && (
                   <img src="/shopping-il-badge.svg" alt="Shopping IL by Google" width={36} height={36} loading="lazy" />
                 )}
-                <div className="flex items-center gap-2 opacity-40 grayscale">
-                  <ShieldCheck size={16} className="text-blue-600" /><span>SSL SECURED</span><span>•</span><span>PCI COMPLIANT</span>
-                </div>
+                <span className="flex items-center gap-2">
+                  <ShieldCheck size={16} aria-hidden="true" /><span>SSL SECURED</span><span aria-hidden="true">•</span><span>PCI COMPLIANT</span>
+                </span>
               </div>
-            </div>
+            </section>
 
             {/* תשלום */}
-            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-md border border-slate-100 text-right">
-              <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <CreditCard className="text-blue-500" /> תשלום מאובטח
+            <section aria-labelledby="payment-title" className={card}>
+              <h2 id="payment-title" className={`${cardTitle} mb-6 flex items-center gap-2.5`}>
+                <CreditCard className="shrink-0 text-cf-green" aria-hidden="true" /> תשלום מאובטח
               </h2>
 
-              <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-sm font-semibold flex items-start gap-2">
-                <span className="text-base mt-0.5">⚠️</span>
-                <p>שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, <strong>למעט כרטיסי אמריקן אקספרס ודיינרס</strong>.</p>
-              </div>
+              <p className={`${notice.warning} mb-5 mt-0`}>
+                שים לב: מערכת הסליקה מכבדת את כל כרטיסי האשראי, <strong>למעט כרטיסי אמריקן אקספרס ודיינרס</strong>.
+              </p>
 
               {paymentFailed && (
-                <div ref={paymentFailedRef} className="mb-5 p-5 bg-red-50 border-2 border-red-300 rounded-2xl text-red-900 shadow-md animate-fadeIn flex items-start gap-3">
-                  <span className="text-2xl leading-none">❌</span>
-                  <div>
-                    <p className="font-black text-base mb-1">התשלום לא הושלם</p>
-                    <p className="text-sm font-medium">לא בוצע חיוב. ניתן לנסות שוב עם אותו כרטיס או כרטיס אחר, ואם הבעיה חוזרת צרו איתנו קשר.</p>
-                  </div>
+                <div ref={paymentFailedRef} className={`${notice.error} mb-5 animate-fadeIn`}>
+                  <p className="mb-1 mt-0 text-base font-extrabold">התשלום לא הושלם</p>
+                  <p className="m-0">לא בוצע חיוב. ניתן לנסות שוב עם אותו כרטיס או כרטיס אחר, ואם הבעיה חוזרת צרו איתנו קשר.</p>
                 </div>
               )}
 
               {priceNotice && !showPayment && (
-                <div role="alert" className="mb-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-amber-900 text-sm font-bold flex items-start gap-2 animate-fadeIn">
-                  <span className="text-base mt-0.5">⚠️</span>
-                  <p>{priceNotice}</p>
-                </div>
+                <p role="alert" className={`${notice.warning} mb-5 mt-0 font-bold animate-fadeIn`}>{priceNotice}</p>
               )}
 
               {orderExpired && !showPayment && (
-                <div role="alert" className="mb-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-amber-900 text-sm font-bold flex items-start gap-2 animate-fadeIn">
-                  <span className="text-base mt-0.5">⏱️</span>
-                  <p>תוקף ההזמנה פג (15 דקות). לחצו שוב על "המשך לתשלום" כדי לרענן את המחיר.</p>
-                </div>
+                <p role="alert" className={`${notice.warning} mb-5 mt-0 font-bold animate-fadeIn`}>תוקף ההזמנה פג (15 דקות). לחצו שוב על "המשך לתשלום" כדי לרענן את המחיר.</p>
               )}
 
               {!showPayment && (
                 <div>
-                  <p className="text-slate-500 text-sm mb-4">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
-                  <button onClick={handleProceedToPayment} disabled={isPreparingPayment} className="w-full gradient-brand text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:brightness-110 hover:shadow-xl active:scale-[0.99] transition-all disabled:opacity-50 disabled:hover:brightness-100">
+                  <p className="mb-4 mt-0 text-[15px] text-cf-body">מלא את כל פרטי החובה למעלה כדי לפתוח את טופס הסליקה המאובטח.</p>
+                  <button type="button" onClick={handleProceedToPayment} disabled={isPreparingPayment} className={`${btnPrimary} min-h-[60px] w-full text-xl`}>
                     {isPreparingPayment ? 'מכין הזמנה...' : 'המשך לתשלום מאובטח'}
                   </button>
                 </div>
@@ -579,11 +585,11 @@ const CheckoutPage = () => {
                 <iframe
                   name="tranzila-target-frame"
                   id="tranzila-iframe"
-                  className="w-full h-[560px] border border-slate-100 rounded-2xl shadow-inner"
+                  className="h-[560px] w-full rounded-[20px] border border-cf-border"
                   title="Tranzila Secure Payment"
                 />
               )}
-            </div>
+            </section>
           </div>
 
         </div>

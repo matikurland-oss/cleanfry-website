@@ -3,7 +3,7 @@
 
 @theme {
   --font-sans: "Heebo", ui-sans-serif, system-ui, sans-serif;
-  /* פונט התצוגה של דף הבית, ה-header וה-footer (שאר הדפים נשארים ב-Heebo) */
+  /* פונט התצוגה של כל הדפים הציבוריים (ממשק הניהול ואזור המשפיעניות נשארים ב-Heebo) */
   --font-display: "Rubik", "Heebo", ui-sans-serif, system-ui, sans-serif;
 
   --color-brand-blue: #29abe2;
@@ -43,12 +43,12 @@ html {
   }
 }
 
-/* מסגרת פוקוס גלויה לניווט במקלדת בדף הבית ובמעטפת */
-.cf-focus :where(a, button, input, summary, [tabindex]):focus-visible {
+/* מסגרת פוקוס גלויה לניווט במקלדת בכל הדפים הציבוריים */
+.cf-focus :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--color-cf-blue);
   outline-offset: 3px;
 }
-.cf-on-navy :where(a, button, input):focus-visible {
+.cf-on-navy :where(a, button, input, textarea, select):focus-visible {
   outline-color: var(--color-cf-lime);
 }
 

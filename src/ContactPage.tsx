@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from './useSEO';
+import { btnPrimary, field, notice, pageShell, pageTitle } from './home/layout';
 
 const ContactPage = () => {
   const [status, setStatus] = useState<"IDLE" | "SUBMITTING" | "ERROR">("IDLE");
@@ -38,91 +39,61 @@ const ContactPage = () => {
     }
   };
 
+  const label = 'mb-1.5 block text-[15px] font-bold text-cf-navy';
+
   return (
-    <div className="bg-slate-50 min-h-screen py-16 px-4 font-sans" dir="rtl">
-      <div className="max-w-4xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative">
-          
-          {/* צד שמאל - טופס */}
-          <div className="relative z-10">
-            <h1 className="text-3xl font-extrabold text-slate-950 mb-2 font-sans">דברו איתנו</h1>
-            <p className="text-slate-600 mb-8 leading-relaxed">
-              נשמח לשמוע מכם! מלאו את הפרטים ונחזור אליכם בהקדם.
-            </p>
+    <div className={pageShell}>
+      <div className="mx-auto grid max-w-[1040px] items-stretch gap-7 md:grid-cols-[1.4fr_1fr]">
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1">שם מלא</label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
+        {/* טופס */}
+        <div className="rounded-[28px] border border-cf-border bg-white p-[clamp(24px,4vw,48px)] md:rounded-[36px]">
+          <h1 className={`${pageTitle} mb-3`}>דברו איתנו</h1>
+          <p className="mb-8 mt-0 text-[17px] leading-relaxed text-cf-body">
+            נשמח לשמוע מכם! מלאו את הפרטים ונחזור אליכם בהקדם.
+          </p>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1">אימייל לחזרה</label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div>
+              <label htmlFor="name" className={label}>שם מלא</label>
+              <input type="text" name="name" id="name" required autoComplete="name" className={field} />
+            </div>
 
-              <div>
-                <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-1">איך נוכל לעזור?</label>
-                <textarea
-                  name="message"
-                  id="message"
-                  rows={4}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all resize-none"
-                ></textarea>
-              </div>
+            <div>
+              <label htmlFor="email" className={label}>אימייל לחזרה</label>
+              <input type="email" name="email" id="email" required autoComplete="email" className={field} />
+            </div>
 
-              <button
-                type="submit"
-                disabled={status === "SUBMITTING"}
-                className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-md ${
-                  status === "SUBMITTING" ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700 transform hover:-translate-y-0.5'
-                }`}
-              >
-                {status === "SUBMITTING" ? "שולח..." : "שלח הודעה"}
-              </button>
+            <div>
+              <label htmlFor="message" className={label}>איך נוכל לעזור?</label>
+              <textarea name="message" id="message" rows={4} required className={`${field} resize-none`}></textarea>
+            </div>
 
-              {status === "ERROR" && (
-                <p className="text-red-500 text-sm mt-2 text-center">אופס! קרתה שגיאה. נסו שוב מאוחר יותר.</p>
-              )}
-            </form>
-          </div>
+            <button type="submit" disabled={status === "SUBMITTING"} className={`${btnPrimary} w-full`}>
+              {status === "SUBMITTING" ? "שולח..." : "שלח הודעה"}
+            </button>
 
-          {/* צד ימין - מידע מינימליסטי */}
-          <div className="bg-slate-900 rounded-2xl p-8 text-white flex flex-col justify-center relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-             
-             <div className="text-center md:text-right">
-                <h2 className="text-2xl font-bold mb-8">פרטי התקשרות</h2>
-                <div className="space-y-8">
-                   <div className="flex items-center gap-4 justify-center md:justify-start">
-                      <div className="bg-slate-800 p-3 rounded-lg text-blue-400">
-                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                         </svg>
-                      </div>
-                      <div>
-                         <p className="text-slate-400 text-sm">שלחו לנו מייל</p>
-                         <p className="font-medium text-lg">info@cleanfry.co.il</p>
-                      </div>
-                   </div>
-                </div>
-             </div>
-          </div>
-
+            {status === "ERROR" && (
+              <p role="alert" className={`${notice.error} m-0 text-center`}>אופס! קרתה שגיאה. נסו שוב מאוחר יותר.</p>
+            )}
+          </form>
         </div>
+
+        {/* פרטי התקשרות */}
+        <aside aria-labelledby="contact-details-title" className="cf-on-navy flex flex-col justify-center gap-8 rounded-[28px] bg-cf-navy p-[clamp(24px,4vw,40px)] text-cf-cream md:rounded-[36px]">
+          <h2 id="contact-details-title" className="m-0 text-2xl font-extrabold">פרטי התקשרות</h2>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex h-14 w-14 flex-none items-center justify-center rounded-[18px] bg-cf-green-light text-cf-green-dark" aria-hidden="true">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </span>
+            <div>
+              <p className="m-0 text-sm text-cf-on-navy">שלחו לנו מייל</p>
+              <a href="mailto:info@cleanfry.co.il" className="text-lg font-bold text-cf-cream underline-offset-4 hover:underline">info@cleanfry.co.il</a>
+            </div>
+          </div>
+        </aside>
+
       </div>
     </div>
   );

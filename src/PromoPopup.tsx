@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { isPromoDismissed, dismissPromo, subscribePromoDismissed } from './promoPopupStore';
 import { SHOPPING_IL_PROMO_END } from './shoppingIlPromo';
 import { track } from './analytics';
+import { btnPrimary } from './home/layout';
 
 const PromoPopup = () => {
   const location = useLocation();
@@ -47,12 +48,15 @@ const PromoPopup = () => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 text-center"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="promo-title"
+        className="cf-focus relative w-full max-w-sm rounded-[32px] bg-white p-8 text-center font-display text-cf-navy shadow-2xl"
       >
         <button
           onClick={handleClose}
           aria-label="סגור"
-          className="absolute top-4 left-4 text-slate-400 hover:text-slate-700 transition-colors"
+          className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-cf-muted transition-colors hover:bg-cf-cream hover:text-cf-navy"
         >
           <X className="w-6 h-6" />
         </button>
@@ -68,17 +72,17 @@ const PromoPopup = () => {
           />
         </div>
 
-        <p className="text-sm font-bold text-blue-600 mb-2">3 ימים בלבד בשיתוף Shopping IL</p>
-        <h2 className="text-2xl font-black text-slate-800 mb-3">18% הנחה בלי מע"מ על כל ההזמנה!</h2>
-        <p className="text-sm text-slate-500 mb-5">לכבוד השיתוף עם Shopping IL הקוד כבר מופעל אוטומטית, רק ללחוץ וליהנות</p>
+        <p className="mx-auto mb-3 mt-0 inline-block rounded-full bg-cf-green-light px-3.5 py-1.5 text-[13px] font-bold text-cf-green-dark">3 ימים בלבד בשיתוף Shopping IL</p>
+        <h2 id="promo-title" className="mb-3 mt-0 text-[26px] font-black leading-tight">18% הנחה בלי מע"מ על כל ההזמנה!</h2>
+        <p className="mb-5 mt-0 text-[15px] text-cf-body">לכבוד השיתוף עם Shopping IL הקוד כבר מופעל אוטומטית, רק ללחוץ וליהנות</p>
 
-        <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl py-3 mb-6">
-          <span className="font-black text-xl tracking-widest text-slate-800">NOV26</span>
+        <div className="mb-6 rounded-[18px] border-2 border-dashed border-cf-border bg-cf-cream py-3">
+          <span className="text-xl font-black tracking-widest">NOV26</span>
         </div>
 
         <button
           onClick={handleClaim}
-          className="w-full gradient-brand text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:brightness-110 transition-all"
+          className={`${btnPrimary} w-full`}
         >
           לקטיפת המבצע
         </button>
