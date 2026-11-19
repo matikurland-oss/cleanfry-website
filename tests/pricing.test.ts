@@ -7,7 +7,7 @@ const total = (input: PriceInput) => priceOrder(input).totalAgorot / 100;
 describe('tiers', () => {
   it('picks the tier by quantity', () => {
     expect([1, 2, 3, 4, 5, 6, 10].map((q) => tierFor(q).priceAgorot / 100)).toEqual([59, 59, 55, 55, 51, 51, 51]);
-    expect([1, 2, 3, 4, 5].map((q) => tierFor(q).homeShippingAgorot / 100)).toEqual([35, 35, 35, 35, 0]);
+    expect([1, 2, 3, 4, 5].map((q) => tierFor(q).homeShippingAgorot / 100)).toEqual([35, 35, 19, 19, 0]);
   });
 
   it('the single-pack tier is the list price (the struck-through price is real)', () => {
@@ -20,8 +20,8 @@ describe('priceOrder – spec table, no coupon', () => {
   it.each([
     [1, 59, 35, 94, 59],
     [2, 118, 35, 153, 118],
-    [3, 165, 35, 200, 165],
-    [4, 220, 35, 255, 220],
+    [3, 165, 19, 184, 165],
+    [4, 220, 19, 239, 220],
     [5, 255, 0, 255, 255],
     [6, 306, 0, 306, 306],
     [10, 510, 0, 510, 510]
@@ -36,8 +36,8 @@ describe('priceOrder – spec table, no coupon', () => {
 
 describe('priceOrder – 15% coupon, stacks = on', () => {
   it.each([
-    [3, 140.25, 175.25],
-    [4, 187, 222],
+    [3, 140.25, 159.25],
+    [4, 187, 206],
     [5, 216.75, 216.75],
     [10, 433.5, 433.5]
   ])('%i packs', (quantity, pickup, home) => {
@@ -48,6 +48,10 @@ describe('priceOrder – 15% coupon, stacks = on', () => {
     expect(total({ quantity, deliveryMethod: 'pickup', coupon: coupon(15, true) })).toBe(pickup);
   });
 
+  it('3–4 packs ship for ₪19 with the coupon too (the coupon never touches shipping)', () => {
+    expect([3, 4].map((q) => priceOrder({ quantity: q, deliveryMethod: 'delivery', coupon: coupon(15, true) }).shippingAgorot)).toEqual([1900, 1900]);
+  });
+
   it('keeps free shipping for 5 packs', () => {
     expect(priceOrder({ quantity: 5, deliveryMethod: 'delivery', coupon: coupon(15, true) }).shippingAgorot).toBe(0);
   });
@@ -56,8 +60,8 @@ describe('priceOrder – 15% coupon, stacks = on', () => {
 describe('priceOrder – 15% coupon, stacks = off', () => {
   it.each([
     [1, 50.15, 85.15],
-    [3, 150.45, 185.45],
-    [4, 200.6, 235.6],
+    [3, 150.45, 169.45],
+    [4, 200.6, 219.6],
     [5, 250.75, 250.75],
     [10, 501.5, 501.5]
   ])('%i packs', (quantity, pickup, home) => {
@@ -69,7 +73,7 @@ describe('priceOrder – 15% coupon, stacks = off', () => {
   });
 
   it('shipping follows quantity, not the coupon', () => {
-    expect(priceOrder({ quantity: 3, deliveryMethod: 'delivery', coupon: coupon(15, false) }).shippingAgorot).toBe(3500);
+    expect(priceOrder({ quantity: 3, deliveryMethod: 'delivery', coupon: coupon(15, false) }).shippingAgorot).toBe(1900);
   });
 
   it('a 5% coupon is not applied on 5 packs because the tier is cheaper', () => {

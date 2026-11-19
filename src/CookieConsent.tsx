@@ -8,6 +8,7 @@ import {
   loadClarityTracking,
   type CookieConsentChoice,
 } from './cookieConsentStore';
+import { pill } from './home/layout';
 
 const CookieConsent = () => {
   const [choice, setChoice] = useState<CookieConsentChoice | null>(() => getCookieConsent());
@@ -26,22 +27,24 @@ const CookieConsent = () => {
   return (
     <div
       dir="rtl"
-      className="fixed inset-x-4 bottom-4 z-50 max-w-2xl mx-auto bg-slate-900 text-white rounded-2xl shadow-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-4 animate-fadeIn"
+      role="region"
+      aria-label="הסכמה לעוגיות"
+      className="cf-focus cf-on-navy fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-2xl flex-col items-center gap-4 rounded-[24px] bg-cf-navy p-5 font-display text-cf-cream shadow-2xl animate-fadeIn sm:flex-row sm:p-6"
     >
-      <p className="text-sm text-slate-200 leading-relaxed flex-1">
+      <p className="m-0 flex-1 text-[15px] leading-relaxed text-cf-on-navy">
         אנחנו משתמשים בעוגיות כדי לשפר את חוויית הגלישה שלכם באתר. תוכלו לקרוא עוד ב
-        <Link to="/legal" className="underline underline-offset-4 hover:text-white"> מדיניות הפרטיות</Link>.
+        <Link to="/legal" className="font-bold text-cf-cream underline underline-offset-4"> מדיניות הפרטיות</Link>.
       </p>
-      <div className="flex gap-3 flex-shrink-0">
+      <div className="flex flex-shrink-0 gap-3">
         <button
           onClick={() => setCookieConsent('rejected')}
-          className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 font-bold text-sm transition-colors"
+          className={`${pill} min-h-11 border-2 border-cf-on-navy/60 px-5 text-[15px] font-bold text-cf-cream`}
         >
           דחייה
         </button>
         <button
           onClick={() => setCookieConsent('accepted')}
-          className="px-4 py-2 rounded-xl bg-brand-blue hover:brightness-110 font-bold text-sm transition-colors"
+          className={`${pill} min-h-11 bg-cf-green px-6 text-[15px] font-bold text-white hover:bg-cf-green-dark`}
         >
           אישור
         </button>

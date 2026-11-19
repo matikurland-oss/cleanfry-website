@@ -2,7 +2,8 @@
 // ומיובא גם לדף הבית ול-CheckoutPage רק לצורך תצוגה. אין כאן שום סוד: זו לוגיקה טהורה.
 //
 // כללים (CLEANFRY-QUANTITY-TIERS-SPEC.md):
-// - המדרגה נקבעת לפי כמות המארזים בהזמנה, ומחירה חל על כל המארזים. המשלוח עד הבית נקבע לפי אותה מדרגה.
+// - המדרגה נקבעת לפי כמות המארזים בהזמנה, ומחירה חל על כל המארזים. המשלוח עד הבית נקבע לפי אותה מדרגה
+//   (1–2: ₪35, 3–4: ₪19, 5 ומעלה: חינם).
 // - איסוף עצמי תמיד חינם.
 // - קופון חל על המוצרים בלבד ולא משנה את המדרגה או את המשלוח.
 //   כפל מבצעים = כן: ההנחה על מחיר המדרגה.
@@ -23,9 +24,12 @@ export interface Tier {
 /** מסודר מהגבוה לנמוך. המדרגה הנמוכה (min: 1) חייבת להיות במחיר המחירון */
 export const TIERS: readonly Tier[] = [
   { min: 5, priceAgorot: 5100, homeShippingAgorot: 0 },
-  { min: 3, priceAgorot: 5500, homeShippingAgorot: 3500 },
+  { min: 3, priceAgorot: 5500, homeShippingAgorot: 1900 },
   { min: 1, priceAgorot: LIST_PRICE_AGOROT, homeShippingAgorot: 3500 }
 ];
+
+/** דמי משלוח עד הבית רגילים (המדרגה הבסיסית) — הבסיס למחיר המשלוח המחוק ולחישוב החיסכון במשלוח */
+export const REGULAR_HOME_SHIPPING_AGOROT = TIERS[TIERS.length - 1].homeShippingAgorot;
 
 /** הכמות שממנה המשלוח עד הבית חינם */
 export const FREE_SHIPPING_MIN_QUANTITY = TIERS.find((t) => t.homeShippingAgorot === 0)!.min;
