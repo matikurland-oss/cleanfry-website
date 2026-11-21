@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { adminApi, confirmSaleQuestion, formatShekels, type AdminOrder, type OrdersResponse } from './adminApi';
 import { formatIsraelDateTime } from './israelTime';
+import { newestFirst } from './dashboardStats';
 
 const PICKUP_NAMES = { 'kfar-saba': 'כפר סבא', 'tel-aviv': 'תל אביב' } as const;
 
@@ -29,14 +30,20 @@ function Status({ order, busy, onConfirm }: { order: AdminOrder; busy: boolean; 
   );
 }
 
-export default function OrdersPanel({ data, loading, onChanged }: {
+export default function OrdersPanel({ data, loading, onChanged, initialLimit }: {
   data: OrdersResponse | null;
   loading: boolean;
   onChanged: () => void;
+  /** אם הוגדר: מציגים בהתחלה רק את ההזמנות האחרונות, עם כפתור "הצג הכל". הסיכום תמיד מלא. */
+  initialLimit?: number;
 }) {
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
-  const orders = data?.orders ?? [];
+  const [showAll, setShowAll] = useState(false);
+  const allOrders = data?.orders ?? [];
+  const sorted = initialLimit ? newestFirst(allOrders) : allOrders;
+  const limited = Boolean(initialLimit) && !showAll && sorted.length > initialLimit!;
+  const orders = limited ? sorted.slice(0, initialLimit) : sorted;
 
   const confirmSale = async (o: AdminOrder) => {
     if (!window.confirm(confirmSaleQuestion(o.public_ref, o.total_agorot))) return;
@@ -65,7 +72,7 @@ export default function OrdersPanel({ data, loading, onChanged }: {
 
       {message && <p role="status" className="text-sm font-bold mb-3">{message}</p>}
       {loading && <p className="text-slate-500 text-sm py-6 text-center">טוען...</p>}
-      {!loading && orders.length === 0 && <p className="text-slate-500 text-sm py-6 text-center">אין הזמנות בתקופה שנבחרה.</p>}
+      {!loading && allOrders.length === 0 && <p className="text-slate-500 text-sm py-6 text-center">אין הזמנות בתקופה שנבחרה.</p>}
 
       {!loading && t && (t.orders > 0 || (data?.pending.orders ?? 0) > 0) && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
@@ -159,6 +166,17 @@ export default function OrdersPanel({ data, loading, onChanged }: {
               )}
             </table>
           </div>
+          {initialLimit && sorted.length > initialLimit && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm">
+              <span className="text-slate-500">
+                {limited ? `מוצגות ${orders.length} ההזמנות האחרונות מתוך ${sorted.length}` : `מוצגות כל ${sorted.length} ההזמנות`}
+              </span>
+              <button type="button" onClick={() => setShowAll((v) => !v)}
+                className="px-4 py-2 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 hover:bg-slate-50">
+                {limited ? 'הצג הכל' : 'הצג פחות'}
+              </button>
+            </div>
+          )}
         </>
       )}
     </section>
