@@ -1,15 +1,16 @@
 // אזור הניהול (/admin). נטען בטעינה עצלה, כך שקוד הניהול ו-supabase-js לא נכנסים לחבילה של האתר.
 // ההגנה האמיתית היא בצד השרת: כל קריאה ל-/api/admin/* בודקת התחברות והרשאת מנהל.
 import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut } from 'lucide-react';
-import { adminApi, ApiError, supabase, type AdminCoupon, type AdminPartner, type AttentionOrder, type OrdersResponse, type ReportResponse } from './adminApi';
+import { adminApi, ApiError, formatShekels, supabase, type AdminCoupon, type AdminPartner, type AttentionOrder, type OrdersResponse, type ReportResponse } from './adminApi';
 import PeriodPicker, { presetPeriod, type Period } from './PeriodPicker';
 import CouponsPanel from './CouponsPanel';
 import ReportPanel from './ReportPanel';
-import AttentionPanel from './AttentionPanel';
-import OrdersPanel from './OrdersPanel';
 import PartnersPanel from './PartnersPanel';
+import AdminTabs, { TAB_PATHS, tabFromPath, type AdminTab } from './AdminTabs';
+import DashboardTab from './DashboardTab';
 
 function useNoIndex() {
   useEffect(() => {
@@ -60,6 +61,32 @@ function LoginForm() {
   );
 }
 
+/** שורת סיכום מעל כרטיסי המשפיעניות. הנתונים מצטברים מכל הזמן, כמו בכרטיסים. */
+function PartnersSummary({ partners }: { partners: AdminPartner[] }) {
+  const active = partners.filter((p) => p.is_active).length;
+  const units = partners.reduce((s, p) => s + p.totals.units, 0);
+  const owed = partners.reduce((s, p) => s + p.totals.commission_agorot, 0);
+  return (
+    <section aria-label="סיכום משפיעניות" className="space-y-2">
+      <p className="text-sm font-bold text-slate-600 bg-blue-50 border border-blue-100 p-3 rounded-xl">
+        הנתונים בטאב הזה מצטברים מכל הזמן, ולא מושפעים מבורר התקופה.
+      </p>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          ['משפיעניות פעילות', String(active)],
+          ['יחידות שנמכרו דרכן', String(units)],
+          ['מגיע להן עד היום', formatShekels(owed)]
+        ].map(([label, value]) => (
+          <div key={label} className="bg-white rounded-2xl border border-slate-100 p-3 sm:p-4 min-w-0">
+            <p className="text-xs font-bold text-slate-500">{label}</p>
+            <p className="text-lg sm:text-2xl font-black text-slate-800 tabular-nums mt-1 truncate">{value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Dashboard({ session }: { session: Session }) {
   const [period, setPeriod] = useState<Period>(() => presetPeriod('7days'));
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
@@ -70,6 +97,12 @@ function Dashboard({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab = tabFromPath(location.pathname);
+  const selectTab = (next: AdminTab) => {
+    if (next !== tab) navigate(TAB_PATHS[next]);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -126,11 +159,26 @@ function Dashboard({ session }: { session: Session }) {
 
       {error && <p role="alert" className="text-red-600 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
 
-      <AttentionPanel orders={attention.orders} verificationConfigured={attention.verificationConfigured} onChanged={load} />
-      <OrdersPanel data={orders} loading={loading} onChanged={load} />
-      <CouponsPanel coupons={coupons} partners={partners} loading={loading} onChanged={load} />
-      <PartnersPanel partners={partners} coupons={coupons} loading={loading} onChanged={load} />
-      <ReportPanel report={report} loading={loading} />
+      <AdminTabs active={tab} attentionCount={attention.orders.length} onSelect={selectTab} />
+
+      <div role="tabpanel" className="space-y-5">
+        {tab === 'dashboard' && (
+          <DashboardTab period={period} orders={orders} report={report} attention={attention} loading={loading}
+            onChanged={load} onOpenCoupons={() => selectTab('coupons')} />
+        )}
+        {tab === 'coupons' && (
+          <>
+            <CouponsPanel coupons={coupons} partners={partners} loading={loading} onChanged={load} />
+            <ReportPanel report={report} loading={loading} />
+          </>
+        )}
+        {tab === 'influencers' && (
+          <>
+            <PartnersSummary partners={partners} />
+            <PartnersPanel partners={partners} coupons={coupons} loading={loading} onChanged={load} />
+          </>
+        )}
+      </div>
     </div>
   );
 }

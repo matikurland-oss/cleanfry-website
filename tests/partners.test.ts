@@ -223,6 +223,25 @@ describe('partner summary', () => {
     expect((await summaryAs('partner-user-1-token')).status).toBe(403);
   });
 
+  it('admin orders report the commission of each order, matching the partner totals', async () => {
+    const coupon = store.addCoupon({ code: 'DANA10', discount_percent: 10 });
+    const id = (await createPartner({ coupon_ids: [coupon.id] })).body.partner.id;
+    await paidCouponOrder(coupon.id, 'DANA10');
+    await store.createOrder(order()); // בלי קופון: אין עמלה
+    const plain = await store.createOrder(order());
+    await store.recordPayment(plain.id, `T-${plain.id}`, plain.total_agorot, 'ILS');
+
+    const res = await call(adminOrders, { method: 'GET', headers: as('admin-token'), query: { from: '2026-11-01', to: '2026-11-08' } });
+    expect(res.status).toBe(200);
+    // 15% מ-15900 אגורות מוצרים (בלי משלוח)
+    expect(res.body.orders.find((o: any) => o.coupon_code === 'DANA10').commission_agorot).toBe(2385);
+    expect(res.body.orders.find((o: any) => o.id === plain.id).commission_agorot).toBe(0);
+    expect(res.body.totals.commission_agorot).toBe(2385);
+
+    const partners = await call(adminPartners, { method: 'GET', headers: as('admin-token') });
+    expect(partners.body.partners.find((p: any) => p.id === id).totals.commission_agorot).toBe(res.body.totals.commission_agorot);
+  });
+
   it('is view-only: every admin action is refused and nothing changes', async () => {
     const coupon = store.addCoupon({ code: 'DANA10', discount_percent: 10 });
     const id = (await createPartner({ coupon_ids: [coupon.id] })).body.partner.id;

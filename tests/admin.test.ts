@@ -269,7 +269,7 @@ describe('admin orders table', () => {
     });
     expect(res.body.totals).toEqual({
       orders: 2, delivery_orders: 2, pickup_orders: 0, quantity: 6,
-      products_agorot: 11800 + 19400, shipping_agorot: 3500, total_agorot: 15300 + 19400
+      products_agorot: 11800 + 19400, shipping_agorot: 3500, total_agorot: 15300 + 19400, commission_agorot: 0
     });
     expect(res.body.pending).toEqual({ orders: 1, total_agorot: 5900 });
     // אימייל הלקוח לא נחשף בטבלה

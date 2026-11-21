@@ -97,6 +97,8 @@ export interface AdminOrder {
   shipping_agorot: number;
   total_agorot: number;
   coupon_code: string | null;
+  /** עמלת המשפיענית על ההזמנה (0 אם אין), על מכירות מוצרים בלי משלוח */
+  commission_agorot: number;
 }
 
 export interface OrdersResponse {
@@ -109,6 +111,7 @@ export interface OrdersResponse {
     products_agorot: number;
     shipping_agorot: number;
     total_agorot: number;
+    commission_agorot: number;
   };
   pending: { orders: number; total_agorot: number };
 }
