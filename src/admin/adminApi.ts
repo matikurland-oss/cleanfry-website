@@ -7,6 +7,11 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 export const supabase: SupabaseClient | null = url && anonKey ? createClient(url, anonKey) : null;
 
+// אזור המשפיעניות (/partner) מחזיק התחברות משלו, נפרדת מזו של האדמין: מנהל מחובר יכול להיכנס גם
+// כמשפיענית באותו דפדפן, ויציאה מאזור אחד לא מנתקת את השני. אותו פרויקט ואותו מפתח anon.
+export const partnerSupabase: SupabaseClient | null =
+  url && anonKey ? createClient(url, anonKey, { auth: { storageKey: 'cleanfry-partner-auth' } }) : null;
+
 export type CouponState = 'active' | 'paused' | 'not_started' | 'expired';
 
 export interface AdminCoupon {
@@ -122,8 +127,8 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const session = (await supabase?.auth.getSession())?.data.session;
+async function request<T>(path: string, init: RequestInit = {}, client: SupabaseClient | null = supabase): Promise<T> {
+  const session = (await client?.auth.getSession())?.data.session;
   const response = await fetch(path, {
     ...init,
     headers: {
@@ -162,7 +167,7 @@ export const adminApi = {
 };
 
 export async function partnerRequest<T>(path: string): Promise<T> {
-  return request<T>(path);
+  return request<T>(path, {}, partnerSupabase);
 }
 
 /** שאלת וידוא לפני אישור ידני של מכירה */
