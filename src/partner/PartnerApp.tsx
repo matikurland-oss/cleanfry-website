@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut } from 'lucide-react';
-import { ApiError, formatShekels, partnerRequest, supabase } from '../admin/adminApi';
+import { ApiError, formatShekels, partnerRequest, partnerSupabase as supabase } from '../admin/adminApi';
 
 const PARTNER_EMAIL_DOMAIN = 'partners.cleanfry.co.il';
 
@@ -34,7 +34,7 @@ function useNoIndex() {
   }, []);
 }
 
-function LoginForm() {
+function LoginForm({ notice = '' }: { notice?: string }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -55,6 +55,7 @@ function LoginForm() {
   return (
     <form onSubmit={submit} className="bg-white max-w-sm w-full mx-auto mt-16 p-6 rounded-3xl shadow-xl border border-slate-100 space-y-4">
       <h1 className="text-2xl font-black text-slate-800">אזור השותפות של CleanFry</h1>
+      {notice && <p role="status" className="text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 p-3 rounded-xl">{notice}</p>}
       <input type="text" required autoComplete="username" placeholder="שם משתמש" value={username} onChange={(e) => setUsername(e.target.value)} className={input} dir="ltr" />
       <input type="password" required autoComplete="current-password" placeholder="סיסמה" value={password} onChange={(e) => setPassword(e.target.value)} className={input} dir="ltr" />
       {error && <p role="alert" className="text-red-600 text-sm font-bold">{error}</p>}
@@ -74,32 +75,22 @@ function Card({ label, value, highlight = false }: { label: string; value: strin
   );
 }
 
-function Dashboard() {
+function Dashboard({ onForbidden }: { onForbidden: () => void }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState('');
-  const [forbidden, setForbidden] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     try {
       setSummary(await partnerRequest<Summary>('/api/partner/summary'));
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) setForbidden(true);
+      if (err instanceof ApiError && err.status === 403) onForbidden();
       else if (err instanceof ApiError && err.status === 401) await supabase!.auth.signOut();
       else setError(err instanceof Error ? err.message : 'שגיאה בטעינת הנתונים');
     }
-  }, []);
+  }, [onForbidden]);
 
   useEffect(() => { load(); }, [load]);
-
-  if (forbidden) {
-    return (
-      <div className="max-w-sm mx-auto mt-16 bg-white p-6 rounded-3xl shadow-xl text-center space-y-4">
-        <p className="font-black text-lg">אין למשתמש הזה גישה לאזור השותפות.</p>
-        <button onClick={() => supabase!.auth.signOut()} className="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold">יציאה</button>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
@@ -178,6 +169,13 @@ export default function PartnerApp() {
   useNoIndex();
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  // משתמש שאינו משפיענית (למשל מנהל): מנתקים רק את ההתחברות של אזור השותפות ומציגים שוב את טופס הכניסה
+  const handleForbidden = useCallback(async () => {
+    setNotice('למשתמש הזה אין גישה לאזור השותפות. התחברו עם שם המשתמש והסיסמה של המשפיענית.');
+    await supabase!.auth.signOut({ scope: 'local' });
+  }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -185,7 +183,10 @@ export default function PartnerApp() {
       setSession(data.session);
       setReady(true);
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    const { data } = supabase.auth.onAuthStateChange((event, next) => {
+      setSession(next);
+      if (event === 'SIGNED_IN') setNotice('');
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -196,9 +197,12 @@ export default function PartnerApp() {
       ) : !ready ? (
         <p className="text-center mt-16 text-slate-500">טוען...</p>
       ) : session ? (
-        <Dashboard key={session.user.id} />
+        // key: החלפת משתמש טוענת את הנתונים מחדש
+        <React.Fragment key={session.user.id}>
+          <Dashboard onForbidden={handleForbidden} />
+        </React.Fragment>
       ) : (
-        <LoginForm />
+        <LoginForm notice={notice} />
       )}
     </div>
   );
