@@ -235,6 +235,7 @@ export default function PartnersPanel({ partners, coupons, loading, onChanged }:
       <p className="text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-xl">
         כל משפיענית נכנסת ל-<span dir="ltr" className="font-mono">/partner</span> ורואה רק כמה נמכר בקופונים שלה וכמה מגיע לה, בלי פרטי לקוחות.
         הנתונים כאן מצטברים מכל הזמן (לא לפי התקופה שנבחרה). נספרות רק הזמנות ששולמו.
+        העמלה מחושבת על סכום המארזים אחרי הנחת הקופון, בלי משלוח.
       </p>
 
       {error && <p role="alert" className="text-red-600 text-sm font-bold bg-red-50 p-3 rounded-xl mb-3">{error}</p>}

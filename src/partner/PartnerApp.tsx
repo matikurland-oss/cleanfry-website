@@ -125,7 +125,7 @@ function Dashboard() {
                 </span>
               ))}
             </span>
-            <span>העמלה שלך: <b className="text-slate-800">{summary.commissionPercent}%</b> ממכירות המוצרים</span>
+            <span>העמלה שלך: <b className="text-slate-800">{summary.commissionPercent}%</b> מסכום המארזים אחרי הנחת הקופון (לא כולל משלוח)</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -146,7 +146,7 @@ function Dashboard() {
                       <th className="py-2 px-2 font-bold">חודש</th>
                       <th className="py-2 px-2 font-bold">הזמנות</th>
                       <th className="py-2 px-2 font-bold">יחידות</th>
-                      <th className="py-2 px-2 font-bold hidden sm:table-cell">מכירות מוצרים</th>
+                      <th className="py-2 px-2 font-bold hidden sm:table-cell">מארזים אחרי הנחה</th>
                       <th className="py-2 px-2 font-bold">מגיע לך</th>
                     </tr>
                   </thead>
